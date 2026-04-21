@@ -112,6 +112,7 @@ export default function ChooseTreatmentsPage() {
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
   const [showEmptyError, setShowEmptyError] = useState(false)
+  const [showPreCheckedNote, setShowPreCheckedNote] = useState(true)
 
   useEffect(() => {
     // Step-5 conditions determine per-treatment ineligibility.
@@ -155,6 +156,7 @@ export default function ChooseTreatmentsPage() {
     }
     if (restored) {
       setSelected(new Set(restored))
+      setShowPreCheckedNote(false)
     } else if (preId) {
       setSelected(new Set([preId]))
     }
@@ -202,6 +204,7 @@ export default function ChooseTreatmentsPage() {
 
   function toggle(id: string) {
     setShowEmptyError(false)
+    setShowPreCheckedNote(false)
     setSelected(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -278,7 +281,7 @@ export default function ChooseTreatmentsPage() {
                   </>
                 )}
               </p>
-              {done && preCheckedId && (
+              {done && preCheckedId && showPreCheckedNote && (
                 <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
                   Some options have been pre-checked based on your initial interest.
                 </p>

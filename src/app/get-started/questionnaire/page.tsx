@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,6 +12,15 @@ import { saveStep, getStepValues } from '@/lib/intake-session-store'
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
 const AVATAR_URL = '/assets/avatar-eve.png'
+
+// ─── Phone formatting ─────────────────────────────────────────────────────────
+
+function formatPhone(digits: string): string {
+  if (digits.length === 0) return ''
+  if (digits.length <= 3) return `(${digits}`
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+}
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
@@ -212,6 +221,11 @@ export default function QuestionnaireStep1() {
 
   const selectedSex = watch('sex')
 
+  const [phoneDisplay, setPhoneDisplay] = useState<string>(() =>
+    formatPhone(typeof saved.phone === 'string' ? saved.phone : '')
+  )
+  const { ref: phoneRef } = register('phone')
+
   function handleDateInput(e: React.ChangeEvent<HTMLInputElement>) {
     let v = e.target.value.replace(/\D/g, '')
     if (v.length > 8) v = v.slice(0, 8)
@@ -224,8 +238,8 @@ export default function QuestionnaireStep1() {
 
   function handlePhoneInput(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+    setPhoneDisplay(formatPhone(digits))
     setValue('phone', digits, { shouldValidate: false })
-    e.target.value = digits
   }
 
   async function onSubmit(data: FormValues) {
@@ -235,7 +249,7 @@ export default function QuestionnaireStep1() {
       data.sex === 'female' ? 'Female' : 'Male',
       data.dateOfBirth,
       stateName,
-      `+1 ${data.phone}`,
+      `+1 ${formatPhone(data.phone)}`,
       ...(data.smsConsent ? ['Opt in to promotional texts'] : []),
     ]
     saveStep(
@@ -463,12 +477,15 @@ export default function QuestionnaireStep1() {
                   <span className="px-3 text-sm text-[#09090b] opacity-50 shrink-0 leading-5">
                     +1
                   </span>
+                  {/* Hidden input — RHF reads raw digits from this ref on submit */}
+                  <input type="hidden" name="phone" ref={phoneRef} />
                   <input
                     id="phone"
                     type="tel"
                     inputMode="numeric"
                     autoComplete="tel-national"
-                    {...register('phone')}
+                    placeholder="(###) ###-####"
+                    value={phoneDisplay}
                     onChange={handlePhoneInput}
                     className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 py-1.5 pr-3"
                     aria-invalid={!!errors.phone}
@@ -489,7 +506,7 @@ export default function QuestionnaireStep1() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label htmlFor="smsConsent" className="text-sm font-medium text-[#09090b] leading-5 cursor-pointer">
-                    I&rsquo;d like to receive recurring promotional texts from Preventive.
+                    I&rsquo;d like to receive recurring promotional texts from PreventiveMD.
                   </label>
                   <p className="text-sm text-[#71717a] leading-5">
                     Msg &amp; data rates may apply. Message frequency varies. Reply STOP to opt out and HELP for help. Consent is not a condition of purchase.

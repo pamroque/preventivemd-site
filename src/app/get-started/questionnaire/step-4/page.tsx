@@ -169,7 +169,7 @@ export default function QuestionnaireStep4() {
     router.push(NEXT_STEP)
   }
 
-  const showExpanded = selection === 'yes'
+  const showExpanded = done && selection === 'yes'
 
   return (
     <>

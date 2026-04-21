@@ -245,41 +245,45 @@ export default function QuestionnaireStep2() {
                   Height <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
-                  <div className={`flex-1 ${inputWrapperCls} ${errors.heightFeet ? inputErrorCls : ''}`}>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min={3}
-                      max={8}
-                      placeholder=""
-                      {...register('heightFeet')}
-                      className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
-                      aria-label="Height in feet"
-                      aria-invalid={!!errors.heightFeet}
-                    />
-                    <span className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
-                      feet
-                    </span>
+                  <div className="flex-1 flex flex-col gap-1">
+                    <div className={`${inputWrapperCls} ${errors.heightFeet ? inputErrorCls : ''}`}>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={3}
+                        max={8}
+                        placeholder=""
+                        {...register('heightFeet')}
+                        className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
+                        aria-label="Height in feet"
+                        aria-invalid={!!errors.heightFeet}
+                      />
+                      <span className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
+                        feet
+                      </span>
+                    </div>
+                    <FieldError message={errors.heightFeet?.message} />
                   </div>
-                  <div className={`flex-1 ${inputWrapperCls} ${errors.heightInches ? inputErrorCls : ''}`}>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={11}
-                      placeholder=""
-                      {...register('heightInches')}
-                      className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
-                      aria-label="Height in inches"
-                      aria-invalid={!!errors.heightInches}
-                    />
-                    <span className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
-                      inches
-                    </span>
+                  <div className="flex-1 flex flex-col gap-1">
+                    <div className={`${inputWrapperCls} ${errors.heightInches ? inputErrorCls : ''}`}>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={11}
+                        placeholder=""
+                        {...register('heightInches')}
+                        className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
+                        aria-label="Height in inches"
+                        aria-invalid={!!errors.heightInches}
+                      />
+                      <span className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
+                        inches
+                      </span>
+                    </div>
+                    <FieldError message={errors.heightInches?.message} />
                   </div>
                 </div>
-                <FieldError message={errors.heightFeet?.message} />
-                <FieldError message={errors.heightInches?.message} />
               </div>
 
               <div className="flex flex-col gap-1.5">
