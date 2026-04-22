@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import IntakeHeader from '@/components/ui/IntakeHeader'
 import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
+import { getStep4BackHref } from '@/lib/goal-routing'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -106,6 +107,7 @@ export default function QuestionnaireStep4() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
+  const [backHref] = useState(() => getStep4BackHref())
 
   useEffect(() => {
     const prior = getPriorSteps(3)
@@ -173,7 +175,7 @@ export default function QuestionnaireStep4() {
 
   return (
     <>
-      <IntakeHeader backHref="/get-started/questionnaire/step-3" progress={PROGRESS} />
+      <IntakeHeader backHref={backHref} progress={PROGRESS} />
 
       <main
         className="overflow-y-auto bg-white"

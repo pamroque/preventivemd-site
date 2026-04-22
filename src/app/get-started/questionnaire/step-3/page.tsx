@@ -9,6 +9,7 @@ import IntakeHeader from '@/components/ui/IntakeHeader'
 import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { computeBmi } from '@/lib/bmi'
+import { clearGoalQuestionData, getFirstGoalQuestionRoute } from '@/lib/goal-routing'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -271,20 +272,13 @@ export default function QuestionnaireStep3() {
       data.goals.includes('other') && data.otherText?.trim()
         ? [...labels.filter((l) => l !== 'Others'), `Other: ${data.otherText.trim()}`]
         : labels
+    clearGoalQuestionData()
     saveStep(
       2,
       { question: QUESTION_TEXT, bubbles },
       { goals: data.goals.join(','), otherText: data.otherText ?? '' },
     )
-    // When "Lose weight" goal is selected, goal-weight / prior-weight-management /
-    // GLP-1 screens will be inserted here before reaching Recent weight change.
-    const hasWeightLossGoal = data.goals.includes('weight')
-    if (hasWeightLossGoal) {
-      // TODO: route to goal-weight step once built
-      router.push('/get-started/questionnaire/step-4')
-    } else {
-      router.push('/get-started/questionnaire/step-4')
-    }
+    router.push(getFirstGoalQuestionRoute(data.goals))
   }
 
   return (

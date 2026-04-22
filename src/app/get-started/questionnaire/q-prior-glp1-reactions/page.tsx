@@ -1,0 +1,252 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import IntakeHeader from '@/components/ui/IntakeHeader'
+import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
+import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
+import { useEveTyping } from '@/lib/useEveTyping'
+import { getSelectedGoals, getNextGoalRoute } from '@/lib/goal-routing'
+import { getSelectedApproaches, getNextApproachRoute, getPrevApproachRoute } from '@/lib/approach-routing'
+
+// ─── Assets ──────────────────────────────────────────────────────────────────
+
+const AVATAR_URL = '/assets/avatar-eve.png'
+
+// ─── Icons ───────────────────────────────────────────────────────────────────
+
+function ChevronRightIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+      className="size-5 shrink-0" aria-hidden="true">
+      <path fillRule="evenodd"
+        d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
+        clipRule="evenodd" />
+    </svg>
+  )
+}
+
+// ─── Copy / config ────────────────────────────────────────────────────────────
+
+const THIS_ROUTE = '/get-started/questionnaire/q-prior-glp1-reactions'
+const QUESTION_TEXT = 'Did you experience a severe allergic reaction or side effect from the GLP-1 medication? *'
+const SESSION_INDEX = 53
+const PROGRESS = 20
+
+// ─── Page ────────────────────────────────────────────────────────────────────
+
+export default function QPriorGlp1ReactionsPage() {
+  const router = useRouter()
+  const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
+  const [isNavigating, setIsNavigating] = useState(false)
+  const [selection, setSelection] = useState<'yes' | 'no' | null>(null)
+  const [details, setDetails] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  const [backHref, setBackHref] = useState('/get-started/questionnaire/q-prior-glp1-history')
+  const [nextRoute, setNextRoute] = useState('/get-started/questionnaire/step-4')
+
+  useEffect(() => {
+    const approaches = getSelectedApproaches()
+    const goals = getSelectedGoals()
+    const goalFallback = getNextGoalRoute('/get-started/questionnaire/q-prior-weight-management', goals)
+    setBackHref(getPrevApproachRoute(THIS_ROUTE, approaches))
+    setNextRoute(getNextApproachRoute(THIS_ROUTE, approaches, goalFallback))
+  }, [])
+
+  // Restore saved state on back navigation
+  useEffect(() => {
+    const saved = getStepValues(SESSION_INDEX)
+    if (saved.hadReaction === 'yes') {
+      setSelection('yes')
+      if (typeof saved.details === 'string') setDetails(saved.details)
+    } else if (saved.hadReaction === 'no') {
+      setSelection('no')
+    }
+  }, [])
+
+  useEffect(() => {
+    const prior = getPriorSteps(SESSION_INDEX)
+    const last = prior[prior.length - 1]
+    if (last) setCurrentStep({ ...last, editHref: '/get-started/questionnaire/q-prior-glp1-history' })
+  }, [])
+
+  const priorBubbleCount = currentStep?.bubbles.length ?? 0
+  const { animateBubbles, visibleWords, typingStarted, done, words } =
+    useEveTyping(QUESTION_TEXT, priorBubbleCount)
+
+  function handleNo() {
+    if (isNavigating) return
+    setIsNavigating(true)
+    setSelection('no')
+    saveStep(
+      SESSION_INDEX,
+      { question: QUESTION_TEXT.replace(' *', ''), bubbles: ['No'] },
+      { hadReaction: 'no' }
+    )
+    router.push(nextRoute)
+  }
+
+  function handleContinue() {
+    if (isNavigating) return
+    if (!details.trim()) {
+      setError('Please describe the reaction or side effect')
+      return
+    }
+    setIsNavigating(true)
+    saveStep(
+      SESSION_INDEX,
+      { question: QUESTION_TEXT.replace(' *', ''), bubbles: ['Yes', details.trim()] },
+      { hadReaction: 'yes', details: details.trim() }
+    )
+    router.push(nextRoute)
+  }
+
+  const showExpanded = done && selection === 'yes'
+
+  return (
+    <>
+      <IntakeHeader backHref={backHref} progress={PROGRESS} />
+
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
+        style={{
+          height: 'calc(100dvh - 52px)',
+          marginTop: '52px',
+          paddingBottom: showExpanded ? '6rem' : '2rem',
+        }}
+      >
+        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+
+          <ChatHistory
+            historicSteps={[]}
+            currentStep={currentStep}
+            animateCurrentStep={animateBubbles}
+          />
+
+          {/* ── Eve's question ── */}
+          <div className="flex items-start gap-3 w-full">
+            <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
+                aria-live="polite"
+                aria-label={QUESTION_TEXT.replace(' *', '')}
+              >
+                {typingStarted && (
+                  <>
+                    {words.slice(0, visibleWords).map((word, i) => (
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
+                        {word}{i < visibleWords - 1 ? ' ' : ''}
+                      </span>
+                    ))}
+                    {visibleWords < words.length && (
+                      <span
+                        className="inline-block w-[2px] h-[1em] bg-current align-middle ml-[1px] animate-pulse"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* ── Yes / No buttons ── */}
+          {done && (
+            <div className="flex gap-3 animate-[fadeIn_0.4s_ease_forwards]">
+              {(['yes', 'no'] as const).map(opt => (
+                <div
+                  key={opt}
+                  className="flex-1"
+                  style={selection === opt ? {
+                    padding: '2px',
+                    background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+                    borderRadius: 8,
+                  } : undefined}
+                >
+                  <button
+                    type="button"
+                    onClick={opt === 'yes' ? () => setSelection('yes') : handleNo}
+                    disabled={isNavigating}
+                    className={`
+                      w-full h-[42px] flex items-center justify-center px-4 text-base font-medium
+                      transition-colors shadow-sm disabled:opacity-60
+                      ${selection === opt
+                        ? 'rounded-[6px] text-[#0778ba] bg-white'
+                        : 'rounded-lg border border-[#e4e4e7] text-[#09090b] bg-white hover:border-[#0778ba]/40'}
+                    `}
+                  >
+                    {opt === 'yes' ? 'Yes' : 'No'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Expanded textarea — only when "Yes" selected ── */}
+          {showExpanded && (
+            <div className="flex flex-col gap-2 animate-[fadeIn_0.4s_ease_forwards]">
+              <label htmlFor="reaction-details" className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+                Please specify <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="reaction-details"
+                value={details}
+                onChange={e => { setDetails(e.target.value); setError(null) }}
+                placeholder=""
+                rows={4}
+                className={`
+                  w-full rounded-lg border bg-white px-3 py-2.5
+                  text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
+                  resize-y shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0778ba]
+                  ${error ? 'border-red-400' : 'border-[rgba(0,0,0,0.12)]'}
+                `}
+                aria-invalid={!!error}
+                aria-describedby={error ? 'reaction-error' : undefined}
+              />
+              {error && (
+                <p id="reaction-error" className="text-sm text-red-500" role="alert">{error}</p>
+              )}
+            </div>
+          )}
+
+        </div>
+      </main>
+
+      {/* ── Sticky CTA — only for the "Yes" path ── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-8 pt-4"
+        style={{
+          background: 'linear-gradient(to top, white 70%, rgba(255,255,255,0))',
+          opacity: showExpanded ? 1 : 0,
+          pointerEvents: showExpanded ? 'auto' : 'none',
+          transition: 'opacity 0.5s',
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleContinue}
+          disabled={isNavigating}
+          className="
+            relative w-full md:w-[480px] h-[42px] flex items-center justify-center gap-3 px-4
+            overflow-hidden rounded-tl-[36px] rounded-br-[36px]
+            text-white text-base font-medium leading-6 whitespace-nowrap
+            transition-opacity hover:opacity-90 disabled:opacity-60
+            shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+          "
+          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+        >
+          Save and continue
+          <ChevronRightIcon />
+        </button>
+      </div>
+    </>
+  )
+}

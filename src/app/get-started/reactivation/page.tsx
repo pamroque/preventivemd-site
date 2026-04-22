@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getStepValues, clearSession } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
+import { getSelectedGoals, getGoalQuestionSequence, AFTER_GOAL_QUESTIONS, GOAL_QUESTION_INDEX_MIN, GOAL_QUESTION_INDEX_MAX } from '@/lib/goal-routing'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -61,7 +62,16 @@ function getResumeHref(): string {
   if (hasData(5))  return '/get-started/questionnaire/step-7'
   if (hasData(4))  return '/get-started/questionnaire/step-6'
   if (hasData(3))  return '/get-started/questionnaire/step-5'
-  if (hasData(2))  return '/get-started/questionnaire/step-4'
+
+  // Check goal-question range (indices 50–89) then step-3
+  if (hasData(2)) {
+    for (let i = GOAL_QUESTION_INDEX_MIN; i <= GOAL_QUESTION_INDEX_MAX; i++) {
+      if (hasData(i)) return AFTER_GOAL_QUESTIONS
+    }
+    const seq = getGoalQuestionSequence(getSelectedGoals())
+    return seq.length > 0 ? seq[0].route : AFTER_GOAL_QUESTIONS
+  }
+
   if (hasData(1))  return '/get-started/questionnaire/step-3'
 
   return '/get-started/questionnaire/step-2'
