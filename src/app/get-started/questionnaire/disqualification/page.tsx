@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import IntakeHeader from '@/components/ui/IntakeHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
@@ -29,12 +28,6 @@ function ChevronRightIcon() {
 const QUESTION_TEXT =
   'Unfortunately, based on the information you shared, we\u2019re unable to continue with your case at this time.'
 
-// ─── Progress ────────────────────────────────────────────────────────────────
-// Keeps the same progress value as the last step the user was on (step-5),
-// since the flow terminates here without advancing.
-
-const PROGRESS = 25
-
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function DisqualificationPage() {
@@ -56,84 +49,75 @@ export default function DisqualificationPage() {
     useEveTyping(QUESTION_TEXT, priorBubbleCount)
 
   return (
-    <>
-      <IntakeHeader backHref="/get-started/questionnaire/step-5" progress={PROGRESS} />
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen bg-white pt-12 md:pt-14 pb-24 focus:outline-none"
+    >
+      <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
 
-      <main
-        id="main-content"
-        tabIndex={-1}
-        className="overflow-y-auto bg-white focus:outline-none"
-        style={{
-          height: 'calc(100dvh - 52px)',
-          marginTop: '52px',
-          paddingBottom: '2rem',
-        }}
-      >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+        <ChatHistory
+          historicSteps={[]}
+          currentStep={currentStep}
+          animateCurrentStep={animateBubbles}
+        />
 
-          <ChatHistory
-            historicSteps={[]}
-            currentStep={currentStep}
-            animateCurrentStep={animateBubbles}
-          />
-
-          {/* ── Eve's message ── */}
-          <div className="flex items-start gap-3 w-full">
-            <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={AVATAR_URL}
-                alt="Eve"
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
-            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-              <p
-                className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
-                aria-live="polite"
-                aria-label={QUESTION_TEXT}
-              >
-                {typingStarted && (
-                  <>
-                    {words.slice(0, visibleWords).map((word, i) => (
-                      <span key={i}>
-                        {word}
-                        {i < visibleWords - 1 ? ' ' : ''}
-                      </span>
-                    ))}
-                    {visibleWords < words.length && (
-                      <span
-                        className="inline-block w-[2px] h-[1em] bg-current align-middle ml-[1px] animate-pulse"
-                        aria-hidden="true"
-                      />
-                    )}
-                  </>
-                )}
-              </p>
-            </div>
+        {/* ── Eve's message ── */}
+        <div className="flex items-start gap-3 w-full">
+          <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={AVATAR_URL}
+              alt="Eve"
+              className="w-full h-full object-cover object-top"
+            />
           </div>
-
-          {/* ── About our treatments CTA ── */}
-          <Link
-            href="/treatments"
-            className="
-              relative flex items-center justify-center gap-3
-              w-full h-[42px] px-4 overflow-hidden
-              rounded-[21px]
-              text-white text-base font-medium leading-6 whitespace-nowrap
-              transition-opacity hover:opacity-90
-              shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
-              animate-[fadeIn_0.4s_ease_forwards]
-            "
-            style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
-          >
-            About our treatments
-            <ChevronRightIcon />
-          </Link>
-
+          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+            <p
+              className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
+              aria-live="polite"
+              aria-label={QUESTION_TEXT}
+            >
+              {typingStarted && (
+                <>
+                  {words.slice(0, visibleWords).map((word, i) => (
+                    <span key={i}>
+                      {word}
+                      {i < visibleWords - 1 ? ' ' : ''}
+                    </span>
+                  ))}
+                  {visibleWords < words.length && (
+                    <span
+                      className="inline-block w-[2px] h-[1em] bg-current align-middle ml-[1px] animate-pulse"
+                      aria-hidden="true"
+                    />
+                  )}
+                </>
+              )}
+            </p>
+          </div>
         </div>
-      </main>
-    </>
+
+        {/* ── About our treatments CTA ── */}
+        <Link
+          href="/treatments"
+          className="
+            relative flex items-center justify-center gap-3
+            w-full h-[42px] px-4 overflow-hidden
+            rounded-tl-[36px] rounded-br-[36px]
+            text-white text-base font-medium leading-6 whitespace-nowrap
+            transition-opacity hover:opacity-90
+            shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            animate-[fadeIn_0.4s_ease_forwards]
+          "
+          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+        >
+          About our treatments
+          <ChevronRightIcon />
+        </Link>
+
+      </div>
+    </main>
   )
 }

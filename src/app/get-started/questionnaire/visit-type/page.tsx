@@ -6,6 +6,7 @@ import IntakeHeader from '@/components/ui/IntakeHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
+import { US_STATES } from '@/lib/us-states'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,10 @@ function ChevronRightIcon() {
     </svg>
   )
 }
+
+// ─── Restricted states (require video consultation first) ─────────────────────
+
+const SYNC_REQUIRED_STATES = new Set(['KY', 'LA', 'MS', 'NM', 'RI', 'WV'])
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
@@ -44,6 +49,7 @@ interface VisitTypeCardProps {
   cardGradient: string
   onClick: () => void
   disabled: boolean
+  unavailable?: boolean
 }
 
 function VisitTypeCard({
@@ -55,6 +61,7 @@ function VisitTypeCard({
   cardGradient,
   onClick,
   disabled,
+  unavailable = false,
 }: VisitTypeCardProps) {
   return (
     <div className="flex flex-col w-full">
@@ -96,23 +103,38 @@ function VisitTypeCard({
       </div>
 
       {/* Button — full-width, only bottom-right corner rounded */}
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        className="
-          relative w-full h-[42px] flex items-center justify-center gap-3 px-4
-          rounded-br-[36px] overflow-hidden
-          text-white text-base font-medium leading-6 whitespace-nowrap
-          transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
-          shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
-        "
-        style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
-      >
-        {cta}
-        <ChevronRightIcon />
-      </button>
+      {unavailable ? (
+        <div
+          aria-disabled="true"
+          className="
+            w-full h-[42px] flex items-center justify-center px-4
+            rounded-br-[36px] overflow-hidden cursor-not-allowed
+            text-white text-xs font-medium leading-4 tracking-[1.5px] uppercase whitespace-nowrap
+            shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
+          "
+          style={{ background: '#737373' }}
+        >
+          {cta}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className="
+            relative w-full h-[42px] flex items-center justify-center gap-3 px-4
+            rounded-br-[36px] overflow-hidden
+            text-white text-base font-medium leading-6 whitespace-nowrap
+            transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
+            shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+          "
+          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+        >
+          {cta}
+          <ChevronRightIcon />
+        </button>
+      )}
     </div>
   )
 }
@@ -124,6 +146,17 @@ export default function VisitTypePage() {
   const [firstName, setFirstName] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
+
+  const [requiresSync] = useState(() => {
+    const s0 = getStepValues(0)
+    return typeof s0.state === 'string' && SYNC_REQUIRED_STATES.has(s0.state)
+  })
+
+  const [userStateName] = useState(() => {
+    const s0 = getStepValues(0)
+    if (typeof s0.state !== 'string') return ''
+    return US_STATES.find(s => s.value === s0.state)?.label ?? ''
+  })
 
   useEffect(() => {
     const saved = getStepValues(0)
@@ -244,34 +277,79 @@ export default function VisitTypePage() {
           {done && (
           <div className="flex flex-col gap-6 items-center animate-[fadeIn_0.4s_ease_forwards]">
 
-            <VisitTypeCard
-              label="Know what you want?"
-              title="Request your treatment"
-              price="0"
-              badges={['Decisions in 12 hours', 'No scheduling']}
-              cta="Choose medications"
-              cardGradient="linear-gradient(129.44deg, #1d2d44 0%, #233d5a 100%)"
-              onClick={handleAsync}
-              disabled={isNavigating}
-            />
+            {requiresSync ? (
+              /* Restricted-state layout: consult first, async disabled second */
+              <>
+                <VisitTypeCard
+                  label="Need guidance?"
+                  title="Consult a provider"
+                  price="35"
+                  badges={['20 minutes (video/phone)', 'Personalized plan']}
+                  cta="Book a live consultation"
+                  cardGradient="linear-gradient(268.18deg, #1d2d44 0%, #233d5a 100%)"
+                  onClick={handleConsult}
+                  disabled={isNavigating}
+                />
 
-            {/* OR divider — inline lines with centered text */}
-            <div className="flex items-center gap-3 w-[180px]">
-              <div className="flex-1 h-px bg-[#d4d4d8]" />
-              <span className="text-sm font-medium leading-5 text-[#71717a]">OR</span>
-              <div className="flex-1 h-px bg-[#d4d4d8]" />
-            </div>
+                <div className="flex items-center gap-3 w-[180px]">
+                  <div className="flex-1 h-px bg-[#d4d4d8]" />
+                  <span className="text-sm font-medium leading-5 text-[#71717a]">OR</span>
+                  <div className="flex-1 h-px bg-[#d4d4d8]" />
+                </div>
 
-            <VisitTypeCard
-              label="Need guidance?"
-              title="Consult a provider"
-              price="35"
-              badges={['20 minutes (video/phone)', 'Personalized plan']}
-              cta="Book a live consultation"
-              cardGradient="linear-gradient(268.18deg, #1d2d44 0%, #233d5a 100%)"
-              onClick={handleConsult}
-              disabled={isNavigating}
-            />
+                <div className="flex flex-col gap-3 w-full">
+                  <VisitTypeCard
+                    label="Know what you want?"
+                    title="Request your treatment"
+                    price="0"
+                    badges={['Decisions in 12 hours', 'No scheduling']}
+                    cta="Unavailable*"
+                    cardGradient="linear-gradient(129.44deg, #1d2d44 0%, #233d5a 100%)"
+                    onClick={() => {}}
+                    disabled
+                    unavailable
+                  />
+                  <p className="text-[12px] leading-[1.66] tracking-[0.4px] text-[rgba(0,0,0,0.6)]">
+                    *Since you live in {userStateName}, you are required to complete a video
+                    consultation with a provider initially.{' '}
+                    <strong className="font-bold">
+                      For future requests or refills, it will no longer be required.
+                    </strong>
+                  </p>
+                </div>
+              </>
+            ) : (
+              /* Standard layout: async first, consult second */
+              <>
+                <VisitTypeCard
+                  label="Know what you want?"
+                  title="Request your treatment"
+                  price="0"
+                  badges={['Decisions in 12 hours', 'No scheduling']}
+                  cta="Choose medications"
+                  cardGradient="linear-gradient(129.44deg, #1d2d44 0%, #233d5a 100%)"
+                  onClick={handleAsync}
+                  disabled={isNavigating}
+                />
+
+                <div className="flex items-center gap-3 w-[180px]">
+                  <div className="flex-1 h-px bg-[#d4d4d8]" />
+                  <span className="text-sm font-medium leading-5 text-[#71717a]">OR</span>
+                  <div className="flex-1 h-px bg-[#d4d4d8]" />
+                </div>
+
+                <VisitTypeCard
+                  label="Need guidance?"
+                  title="Consult a provider"
+                  price="35"
+                  badges={['20 minutes (video/phone)', 'Personalized plan']}
+                  cta="Book a live consultation"
+                  cardGradient="linear-gradient(268.18deg, #1d2d44 0%, #233d5a 100%)"
+                  onClick={handleConsult}
+                  disabled={isNavigating}
+                />
+              </>
+            )}
 
           </div>
           )}

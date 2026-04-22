@@ -26,13 +26,15 @@ function StepBlock({
         {step.bubbles.map((bubble, bi) => (
           <div
             key={bi}
-            className="px-4 py-2 rounded-full bg-[rgba(0,0,0,0.06)] text-sm text-[rgba(0,0,0,0.87)]"
+            className="px-4 py-2 rounded-full bg-[rgba(0,0,0,0.06)] text-sm text-[rgba(0,0,0,0.87)] transition-all duration-500"
             style={animateBubbles ? {
-              animationName: 'fadeIn',
-              animationDuration: '0.3s',
-              animationDelay: `${(bubbleIndexOffset + bi) * 120}ms`,
-              animationFillMode: 'both',
-            } : undefined}
+              opacity: 1,
+              transform: 'translateY(0)',
+              transitionDelay: `${(bubbleIndexOffset + bi) * 120}ms`,
+            } : {
+              opacity: 0,
+              transform: 'translateY(6px)',
+            }}
           >
             {bubble}
           </div>

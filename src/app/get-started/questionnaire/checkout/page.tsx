@@ -105,12 +105,39 @@ function FieldError({ message }: { message?: string }) {
 
 function SectionHeader({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-[12px] font-medium tracking-[1.5px] uppercase text-[rgba(0,0,0,0.45)] shrink-0">
-        {label}
-      </span>
-      <div className="flex-1 h-px bg-[#e4e4e7]" />
-    </div>
+    <span className="text-[12px] font-medium tracking-[1.5px] uppercase text-[rgba(0,0,0,0.45)]">
+      {label}
+    </span>
+  )
+}
+
+// ─── Consultation helpers ─────────────────────────────────────────────────────
+
+const MONTH_ABBRS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+function formatConsultDate(iso: string): string {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return `${MONTH_ABBRS_SHORT[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+}
+
+function VideoCallIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
+      stroke="currentColor" className="size-5 text-white shrink-0" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9A2.25 2.25 0 0 0 13.5 5.25h-9A2.25 2.25 0 0 0 2.25 7.5v9A2.25 2.25 0 0 0 4.5 18.75Z" />
+    </svg>
+  )
+}
+
+function PhoneCallIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
+      stroke="currentColor" className="size-5 text-white shrink-0" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 6.75Z" />
+    </svg>
   )
 }
 
@@ -131,6 +158,17 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
   const [isAndroid, setIsAndroid] = useState(false)
 
+  // Detect consultation flow synchronously so backHref and CTA are correct immediately
+  const [isConsultation] = useState(() => {
+    const s12 = getStepValues(12)
+    return typeof s12.format === 'string' && !!s12.format
+  })
+  const [consultationDetails, setConsultationDetails] = useState<{
+    format: 'Video' | 'Phone'
+    dateLabel: string
+    time: string
+  } | null>(null)
+
   // Read step 0 synchronously so values are available for useForm defaultValues
   const step0Snapshot = getStepValues(0)
   const stateFromStep0 = typeof step0Snapshot.state === 'string' ? step0Snapshot.state : ''
@@ -146,41 +184,52 @@ export default function CheckoutPage() {
     if (last && Array.isArray(last.bubbles)) {
       setCurrentStep({
         ...last,
-        editHref: '/get-started/questionnaire/choose-medications',
+        editHref: isConsultation
+          ? '/get-started/questionnaire/desired-treatments'
+          : '/get-started/questionnaire/choose-medications',
       })
     }
 
     const step12 = getStepValues(12)
-    const step13 = getStepValues(13)
-    let treatments: string[] = []
-    if (typeof step12.treatments === 'string') {
-      try { treatments = JSON.parse(step12.treatments) } catch { /* ignore */ }
-    }
-    let choices: Record<string, { type?: string; form?: string; plan?: string }> = {}
-    if (typeof step13.choices === 'string') {
-      try { choices = JSON.parse(step13.choices) } catch { /* ignore */ }
-    }
 
-    const TREATMENT_NAMES: Record<string, string> = {
-      'ghk-cu': 'GHK-Copper', 'glp-1': 'GLP-1', 'glutathione': 'Glutathione',
-      'nad-plus': 'NAD+', 'sermorelin': 'Sermorelin',
-    }
+    if (isConsultation) {
+      setDueToday(35)
+      const fmt = (typeof step12.format === 'string' ? step12.format : 'Video') as 'Video' | 'Phone'
+      const dateLabel = typeof step12.date === 'string' ? formatConsultDate(step12.date) : ''
+      const time = typeof step12.time === 'string' ? step12.time : ''
+      setConsultationDetails({ format: fmt, dateLabel, time })
+    } else {
+      const step13 = getStepValues(13)
+      let treatments: string[] = []
+      if (typeof step12.treatments === 'string') {
+        try { treatments = JSON.parse(step12.treatments) } catch { /* ignore */ }
+      }
+      let choices: Record<string, { type?: string; form?: string; plan?: string }> = {}
+      if (typeof step13.choices === 'string') {
+        try { choices = JSON.parse(step13.choices) } catch { /* ignore */ }
+      }
 
-    let total = 0
-    const items: string[] = []
-    treatments.forEach(id => {
-      const c = choices[id]
-      const plan = c?.plan
-      if (plan) total += PLAN_PRICES[plan] ?? 0
-      const name = id === 'glp-1' && c?.type
-        ? (c.type === 'semaglutide' ? 'Semaglutide' : 'Tirzepatide')
-        : (TREATMENT_NAMES[id] ?? id)
-      const form = c?.form === 'injection' ? 'Injections' : c?.form === 'oral' ? 'Oral Tablets' : null
-      const planLabel = plan ? plan.replace('mo', ' mo') : null
-      if (form && planLabel) items.push(`${name} ${form} (${planLabel})`)
-    })
-    setDueToday(total)
-    setCartItems(items)
+      const TREATMENT_NAMES: Record<string, string> = {
+        'ghk-cu': 'GHK-Copper', 'glp-1': 'GLP-1', 'glutathione': 'Glutathione',
+        'nad-plus': 'NAD+', 'sermorelin': 'Sermorelin',
+      }
+
+      let total = 0
+      const items: string[] = []
+      treatments.forEach(id => {
+        const c = choices[id]
+        const plan = c?.plan
+        if (plan) total += PLAN_PRICES[plan] ?? 0
+        const name = id === 'glp-1' && c?.type
+          ? (c.type === 'semaglutide' ? 'Semaglutide' : 'Tirzepatide')
+          : (TREATMENT_NAMES[id] ?? id)
+        const form = c?.form === 'injection' ? 'Injections' : c?.form === 'oral' ? 'Oral Tablets' : null
+        const planLabel = plan ? plan.replace('mo', ' mo') : null
+        if (form && planLabel) items.push(`${name} ${form} (${planLabel})`)
+      })
+      setDueToday(total)
+      setCartItems(items)
+    }
   }, [])
 
   const {
@@ -243,12 +292,17 @@ export default function CheckoutPage() {
         ...(data.billingStreet ? { billingStreet: data.billingStreet } : {}),
       }
     )
-    router.push('/get-started/request-submitted')
+    router.push('/get-started/confirmation')
   }
 
   return (
     <>
-      <IntakeHeader backHref="/get-started/questionnaire/choose-medications" progress={PROGRESS} />
+      <IntakeHeader
+        backHref={isConsultation
+          ? '/get-started/questionnaire/desired-treatments'
+          : '/get-started/questionnaire/choose-medications'}
+        progress={PROGRESS}
+      />
 
       <main
         className="overflow-y-auto bg-white"
@@ -332,9 +386,6 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <FieldError message={errors.phone?.message} />
-                  <p className="text-xs font-bold text-[#0778ba] leading-4">
-                    Will be used to sign in to your Care Portal
-                  </p>
                 </div>
 
                 {/* Email */}
@@ -669,12 +720,25 @@ export default function CheckoutPage() {
 
               {/* Authorization text */}
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
-                  By submitting, you authorize ${dueToday.toLocaleString()} today and, if your prescription is approved, recurring charges of ${dueToday.toLocaleString()} per your selected billing cycle until you cancel.
-                </p>
-                <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
-                  Payment does not guarantee a prescription. If treatment is not approved, you will receive a refund.
-                </p>
+                {isConsultation ? (
+                  <>
+                    <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
+                      By submitting, you authorize $35 today to secure your live consultation appointment.
+                    </p>
+                    <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
+                      This fee is non-refundable if you cancel within 24 hours of your scheduled appointment.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
+                      By submitting, you authorize ${dueToday.toLocaleString()} today and, if your prescription is approved, recurring charges of ${dueToday.toLocaleString()} per your selected billing cycle until you cancel.
+                    </p>
+                    <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
+                      Payment does not guarantee a prescription. If treatment is not approved, you will receive a refund.
+                    </p>
+                  </>
+                )}
               </div>
 
               {/* Trust badges — same 1x display dimensions as /get-started */}
@@ -721,7 +785,7 @@ export default function CheckoutPage() {
               background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)',
             }}
           >
-            {isSubmitting ? 'Submitting…' : 'Submit request'}
+            {isSubmitting ? 'Submitting…' : isConsultation ? 'Secure appointment' : 'Submit request'}
           </button>
 
           {/* Cart bar */}
@@ -729,27 +793,48 @@ export default function CheckoutPage() {
             className="flex items-center justify-center gap-4 px-4 py-3 rounded-br-[36px] overflow-x-auto"
             style={{ background: 'rgba(29,45,68,0.95)', backdropFilter: 'blur(2px)' }}
           >
-            {/* Medication badges — stacked vertically */}
-            <div className="flex flex-col gap-1 items-start justify-center shrink-0">
-              {cartItems.length > 0
-                ? cartItems.map((item, i) => (
-                    <span
-                      key={i}
-                      className="text-[12px] font-normal leading-4 text-[rgba(255,255,255,0.7)] border rounded-xl whitespace-nowrap"
-                      style={{
-                        background: 'rgba(244,244,245,0.08)',
-                        borderColor: 'rgba(244,244,245,0.12)',
-                        padding: '4px 6px',
-                      }}
-                    >
-                      {item}
-                    </span>
-                  ))
-                : (
-                  <span className="text-[12px] text-white/40">No items selected</span>
-                )
-              }
-            </div>
+            {/* Left: consultation schedule OR medication badges */}
+            {isConsultation && consultationDetails ? (
+              <div className="flex flex-col gap-1.5 items-center justify-center shrink-0">
+                <div className="flex items-center gap-2">
+                  {consultationDetails.format === 'Video' ? <VideoCallIcon /> : <PhoneCallIcon />}
+                  <span className="text-sm font-medium text-white">
+                    {consultationDetails.format === 'Video' ? 'Video Call' : 'Phone Call'}
+                  </span>
+                </div>
+                <span
+                  className="text-[12px] font-normal leading-4 text-[rgba(255,255,255,0.7)] border rounded-xl whitespace-nowrap"
+                  style={{
+                    background: 'rgba(244,244,245,0.08)',
+                    borderColor: 'rgba(244,244,245,0.12)',
+                    padding: '4px 6px',
+                  }}
+                >
+                  {consultationDetails.dateLabel} @ {consultationDetails.time}
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1 items-start justify-center shrink-0">
+                {cartItems.length > 0
+                  ? cartItems.map((item, i) => (
+                      <span
+                        key={i}
+                        className="text-[12px] font-normal leading-4 text-[rgba(255,255,255,0.7)] border rounded-xl whitespace-nowrap"
+                        style={{
+                          background: 'rgba(244,244,245,0.08)',
+                          borderColor: 'rgba(244,244,245,0.12)',
+                          padding: '4px 6px',
+                        }}
+                      >
+                        {item}
+                      </span>
+                    ))
+                  : (
+                    <span className="text-[12px] text-white/40">No items selected</span>
+                  )
+                }
+              </div>
+            )}
 
             {/* Vertical divider */}
             <div className="w-px self-stretch bg-[rgba(255,255,255,0.1)] shrink-0" />
