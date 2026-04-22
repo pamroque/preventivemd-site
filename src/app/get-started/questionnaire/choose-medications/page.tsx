@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import IntakeHeader from '@/components/ui/IntakeHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
@@ -209,6 +209,7 @@ export default function ChooseMedicationsPage() {
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, { type?: boolean; form?: boolean; plan?: boolean }>>({})
+  const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
 
   useEffect(() => {
@@ -300,6 +301,18 @@ export default function ChooseMedicationsPage() {
     })
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
+      // Scroll to the first unfilled required field
+      for (const id of treatments) {
+        if (!errors[id]) continue
+        const fields = (id === 'glp-1' ? ['type', 'form', 'plan'] : ['form', 'plan']) as ('type' | 'form' | 'plan')[]
+        for (const field of fields) {
+          if (errors[id]?.[field]) {
+            sectionRefs.current.get(`${id}-${field}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            break
+          }
+        }
+        break
+      }
       return
     }
     setFieldErrors({})
@@ -417,7 +430,10 @@ export default function ChooseMedicationsPage() {
 
                       {/* ── Which type? (GLP-1 only) ── */}
                       {tid === 'glp-1' && (
-                        <div className="flex flex-col gap-2">
+                        <div
+                          ref={el => { if (el) sectionRefs.current.set(`${tid}-type`, el); else sectionRefs.current.delete(`${tid}-type`) }}
+                          className="flex flex-col gap-2"
+                        >
                           <SectionLabel>Which type?</SectionLabel>
                           <div className="flex gap-2">
                             {GLP1_TYPES.map(opt => (
@@ -437,7 +453,10 @@ export default function ChooseMedicationsPage() {
                       )}
 
                       {/* ── How would you like to take it? ── */}
-                      <div className="flex flex-col gap-2">
+                      <div
+                        ref={el => { if (el) sectionRefs.current.set(`${tid}-form`, el); else sectionRefs.current.delete(`${tid}-form`) }}
+                        className="flex flex-col gap-2"
+                      >
                         <SectionLabel>How would you like to take it?</SectionLabel>
                         <div className="flex gap-2">
                           {FORM_OPTIONS.map(opt => (
@@ -456,7 +475,10 @@ export default function ChooseMedicationsPage() {
                       </div>
 
                       {/* ── Prescription plan ── */}
-                      <div className="flex flex-col gap-2">
+                      <div
+                        ref={el => { if (el) sectionRefs.current.set(`${tid}-plan`, el); else sectionRefs.current.delete(`${tid}-plan`) }}
+                        className="flex flex-col gap-2"
+                      >
                         <SectionLabel>Prescription plan</SectionLabel>
                         <div className="flex flex-col gap-3">
                           {PLAN_OPTIONS.map(opt => (
