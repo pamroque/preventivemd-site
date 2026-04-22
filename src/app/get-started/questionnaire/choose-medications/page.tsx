@@ -209,8 +209,14 @@ export default function ChooseMedicationsPage() {
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, { type?: boolean; form?: boolean; plan?: boolean }>>({})
+  const [loaded, setLoaded] = useState(false)
   const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
+  useEffect(() => {
+    if (loaded && treatments.length === 0) {
+      router.replace('/get-started/questionnaire/choose-treatments')
+    }
+  }, [loaded, treatments, router])
 
   useEffect(() => {
     const step12 = getStepValues(12)
@@ -242,6 +248,7 @@ export default function ChooseMedicationsPage() {
         editHref: '/get-started/questionnaire/choose-treatments',
       })
     }
+    setLoaded(true)
   }, [])
 
   const priorBubbleCount = currentStep?.bubbles.length ?? 0
@@ -391,20 +398,8 @@ export default function ChooseMedicationsPage() {
 
           {/* ── Medication sections ── */}
           {done && (
-            treatments.length === 0 ? (
-              <p className="text-sm text-[rgba(0,0,0,0.6)]">
-                No treatments selected.{' '}
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  className="text-[#0778ba] underline"
-                >
-                  Go back to add some.
-                </button>
-              </p>
-            ) : (
-              <div className="flex flex-col gap-12 animate-[fadeIn_0.4s_ease_forwards]">
-                {treatments.map((tid) => {
+            <div className="flex flex-col gap-12 animate-[fadeIn_0.4s_ease_forwards]">
+              {treatments.map((tid) => {
                   const choice = choices[tid] ?? { type: null, form: null, plan: null }
                   const name = TREATMENT_NAMES[tid] ?? tid
 
@@ -414,9 +409,11 @@ export default function ChooseMedicationsPage() {
                       {/* ── Treatment heading: name + divider + Remove ── */}
                       <div className="flex items-center gap-4">
                         <div className="flex flex-1 items-center gap-3 min-w-0">
-                          <span className="text-[20px] font-semibold leading-7 tracking-[-0.5px] text-[#09090b] shrink-0">
-                            {name}
-                          </span>
+                          <div className="shrink-0 bg-[#f0f0f0] rounded-[20px] px-3 py-1.5">
+                            <span className="text-[20px] font-semibold leading-7 tracking-[-0.5px] text-[#09090b]">
+                              {name}
+                            </span>
+                          </div>
                           <div className="flex-1 h-px bg-[#e4e4e7]" aria-hidden="true" />
                         </div>
                         <button
@@ -501,8 +498,7 @@ export default function ChooseMedicationsPage() {
                     </div>
                   )
                 })}
-              </div>
-            )
+            </div>
           )}
 
         </div>
