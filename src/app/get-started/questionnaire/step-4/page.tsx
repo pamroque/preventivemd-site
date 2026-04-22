@@ -66,9 +66,9 @@ function useAnimationSequence(currentBubbleCount: number) {
 
 // ─── Field helpers ────────────────────────────────────────────────────────────
 
-function FieldError({ message }: { message?: string }) {
+function FieldError({ id, message }: { id?: string; message?: string }) {
   if (!message) return null
-  return <p className="text-sm text-red-500 mt-1" role="alert">{message}</p>
+  return <p id={id} className="text-sm text-red-600 mt-1" role="alert">{message}</p>
 }
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -89,7 +89,8 @@ type FormValues = z.infer<typeof schema>
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const inputWrapperCls =
-  'flex items-center h-[42px] rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden'
+  'flex items-center h-[42px] rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden ' +
+  'focus-within:border-[#0778ba] transition-colors'
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
@@ -178,7 +179,9 @@ export default function QuestionnaireStep4() {
       <IntakeHeader backHref={backHref} progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -194,7 +197,7 @@ export default function QuestionnaireStep4() {
           />
 
           {/* ── Eve's question ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -212,7 +215,7 @@ export default function QuestionnaireStep4() {
                 {typingStarted && (
                   <>
                     {QUESTION_WORDS.slice(0, visibleWords).map((word, i) => (
-                      <span key={i} className={word === '*' ? 'text-red-500' : undefined}>
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
                         {word}
                         {i < visibleWords - 1 ? ' ' : ''}
                       </span>
@@ -272,9 +275,10 @@ export default function QuestionnaireStep4() {
               {/* Weight lost */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="weightLost" className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-                  Weight lost <span className="text-red-500">*</span>
+                  Weight lost <span className="text-red-600" aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
                 </label>
-                <div className={`${inputWrapperCls} ${errors.weightLost ? 'border-red-400' : ''}`}>
+                <div className={`${inputWrapperCls} ${errors.weightLost ? 'border-red-600 focus-within:border-red-600' : ''}`}>
                   <input
                     id="weightLost"
                     type="number"
@@ -285,48 +289,64 @@ export default function QuestionnaireStep4() {
                     {...register('weightLost')}
                     className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
                     aria-invalid={!!errors.weightLost}
+                    aria-describedby={errors.weightLost ? 'weightLost-error' : undefined}
+                    aria-required="true"
                   />
-                  <span className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
+                  <span aria-hidden="true" className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
                     lbs (pounds)
                   </span>
                 </div>
-                <FieldError message={errors.weightLost?.message} />
+                <FieldError id="weightLost-error" message={errors.weightLost?.message} />
               </div>
 
               {/* Was it intentional? */}
-              <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-                  Was it intentional? <span className="text-red-500">*</span>
-                </p>
-                <div className="flex gap-3">
-                  {(['yes', 'no'] as const).map((opt) => (
-                    <div
-                      key={opt}
-                      className="flex-1"
-                      style={intentionalValue === opt ? {
-                        padding: '2px',
-                        background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
-                        borderRadius: 8,
-                      } : undefined}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setValue('intentional', opt, { shouldValidate: true })}
-                        className={`
-                          w-full h-[42px] flex items-center justify-center px-4 text-base font-medium
-                          transition-colors shadow-sm
-                          ${intentionalValue === opt
-                            ? 'rounded-[6px] text-[#0778ba] bg-white'
-                            : 'rounded-lg border border-[#e4e4e7] text-[#09090b] bg-white hover:border-[#0778ba]/40'}
-                        `}
+              <fieldset
+                className="flex flex-col gap-2 border-0 p-0 m-0"
+                aria-describedby={errors.intentional ? 'intentional-error' : undefined}
+              >
+                <legend className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+                  Was it intentional? <span className="text-red-600" aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
+                </legend>
+                <div role="radiogroup" aria-label="Was it intentional?" className="flex gap-3">
+                  {(['yes', 'no'] as const).map((opt) => {
+                    const isSelected = intentionalValue === opt
+                    return (
+                      <label
+                        key={opt}
+                        className="flex-1 cursor-pointer"
+                        style={isSelected ? {
+                          padding: '2px',
+                          background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+                          borderRadius: 8,
+                        } : undefined}
                       >
-                        {opt === 'yes' ? 'Yes' : 'No'}
-                      </button>
-                    </div>
-                  ))}
+                        <input
+                          type="radio"
+                          name="intentional"
+                          value={opt}
+                          checked={isSelected}
+                          onChange={() => setValue('intentional', opt, { shouldValidate: true })}
+                          className="peer sr-only"
+                        />
+                        <span
+                          className={`
+                            w-full h-[42px] flex items-center justify-center px-4 text-base font-medium
+                            transition-colors shadow-sm
+                            peer-focus-visible:ring-2 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-[#0778ba]
+                            ${isSelected
+                              ? 'rounded-[6px] text-[#0778ba] bg-white'
+                              : 'rounded-lg border border-[#e4e4e7] text-[#09090b] bg-white hover:border-[#0778ba]/40'}
+                          `}
+                        >
+                          {opt === 'yes' ? 'Yes' : 'No'}
+                        </span>
+                      </label>
+                    )
+                  })}
                 </div>
-                <FieldError message={errors.intentional?.message} />
-              </div>
+                <FieldError id="intentional-error" message={errors.intentional?.message} />
+              </fieldset>
             </form>
           )}
 

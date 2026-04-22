@@ -145,7 +145,9 @@ export default function QuestionnaireStep7() {
       <IntakeHeader backHref="/get-started/questionnaire/step-6" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -161,7 +163,7 @@ export default function QuestionnaireStep7() {
           />
 
           {/* ── Eve's question ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -179,7 +181,7 @@ export default function QuestionnaireStep7() {
                 {typingStarted && (
                   <>
                     {QUESTION_WORDS.slice(0, visibleWords).map((word, i) => (
-                      <span key={i} className={word === '*' ? 'text-red-500' : undefined}>
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
                         {word}
                         {i < visibleWords - 1 ? ' ' : ''}
                       </span>
@@ -199,14 +201,17 @@ export default function QuestionnaireStep7() {
                 </p>
               )}
               {error && (
-                <p className="text-sm text-red-500 leading-5" role="alert">{error}</p>
+                <p id="diet-error" className="text-sm text-red-600 leading-5" role="alert">{error}</p>
               )}
             </div>
           </div>
 
           {/* ── Diet options ── */}
           {done && (
-            <fieldset className="flex flex-col gap-6 border-0 p-0 m-0 animate-[fadeIn_0.4s_ease_forwards]">
+            <fieldset
+              className="flex flex-col gap-6 border-0 p-0 m-0 animate-[fadeIn_0.4s_ease_forwards]"
+              aria-describedby={error ? 'diet-error' : undefined}
+            >
               <legend className="sr-only">Select all eating habits that apply</legend>
               {DIET_OPTIONS.map((opt) => (
                 <label key={opt.id} className="flex gap-3 items-start cursor-pointer">
@@ -215,7 +220,6 @@ export default function QuestionnaireStep7() {
                       type="checkbox"
                       checked={selected.has(opt.id)}
                       onChange={() => toggle(opt.id)}
-                      aria-invalid={!!error}
                       className="
                         size-4 rounded-[4px] border border-[#e4e4e7]
                         accent-[#0778ba]

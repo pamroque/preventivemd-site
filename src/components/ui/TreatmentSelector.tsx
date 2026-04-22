@@ -323,7 +323,9 @@ export default function TreatmentSelector({
       <IntakeHeader backHref={backHref} progress={progress} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -339,7 +341,7 @@ export default function TreatmentSelector({
           />
 
           {/* ── Eve's question ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
@@ -353,7 +355,7 @@ export default function TreatmentSelector({
                 {typingStarted && (
                   <>
                     {words.slice(0, visibleWords).map((word, i) => (
-                      <span key={i} className={word === '*' ? 'text-red-500' : undefined}>
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
                         {word}
                         {i < visibleWords - 1 ? ' ' : ''}
                       </span>
@@ -373,7 +375,7 @@ export default function TreatmentSelector({
                 </p>
               )}
               {done && showEmptyError && (
-                <p id="treatments-error" role="alert" className="text-sm leading-5 text-red-500">
+                <p id="treatments-error" role="alert" className="text-sm leading-5 text-red-600">
                   {escapeLabel
                     ? `Please select at least one treatment, or choose \u201c${escapeLabel}.\u201d`
                     : 'Please check at least one treatment.'}

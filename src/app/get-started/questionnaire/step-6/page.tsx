@@ -167,7 +167,9 @@ export default function QuestionnaireStep6() {
       <IntakeHeader backHref="/get-started/questionnaire/step-5" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -183,7 +185,7 @@ export default function QuestionnaireStep6() {
           />
 
           {/* ── Eve's question ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -201,7 +203,7 @@ export default function QuestionnaireStep6() {
                 {typingStarted && (
                   <>
                     {QUESTION_WORDS.slice(0, visibleWords).map((word, i) => (
-                      <span key={i} className={word === '*' ? 'text-red-500' : undefined}>
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
                         {word}
                         {i < visibleWords - 1 ? ' ' : ''}
                       </span>
@@ -271,14 +273,15 @@ export default function QuestionnaireStep6() {
                           value={othersText}
                           onChange={(e) => setOthersText(e.target.value)}
                           rows={4}
+                          aria-label="List other medications, supplements, or therapies"
                           placeholder="Other prescription and over-the-counter medicines, vitamins, supplements, hormones, injections, and IV therapies"
                           className="
                             w-full px-3 py-1.5 rounded-lg
                             border border-[#e4e4e7] bg-white
                             text-base leading-6 text-[rgba(0,0,0,0.87)]
                             placeholder:text-[#71717a]
-                            shadow-sm resize-y
-                            focus:outline-none focus:ring-2 focus:ring-[#0778ba] focus:ring-offset-1
+                            shadow-sm resize-y transition-colors
+                            focus:outline-none focus:border-[#0778ba]
                           "
                         />
                       </div>

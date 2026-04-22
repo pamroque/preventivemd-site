@@ -87,7 +87,8 @@ type FormValues = z.infer<typeof schema>
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const selectWrapperCls =
-  'relative flex items-center h-[42px] rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden shadow-sm'
+  'relative flex items-center h-[42px] rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden shadow-sm ' +
+  'focus-within:border-[#0778ba] transition-colors'
 
 // ─── Copy / config ────────────────────────────────────────────────────────────
 
@@ -98,9 +99,9 @@ const PROGRESS = 20
 
 // ─── Field error ─────────────────────────────────────────────────────────────
 
-function FieldError({ message }: { message?: string }) {
+function FieldError({ id, message }: { id?: string; message?: string }) {
   if (!message) return null
-  return <p className="text-sm text-red-500 mt-1" role="alert">{message}</p>
+  return <p id={id} className="text-sm text-red-600 mt-1" role="alert">{message}</p>
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -232,23 +233,26 @@ export default function QPriorGlp1HistoryPage() {
               {/* GLP-1 name */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="glp1Name" className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-                  GLP-1 name <span className="text-red-500">*</span>
+                  GLP-1 name <span className="text-red-600" aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
                 </label>
-                <div className={`${selectWrapperCls} ${errors.glp1Name ? 'border-red-400' : ''}`}>
+                <div className={`${selectWrapperCls} ${errors.glp1Name ? 'border-red-600 focus-within:border-red-600' : ''}`}>
                   <select
                     id="glp1Name"
                     {...register('glp1Name')}
                     className={`flex-1 h-full bg-transparent text-sm focus:outline-none border-0 pl-3 pr-1 appearance-none ${glp1NameValue ? 'text-[rgba(0,0,0,0.87)]' : 'text-[#71717a]'}`}
                     aria-invalid={!!errors.glp1Name}
+                    aria-describedby={errors.glp1Name ? 'glp1Name-error' : undefined}
+                    aria-required="true"
                   >
-                    <option value="" disabled hidden></option>
+                    <option value="" disabled hidden>Select a medication</option>
                     {GLP1_OPTIONS.map(o => (
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
-                  <span className="pr-2 pointer-events-none"><ChevronUpDownIcon /></span>
+                  <span aria-hidden="true" className="pr-2 pointer-events-none"><ChevronUpDownIcon /></span>
                 </div>
-                <FieldError message={errors.glp1Name?.message} />
+                <FieldError id="glp1Name-error" message={errors.glp1Name?.message} />
               </div>
 
               {/* How you took it + Dosage (2-up) */}
@@ -292,10 +296,14 @@ export default function QPriorGlp1HistoryPage() {
               </div>
 
               {/* Time since last dose */}
-              <div className="flex flex-col gap-4">
-                <p className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-                  Time since last dose <span className="text-red-500">*</span>
-                </p>
+              <fieldset
+                className="flex flex-col gap-4 border-0 p-0 m-0"
+                aria-describedby={errors.timeSinceLastDose ? 'timeSinceLastDose-error' : undefined}
+              >
+                <legend className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+                  Time since last dose <span className="text-red-600" aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
+                </legend>
                 <div className="flex flex-col gap-4">
                   {TIME_OPTIONS.map(opt => (
                     <label key={opt} className="flex items-center gap-3 cursor-pointer">
@@ -304,14 +312,13 @@ export default function QPriorGlp1HistoryPage() {
                         value={opt}
                         {...register('timeSinceLastDose')}
                         className="size-4 accent-[#0778ba] cursor-pointer"
-                        aria-invalid={!!errors.timeSinceLastDose}
                       />
                       <span className="text-sm text-[rgba(0,0,0,0.87)]">{TIME_LABELS[opt]}</span>
                     </label>
                   ))}
                 </div>
-                <FieldError message={errors.timeSinceLastDose?.message} />
-              </div>
+                <FieldError id="timeSinceLastDose-error" message={errors.timeSinceLastDose?.message} />
+              </fieldset>
 
             </form>
           )}

@@ -83,10 +83,11 @@ interface MedChoice {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
-    <p className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-      {children} <span className="text-[#b91c1c]">*</span>
+    <p id={id} className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+      {children} <span className="text-[#b91c1c]" aria-hidden="true">*</span>
+      <span className="sr-only">(required)</span>
     </p>
   )
 }
@@ -114,7 +115,8 @@ function MedOptionCard({
       <button
         type="button"
         onClick={onClick}
-        className={`w-full flex flex-col items-start gap-1 px-4 py-3 transition-colors ${
+        aria-pressed={isSelected}
+        className={`w-full flex flex-col items-start gap-1 px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
           isSelected
             ? 'rounded-[8px] bg-white'
             : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#0778ba]/40'
@@ -151,7 +153,8 @@ function PlanRow({
       <button
         type="button"
         onClick={onClick}
-        className={`w-full flex flex-col gap-1 p-4 text-left transition-colors ${
+        aria-pressed={isSelected}
+        className={`w-full flex flex-col gap-1 p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
           isSelected
             ? 'rounded-[8px] bg-white'
             : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#0778ba]/40'
@@ -349,7 +352,9 @@ export default function ChooseMedicationsPage() {
       <IntakeHeader backHref="/get-started/questionnaire/choose-treatments" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -365,7 +370,7 @@ export default function ChooseMedicationsPage() {
           />
 
           {/* ── Eve's message ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
@@ -431,8 +436,13 @@ export default function ChooseMedicationsPage() {
                           ref={el => { if (el) sectionRefs.current.set(`${tid}-type`, el); else sectionRefs.current.delete(`${tid}-type`) }}
                           className="flex flex-col gap-2"
                         >
-                          <SectionLabel>Which type?</SectionLabel>
-                          <div className="flex gap-2">
+                          <SectionLabel id={`${tid}-type-label`}>Which type?</SectionLabel>
+                          <div
+                            role="group"
+                            aria-labelledby={`${tid}-type-label`}
+                            aria-describedby={fieldErrors[tid]?.type ? `${tid}-type-error` : undefined}
+                            className="flex gap-2"
+                          >
                             {GLP1_TYPES.map(opt => (
                               <MedOptionCard
                                 key={opt.id}
@@ -444,7 +454,7 @@ export default function ChooseMedicationsPage() {
                             ))}
                           </div>
                           {fieldErrors[tid]?.type && (
-                            <p role="alert" className="text-xs text-red-500 leading-4">Please select a type.</p>
+                            <p id={`${tid}-type-error`} role="alert" className="text-xs text-red-600 leading-4">Please select a type.</p>
                           )}
                         </div>
                       )}
@@ -454,8 +464,13 @@ export default function ChooseMedicationsPage() {
                         ref={el => { if (el) sectionRefs.current.set(`${tid}-form`, el); else sectionRefs.current.delete(`${tid}-form`) }}
                         className="flex flex-col gap-2"
                       >
-                        <SectionLabel>How would you like to take it?</SectionLabel>
-                        <div className="flex gap-2">
+                        <SectionLabel id={`${tid}-form-label`}>How would you like to take it?</SectionLabel>
+                        <div
+                          role="group"
+                          aria-labelledby={`${tid}-form-label`}
+                          aria-describedby={fieldErrors[tid]?.form ? `${tid}-form-error` : undefined}
+                          className="flex gap-2"
+                        >
                           {FORM_OPTIONS.map(opt => (
                             <MedOptionCard
                               key={opt.id}
@@ -467,7 +482,7 @@ export default function ChooseMedicationsPage() {
                           ))}
                         </div>
                         {fieldErrors[tid]?.form && (
-                          <p role="alert" className="text-xs text-red-500 leading-4">Please select a form.</p>
+                          <p id={`${tid}-form-error`} role="alert" className="text-xs text-red-600 leading-4">Please select a form.</p>
                         )}
                       </div>
 
@@ -476,8 +491,13 @@ export default function ChooseMedicationsPage() {
                         ref={el => { if (el) sectionRefs.current.set(`${tid}-plan`, el); else sectionRefs.current.delete(`${tid}-plan`) }}
                         className="flex flex-col gap-2"
                       >
-                        <SectionLabel>Prescription plan</SectionLabel>
-                        <div className="flex flex-col gap-3">
+                        <SectionLabel id={`${tid}-plan-label`}>Prescription plan</SectionLabel>
+                        <div
+                          role="group"
+                          aria-labelledby={`${tid}-plan-label`}
+                          aria-describedby={fieldErrors[tid]?.plan ? `${tid}-plan-error` : undefined}
+                          className="flex flex-col gap-3"
+                        >
                           {PLAN_OPTIONS.map(opt => (
                             <PlanRow
                               key={opt.id}
@@ -488,7 +508,7 @@ export default function ChooseMedicationsPage() {
                           ))}
                         </div>
                         {fieldErrors[tid]?.plan && (
-                          <p role="alert" className="text-xs text-red-500 leading-4">Please select a plan.</p>
+                          <p id={`${tid}-plan-error`} role="alert" className="text-xs text-red-600 leading-4">Please select a plan.</p>
                         )}
                         <p className="text-xs text-[#71717a] leading-4">
                           *For 6- and 12-month plans, medication will be shipped 3 months at a time.
@@ -526,7 +546,7 @@ export default function ChooseMedicationsPage() {
               text-white text-base font-medium leading-6 whitespace-nowrap
               transition-opacity hover:opacity-90 disabled:opacity-60
               shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
             "
             style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
           >

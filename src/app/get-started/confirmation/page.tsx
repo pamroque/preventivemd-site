@@ -274,7 +274,9 @@ export default function ConfirmationPage() {
   return (
     <div className="min-h-[100dvh] bg-white">
       <main
-        className="overflow-y-auto"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto focus:outline-none"
         style={{ marginTop: '48px', paddingBottom: '88px' }}
       >
         <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 py-4 md:py-6">
@@ -432,11 +434,12 @@ export default function ConfirmationPage() {
 
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-2">
-                    <label className="text-[12px] font-medium tracking-[1.5px] uppercase text-[#71717a]">
+                    <label htmlFor="credential" className="text-[12px] font-medium tracking-[1.5px] uppercase text-[#71717a]">
                       Email or mobile number
                     </label>
-                    <div className={`h-[42px] border rounded-lg shadow-sm flex items-center overflow-hidden bg-white ${credentialError ? 'border-red-500' : credential ? 'border-[#0778ba]' : 'border-[#e4e4e7]'}`}>
+                    <div className={`h-[42px] border rounded-lg shadow-sm flex items-center overflow-hidden bg-white transition-colors ${credentialError ? 'border-red-600 focus-within:border-red-600' : credential ? 'border-[#0778ba]' : 'border-[#e4e4e7] focus-within:border-[#0778ba]'}`}>
                       <input
+                        id="credential"
                         type="text"
                         inputMode="email"
                         autoComplete="username"
@@ -444,11 +447,12 @@ export default function ConfirmationPage() {
                         onChange={e => handleCredentialChange(e.target.value)}
                         aria-describedby={credentialError ? 'credential-error' : undefined}
                         aria-invalid={!!credentialError}
+                        aria-required="true"
                         className="flex-1 h-full px-3 text-base text-[rgba(0,0,0,0.87)] focus:outline-none bg-transparent border-0"
                       />
                     </div>
                     {credentialError && (
-                      <p id="credential-error" className="text-xs text-red-500 leading-4 mt-1">
+                      <p id="credential-error" className="text-xs text-red-600 leading-4 mt-1" role="alert">
                         {credentialError}
                       </p>
                     )}

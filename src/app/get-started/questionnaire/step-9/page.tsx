@@ -128,7 +128,9 @@ export default function QuestionnaireStep9() {
       <IntakeHeader backHref="/get-started/questionnaire/step-8" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -144,7 +146,7 @@ export default function QuestionnaireStep9() {
           />
 
           {/* ── Eve's question ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -162,7 +164,7 @@ export default function QuestionnaireStep9() {
                 {typingStarted && (
                   <>
                     {QUESTION_WORDS.slice(0, visibleWords).map((word, i) => (
-                      <span key={i} className={word === '*' ? 'text-red-500' : undefined}>
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
                         {word}
                         {i < visibleWords - 1 ? ' ' : ''}
                       </span>
@@ -202,9 +204,11 @@ export default function QuestionnaireStep9() {
                       type="button"
                       onClick={() => handleSelect(opt)}
                       disabled={isNavigating}
+                      aria-pressed={isSelected}
                       className={`
                         w-full h-[42px] flex items-center justify-center gap-2 px-4
                         text-base font-medium transition-colors shadow-sm disabled:opacity-60
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1
                         ${isSelected
                           ? 'rounded-[6px] text-[#0778ba] bg-white'
                           : 'rounded-lg border border-[#e4e4e7] text-[#0778ba] bg-white hover:border-[#0778ba]/40'}

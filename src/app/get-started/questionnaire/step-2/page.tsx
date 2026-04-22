@@ -28,9 +28,9 @@ function ChevronRightIcon() {
 
 // ─── Field helpers ────────────────────────────────────────────────────────────
 
-function FieldError({ message }: { message?: string }) {
+function FieldError({ id, message }: { id?: string; message?: string }) {
   if (!message) return null
-  return <p className="text-sm text-red-500 mt-1">{message}</p>
+  return <p id={id} className="text-sm text-red-600 mt-1" role="alert">{message}</p>
 }
 
 // ─── Word-by-word typing animation ───────────────────────────────────────────
@@ -109,8 +109,9 @@ type FormValues = z.infer<typeof schema>
 // ─── Shared input styles ──────────────────────────────────────────────────────
 
 const inputWrapperCls =
-  'flex items-center h-12 rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden'
-const inputErrorCls = 'border-red-400'
+  'flex items-center h-12 rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden ' +
+  'focus-within:border-[#0778ba] transition-colors'
+const inputErrorCls = 'border-red-600 focus-within:border-red-600'
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
@@ -183,7 +184,9 @@ export default function QuestionnaireStep2() {
       <IntakeHeader backHref="/get-started/questionnaire" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -199,7 +202,7 @@ export default function QuestionnaireStep2() {
           />
 
           {/* ── Eve's new question — types in ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -248,9 +251,10 @@ export default function QuestionnaireStep2() {
               className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease_forwards]"
             >
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-                  Height <span className="text-red-500">*</span>
-                </label>
+                <span className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+                  Height <span className="text-red-600" aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
+                </span>
                 <div className="flex gap-2">
                   <div className="flex-1 flex flex-col gap-1">
                     <div className={`${inputWrapperCls} ${errors.heightFeet ? inputErrorCls : ''}`}>
@@ -264,12 +268,14 @@ export default function QuestionnaireStep2() {
                         className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
                         aria-label="Height in feet"
                         aria-invalid={!!errors.heightFeet}
+                        aria-describedby={errors.heightFeet ? 'heightFeet-error' : undefined}
+                        aria-required="true"
                       />
-                      <span className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
+                      <span aria-hidden="true" className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
                         feet
                       </span>
                     </div>
-                    <FieldError message={errors.heightFeet?.message} />
+                    <FieldError id="heightFeet-error" message={errors.heightFeet?.message} />
                   </div>
                   <div className="flex-1 flex flex-col gap-1">
                     <div className={`${inputWrapperCls} ${errors.heightInches ? inputErrorCls : ''}`}>
@@ -283,19 +289,22 @@ export default function QuestionnaireStep2() {
                         className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
                         aria-label="Height in inches"
                         aria-invalid={!!errors.heightInches}
+                        aria-describedby={errors.heightInches ? 'heightInches-error' : undefined}
+                        aria-required="true"
                       />
-                      <span className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
+                      <span aria-hidden="true" className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
                         inches
                       </span>
                     </div>
-                    <FieldError message={errors.heightInches?.message} />
+                    <FieldError id="heightInches-error" message={errors.heightInches?.message} />
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="weight" className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-                  Weight <span className="text-red-500">*</span>
+                  Weight <span className="text-red-600" aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
                 </label>
                 <div className={`${inputWrapperCls} !py-0 !px-0 overflow-hidden ${errors.weight ? inputErrorCls : ''}`}>
                   <input
@@ -309,12 +318,14 @@ export default function QuestionnaireStep2() {
                     className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
                     aria-label="Weight in pounds"
                     aria-invalid={!!errors.weight}
+                    aria-describedby={errors.weight ? 'weight-error' : undefined}
+                    aria-required="true"
                   />
-                  <span className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
+                  <span aria-hidden="true" className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
                     lbs (pounds)
                   </span>
                 </div>
-                <FieldError message={errors.weight?.message} />
+                <FieldError id="weight-error" message={errors.weight?.message} />
               </div>
             </form>
           )}

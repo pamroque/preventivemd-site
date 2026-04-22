@@ -286,7 +286,9 @@ export default function QuestionnaireStep3() {
       <IntakeHeader backHref="/get-started/questionnaire/step-2" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -302,7 +304,7 @@ export default function QuestionnaireStep3() {
           />
 
           {/* ── Eve's new question — types in ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -321,7 +323,7 @@ export default function QuestionnaireStep3() {
                 {typingStarted && (
                   <>
                     {QUESTION_WORDS.slice(0, visibleWords).map((word, i) => (
-                      <span key={i} className={word === '*' ? 'text-red-500' : undefined}>
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
                         {word}
                         {i < visibleWords - 1 ? ' ' : ''}
                       </span>
@@ -343,7 +345,7 @@ export default function QuestionnaireStep3() {
               {errors.goals && (
                 <p
                   id="goals-error"
-                  className="text-sm text-red-500 leading-5"
+                  className="text-sm text-red-600 leading-5"
                   role="alert"
                 >
                   {errors.goals.message}
@@ -392,7 +394,8 @@ export default function QuestionnaireStep3() {
                     htmlFor="otherText"
                     className="text-sm font-medium text-[rgba(0,0,0,0.87)]"
                   >
-                    Please specify <span className="text-red-500">*</span>
+                    Please specify <span className="text-red-600" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <textarea
                     id="otherText"
@@ -401,15 +404,15 @@ export default function QuestionnaireStep3() {
                     className={`
                       w-full min-h-[99px] px-3 py-1.5 bg-white border rounded-lg shadow-sm
                       text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
-                      focus:outline-none focus:ring-2 focus:ring-[#0778ba] focus:border-[#0778ba]
-                      transition-colors resize-y
-                      ${errors.otherText ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : 'border-[#e4e4e7]'}
+                      focus:outline-none transition-colors resize-y
+                      ${errors.otherText ? 'border-red-600 focus:border-red-600' : 'border-[#e4e4e7] focus:border-[#0778ba]'}
                     `}
                     aria-invalid={!!errors.otherText}
                     aria-describedby={errors.otherText ? 'otherText-error' : undefined}
+                    aria-required="true"
                   />
                   {errors.otherText && (
-                    <p id="otherText-error" className="text-xs text-red-500 leading-4" role="alert">
+                    <p id="otherText-error" className="text-xs text-red-600 leading-4" role="alert">
                       {errors.otherText.message}
                     </p>
                   )}
@@ -482,6 +485,7 @@ function GoalCard({
       className={`
         flex items-center gap-4 md:gap-6 px-4 py-3 bg-white cursor-pointer
         transition-colors
+        focus-within:ring-2 focus-within:ring-[#0778ba] focus-within:ring-offset-1
         ${checked
           ? 'rounded-[6px]'
           : 'rounded-lg border border-[#e3e3e3] hover:border-[#0778ba]/40'}

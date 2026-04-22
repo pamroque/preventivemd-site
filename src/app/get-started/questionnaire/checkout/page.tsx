@@ -94,13 +94,13 @@ type FormValues = z.infer<typeof checkoutSchema>
 const inputBase =
   'w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm ' +
   'text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] ' +
-  'focus:outline-none focus:ring-2 focus:ring-[#0778ba] focus:border-[#0778ba] transition-colors'
+  'focus:outline-none focus:border-[#0778ba] focus-within:border-[#0778ba] transition-colors'
 
-const inputErrorCls = 'border-red-400 focus:ring-red-400 focus:border-red-400'
+const inputErrorCls = 'border-red-600 focus:border-red-600 focus-within:border-red-600'
 
-function FieldError({ message }: { message?: string }) {
+function FieldError({ id, message }: { id?: string; message?: string }) {
   if (!message) return null
-  return <p className="text-xs text-red-500 leading-4 mt-1" role="alert">{message}</p>
+  return <p id={id} className="text-xs text-red-600 leading-4 mt-1" role="alert">{message}</p>
 }
 
 function SectionHeader({ label }: { label: string }) {
@@ -257,12 +257,10 @@ export default function CheckoutPage() {
   const { animateBubbles, visibleWords, typingStarted, done, words } =
     useEveTyping(QUESTION_TEXT, priorBubbleCount)
 
-  const { ref: phoneRef } = register('phone')
-
   function handlePhoneInput(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
     setPhoneDisplay(formatPhone(digits))
-    setValue('phone', digits, { shouldValidate: false })
+    setValue('phone', digits, { shouldValidate: false, shouldDirty: true })
   }
 
   function handleCardInput(e: React.ChangeEvent<HTMLInputElement>) {
@@ -305,7 +303,9 @@ export default function CheckoutPage() {
       />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -321,7 +321,7 @@ export default function CheckoutPage() {
           />
 
           {/* ── Eve's message ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
@@ -368,11 +368,10 @@ export default function CheckoutPage() {
                 {/* Phone — pre-filled, editable, required */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="phone" className="text-sm font-medium text-[#09090b] leading-5">
-                    Mobile number <span className="text-red-500">*</span>
+                    Mobile number <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                   </label>
-                  <input type="hidden" ref={phoneRef} name="phone" />
                   <div className={`${inputBase} flex items-center !px-0 overflow-hidden ${errors.phone ? inputErrorCls : ''}`}>
-                    <span className="px-3 text-base text-[rgba(0,0,0,0.87)] opacity-50 shrink-0 border-r border-[#e4e4e7]">+1</span>
+                    <span aria-hidden="true" className="px-3 text-base text-[rgba(0,0,0,0.87)] opacity-50 shrink-0 border-r border-[#e4e4e7]">+1</span>
                     <input
                       id="phone"
                       type="tel"
@@ -383,15 +382,17 @@ export default function CheckoutPage() {
                       onChange={handlePhoneInput}
                       className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
                       aria-invalid={!!errors.phone}
+                      aria-describedby={errors.phone ? 'phone-error' : undefined}
+                      aria-required="true"
                     />
                   </div>
-                  <FieldError message={errors.phone?.message} />
+                  <FieldError id="phone-error" message={errors.phone?.message} />
                 </div>
 
                 {/* Email */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="email" className="text-sm font-medium text-[#09090b] leading-5">
-                    Email <span className="text-red-500">*</span>
+                    Email <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                   </label>
                   <input
                     id="email"
@@ -400,8 +401,10 @@ export default function CheckoutPage() {
                     {...register('email')}
                     className={`${inputBase} ${errors.email ? inputErrorCls : ''}`}
                     aria-invalid={!!errors.email}
+                    aria-describedby={errors.email ? "email-error" : undefined}
+                    aria-required="true"
                   />
-                  <FieldError message={errors.email?.message} />
+                  <FieldError id="email-error" message={errors.email?.message} />
                 </div>
               </div>
 
@@ -411,7 +414,7 @@ export default function CheckoutPage() {
 
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="street" className="text-sm font-medium text-[#09090b] leading-5">
-                    Street address <span className="text-red-500">*</span>
+                    Street address <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                   </label>
                   <input
                     id="street"
@@ -420,8 +423,10 @@ export default function CheckoutPage() {
                     {...register('street')}
                     className={`${inputBase} ${errors.street ? inputErrorCls : ''}`}
                     aria-invalid={!!errors.street}
+                    aria-describedby={errors.street ? "street-error" : undefined}
+                    aria-required="true"
                   />
-                  <FieldError message={errors.street?.message} />
+                  <FieldError id="street-error" message={errors.street?.message} />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -439,7 +444,7 @@ export default function CheckoutPage() {
 
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="city" className="text-sm font-medium text-[#09090b] leading-5">
-                    City <span className="text-red-500">*</span>
+                    City <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                   </label>
                   <input
                     id="city"
@@ -448,14 +453,16 @@ export default function CheckoutPage() {
                     {...register('city')}
                     className={`${inputBase} ${errors.city ? inputErrorCls : ''}`}
                     aria-invalid={!!errors.city}
+                    aria-describedby={errors.city ? "city-error" : undefined}
+                    aria-required="true"
                   />
-                  <FieldError message={errors.city?.message} />
+                  <FieldError id="city-error" message={errors.city?.message} />
                 </div>
 
                 <div className="flex gap-3 items-start">
                   <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                     <label htmlFor="deliveryState" className="text-sm font-medium text-[#09090b] leading-5">
-                      State <span className="text-red-500">*</span>
+                      State <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                     </label>
                     <div className="relative opacity-50">
                       <select
@@ -466,7 +473,7 @@ export default function CheckoutPage() {
                         className={`${inputBase} appearance-none pr-8 cursor-not-allowed`}
                         aria-disabled="true"
                       >
-                        <option value="" disabled />
+                        <option value="" disabled>Select a state</option>
                         {US_STATES.map(({ value, label }) => (
                           <option key={value} value={value}>{label}</option>
                         ))}
@@ -475,12 +482,12 @@ export default function CheckoutPage() {
                         <ChevronUpDownIcon />
                       </span>
                     </div>
-                    <FieldError message={errors.deliveryState?.message} />
+                    <FieldError id="deliveryState-error" message={errors.deliveryState?.message} />
                   </div>
 
                   <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                     <label htmlFor="zip" className="text-sm font-medium text-[#09090b] leading-5">
-                      ZIP code <span className="text-red-500">*</span>
+                      ZIP code <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                     </label>
                     <input
                       id="zip"
@@ -491,8 +498,10 @@ export default function CheckoutPage() {
                       {...register('zip')}
                       className={`${inputBase} ${errors.zip ? inputErrorCls : ''}`}
                       aria-invalid={!!errors.zip}
+                    aria-describedby={errors.zip ? "zip-error" : undefined}
+                    aria-required="true"
                     />
-                    <FieldError message={errors.zip?.message} />
+                    <FieldError id="zip-error" message={errors.zip?.message} />
                   </div>
                 </div>
               </div>
@@ -535,7 +544,7 @@ export default function CheckoutPage() {
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="cardNumber" className="text-sm font-medium text-[#09090b] leading-5">
-                          Card number <span className="text-red-500">*</span>
+                          Card number <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                         </label>
                         <input
                           id="cardNumber"
@@ -547,14 +556,16 @@ export default function CheckoutPage() {
                           onChange={handleCardInput}
                           className={`${inputBase} ${errors.cardNumber ? inputErrorCls : ''}`}
                           aria-invalid={!!errors.cardNumber}
+                    aria-describedby={errors.cardNumber ? "cardNumber-error" : undefined}
+                    aria-required="true"
                         />
-                        <FieldError message={errors.cardNumber?.message} />
+                        <FieldError id="cardNumber-error" message={errors.cardNumber?.message} />
                       </div>
 
                       <div className="flex gap-3 items-start">
                         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                           <label htmlFor="expiration" className="text-sm font-medium text-[#09090b] leading-5">
-                            Expiration <span className="text-red-500">*</span>
+                            Expiration <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                           </label>
                           <input
                             id="expiration"
@@ -566,12 +577,14 @@ export default function CheckoutPage() {
                             onChange={handleExpInput}
                             className={`${inputBase} ${errors.expiration ? inputErrorCls : ''}`}
                             aria-invalid={!!errors.expiration}
+                    aria-describedby={errors.expiration ? "expiration-error" : undefined}
+                    aria-required="true"
                           />
-                          <FieldError message={errors.expiration?.message} />
+                          <FieldError id="expiration-error" message={errors.expiration?.message} />
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                           <label htmlFor="security" className="text-sm font-medium text-[#09090b] leading-5">
-                            Security code <span className="text-red-500">*</span>
+                            Security code <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                           </label>
                           <input
                             id="security"
@@ -583,14 +596,16 @@ export default function CheckoutPage() {
                             {...register('security')}
                             className={`${inputBase} ${errors.security ? inputErrorCls : ''}`}
                             aria-invalid={!!errors.security}
+                    aria-describedby={errors.security ? "security-error" : undefined}
+                    aria-required="true"
                           />
-                          <FieldError message={errors.security?.message} />
+                          <FieldError id="security-error" message={errors.security?.message} />
                         </div>
                       </div>
 
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="cardName" className="text-sm font-medium text-[#09090b] leading-5">
-                          Cardholder name <span className="text-red-500">*</span>
+                          Cardholder name <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                         </label>
                         <input
                           id="cardName"
@@ -599,8 +614,10 @@ export default function CheckoutPage() {
                           {...register('cardName')}
                           className={`${inputBase} ${errors.cardName ? inputErrorCls : ''}`}
                           aria-invalid={!!errors.cardName}
+                    aria-describedby={errors.cardName ? "cardName-error" : undefined}
+                    aria-required="true"
                         />
-                        <FieldError message={errors.cardName?.message} />
+                        <FieldError id="cardName-error" message={errors.cardName?.message} />
                       </div>
                     </div>
                   </>
@@ -630,7 +647,7 @@ export default function CheckoutPage() {
                     <div className="flex flex-col gap-4 animate-[fadeIn_0.3s_ease_forwards]">
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="billingStreet" className="text-sm font-medium text-[#09090b] leading-5">
-                          Street address <span className="text-red-500">*</span>
+                          Street address <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                         </label>
                         <input
                           id="billingStreet"
@@ -639,8 +656,10 @@ export default function CheckoutPage() {
                           {...register('billingStreet')}
                           className={`${inputBase} ${errors.billingStreet ? inputErrorCls : ''}`}
                           aria-invalid={!!errors.billingStreet}
+                    aria-describedby={errors.billingStreet ? "billingStreet-error" : undefined}
+                    aria-required="true"
                         />
-                        <FieldError message={errors.billingStreet?.message} />
+                        <FieldError id="billingStreet-error" message={errors.billingStreet?.message} />
                       </div>
 
                       <div className="flex flex-col gap-1.5">
@@ -658,7 +677,7 @@ export default function CheckoutPage() {
 
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="billingCity" className="text-sm font-medium text-[#09090b] leading-5">
-                          City <span className="text-red-500">*</span>
+                          City <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                         </label>
                         <input
                           id="billingCity"
@@ -667,14 +686,16 @@ export default function CheckoutPage() {
                           {...register('billingCity')}
                           className={`${inputBase} ${errors.billingCity ? inputErrorCls : ''}`}
                           aria-invalid={!!errors.billingCity}
+                    aria-describedby={errors.billingCity ? "billingCity-error" : undefined}
+                    aria-required="true"
                         />
-                        <FieldError message={errors.billingCity?.message} />
+                        <FieldError id="billingCity-error" message={errors.billingCity?.message} />
                       </div>
 
                       <div className="flex gap-3 items-start">
                         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                           <label htmlFor="billingState" className="text-sm font-medium text-[#09090b] leading-5">
-                            State <span className="text-red-500">*</span>
+                            State <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                           </label>
                           <div className="relative">
                             <select
@@ -683,8 +704,10 @@ export default function CheckoutPage() {
                               defaultValue=""
                               className={`${inputBase} appearance-none pr-8 ${errors.billingState ? inputErrorCls : ''}`}
                               aria-invalid={!!errors.billingState}
+                    aria-describedby={errors.billingState ? "billingState-error" : undefined}
+                    aria-required="true"
                             >
-                              <option value="" disabled />
+                              <option value="" disabled>Select a state</option>
                               {US_STATES.map(({ value, label }) => (
                                 <option key={value} value={value}>{label}</option>
                               ))}
@@ -693,12 +716,12 @@ export default function CheckoutPage() {
                               <ChevronUpDownIcon />
                             </span>
                           </div>
-                          <FieldError message={errors.billingState?.message} />
+                          <FieldError id="billingState-error" message={errors.billingState?.message} />
                         </div>
 
                         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                           <label htmlFor="billingZip" className="text-sm font-medium text-[#09090b] leading-5">
-                            ZIP code <span className="text-red-500">*</span>
+                            ZIP code <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                           </label>
                           <input
                             id="billingZip"
@@ -709,8 +732,10 @@ export default function CheckoutPage() {
                             {...register('billingZip')}
                             className={`${inputBase} ${errors.billingZip ? inputErrorCls : ''}`}
                             aria-invalid={!!errors.billingZip}
+                    aria-describedby={errors.billingZip ? "billingZip-error" : undefined}
+                    aria-required="true"
                           />
-                          <FieldError message={errors.billingZip?.message} />
+                          <FieldError id="billingZip-error" message={errors.billingZip?.message} />
                         </div>
                       </div>
                     </div>

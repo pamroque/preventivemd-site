@@ -158,7 +158,7 @@ export default function QTargetWeightPage() {
           {done && (
             <div className="flex flex-col gap-2 animate-[fadeIn_0.4s_ease_forwards]">
               {/* Input */}
-              <div className="flex items-center h-[42px] rounded-lg border border-[#e4e4e7] bg-white shadow-sm overflow-hidden px-3 focus-within:ring-2 focus-within:ring-[#0778ba] focus-within:border-[#0778ba] transition-colors">
+              <div className="flex items-center h-[42px] rounded-lg border border-[#e4e4e7] bg-white shadow-sm overflow-hidden px-3 focus-within:border-[#0778ba] transition-colors">
                 <input
                   type="number"
                   inputMode="decimal"
@@ -170,9 +170,11 @@ export default function QTargetWeightPage() {
                   }}
                   className="flex-1 text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   aria-label="Goal weight in pounds"
+                  aria-invalid={!!error}
                   aria-describedby={error ? 'weight-error' : bmiText ? 'bmi-display' : undefined}
+                  aria-required="true"
                 />
-                <span className="text-sm font-semibold text-[#09090b] opacity-50 shrink-0 pl-2">
+                <span aria-hidden="true" className="text-sm font-semibold text-[#09090b] opacity-50 shrink-0 pl-2">
                   lbs (pounds)
                 </span>
               </div>
@@ -186,7 +188,7 @@ export default function QTargetWeightPage() {
 
               {/* Validation error */}
               {error && (
-                <p id="weight-error" role="alert" className="text-xs text-red-500 leading-4">
+                <p id="weight-error" role="alert" className="text-xs text-red-600 leading-4">
                   {error}
                 </p>
               )}

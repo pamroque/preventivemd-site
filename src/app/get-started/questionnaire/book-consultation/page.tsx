@@ -278,7 +278,9 @@ export default function BookConsultationPage() {
       <IntakeHeader backHref="/get-started/questionnaire/visit-type" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -339,7 +341,7 @@ export default function BookConsultationPage() {
                       id="language"
                       value={language}
                       onChange={e => setLanguage(e.target.value)}
-                      className="w-full h-[42px] pl-3 pr-9 border border-[#e4e4e7] rounded-lg bg-white text-base text-[#09090b] shadow-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0778ba] focus:border-transparent"
+                      className="w-full h-[42px] pl-3 pr-9 border border-[#e4e4e7] rounded-lg bg-white text-base text-[#09090b] shadow-sm appearance-none cursor-pointer focus:outline-none focus:border-[#0778ba] transition-colors"
                     >
                       <option>English</option>
                       <option>Español</option>
@@ -355,6 +357,7 @@ export default function BookConsultationPage() {
                   <label htmlFor="format" className="text-[14px] font-medium leading-5 text-[#09090b]">
                     Format{' '}
                     <span className="text-[#b91c1c]" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <div className={`relative ${requiresSync ? 'opacity-50' : ''}`}>
                     <select
@@ -364,13 +367,14 @@ export default function BookConsultationPage() {
                       disabled={requiresSync}
                       aria-describedby={formatError ? 'format-error' : undefined}
                       aria-invalid={!!formatError}
-                      className={`w-full h-[42px] pl-3 pr-9 border rounded-lg bg-white text-base shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#0778ba] focus:border-transparent ${
+                      aria-required="true"
+                      className={`w-full h-[42px] pl-3 pr-9 border rounded-lg bg-white text-base shadow-sm appearance-none focus:outline-none focus:border-[#0778ba] transition-colors ${
                         requiresSync ? 'cursor-not-allowed' : 'cursor-pointer'
                       } ${!format ? 'text-[#a1a1aa]' : 'text-[#09090b]'} ${
-                        formatError ? 'border-red-500' : 'border-[#e4e4e7]'
+                        formatError ? 'border-red-600' : 'border-[#e4e4e7]'
                       }`}
                     >
-                      {!requiresSync && <option value="" disabled hidden />}
+                      {!requiresSync && <option value="" disabled hidden>Select a format</option>}
                       <option value="Video">Video</option>
                       {!requiresSync && <option value="Phone">Phone</option>}
                     </select>
@@ -379,7 +383,7 @@ export default function BookConsultationPage() {
                     </div>
                   </div>
                   {formatError && (
-                    <p id="format-error" className="text-xs text-red-500 leading-4 mt-0.5">
+                    <p id="format-error" className="text-xs text-red-600 leading-4 mt-0.5">
                       {formatError}
                     </p>
                   )}

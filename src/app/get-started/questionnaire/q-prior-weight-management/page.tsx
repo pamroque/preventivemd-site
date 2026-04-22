@@ -241,7 +241,8 @@ export default function QPriorWeightManagementPage() {
                     <button
                       type="button"
                       onClick={() => toggle(approach.id)}
-                      className={`w-full flex items-center gap-6 px-4 py-3 text-left transition-colors ${
+                      aria-pressed={isSelected}
+                      className={`w-full flex items-center gap-6 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
                         isSelected
                           ? 'rounded-[8px] bg-white'
                           : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#0778ba]/40'

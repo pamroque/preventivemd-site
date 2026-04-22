@@ -147,14 +147,15 @@ export default function QPriorSurgeryTypePage() {
                 className={`
                   w-full rounded-lg border bg-white px-3 py-2.5
                   text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
-                  resize-y shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0778ba]
-                  ${error ? 'border-red-400' : 'border-[rgba(0,0,0,0.12)]'}
+                  resize-y shadow-sm focus:outline-none transition-colors
+                  ${error ? 'border-red-600 focus:border-red-600' : 'border-[rgba(0,0,0,0.12)] focus:border-[#0778ba]'}
                 `}
                 aria-invalid={!!error}
                 aria-describedby={error ? 'surgery-error' : undefined}
+                aria-required="true"
               />
               {error && (
-                <p id="surgery-error" className="text-sm text-red-500" role="alert">{error}</p>
+                <p id="surgery-error" className="text-sm text-red-600" role="alert">{error}</p>
               )}
             </div>
           )}

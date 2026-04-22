@@ -193,7 +193,8 @@ export default function QPriorGlp1ReactionsPage() {
           {showExpanded && (
             <div className="flex flex-col gap-2 animate-[fadeIn_0.4s_ease_forwards]">
               <label htmlFor="reaction-details" className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-                Please specify <span className="text-red-500">*</span>
+                Please specify <span className="text-red-600" aria-hidden="true">*</span>
+                <span className="sr-only">(required)</span>
               </label>
               <textarea
                 id="reaction-details"
@@ -204,14 +205,15 @@ export default function QPriorGlp1ReactionsPage() {
                 className={`
                   w-full rounded-lg border bg-white px-3 py-2.5
                   text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
-                  resize-y shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0778ba]
-                  ${error ? 'border-red-400' : 'border-[rgba(0,0,0,0.12)]'}
+                  resize-y shadow-sm focus:outline-none transition-colors
+                  ${error ? 'border-red-600 focus:border-red-600' : 'border-[rgba(0,0,0,0.12)] focus:border-[#0778ba]'}
                 `}
                 aria-invalid={!!error}
                 aria-describedby={error ? 'reaction-error' : undefined}
+                aria-required="true"
               />
               {error && (
-                <p id="reaction-error" className="text-sm text-red-500" role="alert">{error}</p>
+                <p id="reaction-error" className="text-sm text-red-600" role="alert">{error}</p>
               )}
             </div>
           )}
