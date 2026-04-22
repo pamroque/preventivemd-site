@@ -1,23 +1,36 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getStepValues } from '@/lib/intake-session-store'
 
-/**
- * Silently redirects to /get-started/reactivation when an in-progress
- * intake session is detected. Renders nothing — meant to be dropped into
- * the get-started landing page alongside its normal server-rendered content.
- */
-export default function ReactivationGate() {
+function Gate() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const s0 = getStepValues(0)
     if (typeof s0.firstName === 'string' && s0.firstName) {
-      router.replace('/get-started/reactivation')
+      const peptide = searchParams.get('peptide')
+      const dest = peptide
+        ? `/get-started/reactivation?peptide=${encodeURIComponent(peptide)}`
+        : '/get-started/reactivation'
+      router.replace(dest)
     }
-  }, [router])
+  }, [router, searchParams])
 
   return null
+}
+
+/**
+ * Silently redirects to /get-started/reactivation when an in-progress
+ * intake session is detected. Forwards any ?peptide= param so the
+ * reactivation page can restore it if the user starts over.
+ */
+export default function ReactivationGate() {
+  return (
+    <Suspense>
+      <Gate />
+    </Suspense>
+  )
 }

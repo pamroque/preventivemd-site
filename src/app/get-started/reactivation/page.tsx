@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getStepValues, clearSession } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
 
@@ -79,8 +79,10 @@ function getResumeCopy(): string {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-export default function ReactivationPage() {
+function ReactivationContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const peptide = searchParams.get('peptide')
   const [firstName, setFirstName] = useState<string | null>(null)
   const [resumeHref, setResumeHref] = useState('/get-started/questionnaire')
   const [resumeCopy, setResumeCopy] = useState('Continue questionnaire')
@@ -105,7 +107,10 @@ export default function ReactivationPage() {
 
   function handleStartOver() {
     clearSession()
-    router.push('/get-started/questionnaire')
+    const dest = peptide
+      ? `/get-started?peptide=${encodeURIComponent(peptide)}`
+      : '/get-started'
+    router.push(dest)
   }
 
   return (
@@ -197,5 +202,13 @@ export default function ReactivationPage() {
 
       </div>
     </main>
+  )
+}
+
+export default function ReactivationPage() {
+  return (
+    <Suspense>
+      <ReactivationContent />
+    </Suspense>
   )
 }
