@@ -1,0 +1,15 @@
+# CODEOWNERS — require review from listed owners on matching files.
+# GitHub uses the last matching pattern, so order matters.
+# Docs: https://docs.github.com/repositories/managing-your-repositorys-settings-and-security/customizing-your-repository/about-code-owners
+
+# Default: everything requires review from the repo owner
+*                 @patsur160794
+
+# Dependency and build configuration — always review, never rubber-stamp
+/package.json     @patsur160794
+/package-lock.json @patsur160794
+/next.config.js   @patsur160794
+/tsconfig.json    @patsur160794
+
+# CI and repo policy — changes here weaken guardrails
+/.github/         @patsur160794
