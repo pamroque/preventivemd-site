@@ -148,12 +148,19 @@ export default function QuestionnaireStep2() {
   const currentBubbleCount = currentStep?.bubbles.length ?? 0
   const { animateBubbles, visibleWords, typingStarted, done } = useAnimationSequence(currentBubbleCount)
 
+  const saved = getStepValues(1)
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      heightFeet: typeof saved.heightFeet === 'string' ? saved.heightFeet : '',
+      heightInches: typeof saved.heightInches === 'string' ? saved.heightInches : '',
+      weight: typeof saved.weight === 'string' ? saved.weight : '',
+    },
   })
 
   async function onSubmit(data: FormValues) {
@@ -317,7 +324,7 @@ export default function QuestionnaireStep2() {
 
       {/* ── Sticky CTA — fixed to viewport bottom, appears with the form ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4 transition-all duration-500"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4 transition-all duration-500"
         style={{
           opacity: done ? 1 : 0,
           pointerEvents: done ? 'auto' : 'none',

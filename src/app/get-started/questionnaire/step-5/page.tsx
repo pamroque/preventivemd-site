@@ -211,7 +211,7 @@ export default function QuestionnaireStep5() {
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: hasSelection ? '7rem' : '2rem',
+          paddingBottom: done && hasSelection ? '7rem' : '2rem',
         }}
       >
         <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
@@ -315,10 +315,10 @@ export default function QuestionnaireStep5() {
 
       {/* ── Sticky CTA — visible only when at least one condition selected ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4 transition-all duration-500"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4 transition-all duration-500"
         style={{
-          opacity: hasSelection ? 1 : 0,
-          pointerEvents: hasSelection ? 'auto' : 'none',
+          opacity: done && hasSelection ? 1 : 0,
+          pointerEvents: done && hasSelection ? 'auto' : 'none',
           background: 'linear-gradient(to top, white 60%, rgba(255,255,255,0))',
         }}
       >

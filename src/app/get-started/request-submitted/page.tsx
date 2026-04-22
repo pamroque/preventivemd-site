@@ -306,7 +306,7 @@ export default function RequestSubmittedPage() {
 
       {/* ── Bottom nav ── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-4"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2"
         aria-label="Main navigation"
       >
         <div

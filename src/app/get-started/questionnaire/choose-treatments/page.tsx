@@ -45,7 +45,7 @@ const TREATMENTS: readonly Treatment[] = [
   {
     id: 'glp-1',
     name: 'GLP-1',
-    description: 'Examples include semaglutide and tirzepatide. May help support weight management by helping you feel fuller.',
+    description: 'Examples include Semaglutide and Tirzepatide. May help support weight management by helping you feel fuller.',
   },
   {
     id: 'glutathione',
@@ -283,7 +283,7 @@ export default function ChooseTreatmentsPage() {
               </p>
               {done && preCheckedId && showPreCheckedNote && (
                 <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
-                  Some options have been pre-checked based on your initial interest.
+                  {TREATMENTS.find(t => t.id === preCheckedId)?.name ?? preCheckedId} has been pre-checked based on your initial interest.
                 </p>
               )}
               {done && showEmptyError && (
@@ -304,33 +304,7 @@ export default function ChooseTreatmentsPage() {
             className="flex flex-col gap-3 animate-[fadeIn_0.4s_ease_forwards]"
             aria-describedby={showEmptyError ? 'treatments-error' : undefined}
           >
-            {sortedTreatments.map((t) => {
-              const isIneligible = ineligibleIds.has(t.id)
-
-              if (isIneligible) {
-                return (
-                  <div
-                    key={t.id}
-                    aria-disabled="true"
-                    className="w-full p-4 rounded-xl border border-[#e3e3e3] flex items-start gap-3"
-                  >
-                    <div className="flex-1 min-w-0 flex flex-col gap-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-lg font-semibold leading-5 text-[rgba(0,0,0,0.87)]">
-                          {t.name}
-                        </span>
-                        <span className="text-xs font-semibold tracking-widest uppercase text-[#b91c1c] bg-[#fee2e2] px-1.5 py-0.5 rounded-full leading-none">
-                          INELIGIBLE
-                        </span>
-                      </div>
-                      <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
-                        Based on the information you shared, we&rsquo;re unable to offer this treatment
-                      </p>
-                    </div>
-                  </div>
-                )
-              }
-
+            {sortedTreatments.filter(t => !ineligibleIds.has(t.id)).map((t) => {
               const isSelected = selected.has(t.id)
               const isGoalMatch = goalMatchedIds.has(t.id)
               return (
@@ -352,7 +326,6 @@ export default function ChooseTreatmentsPage() {
                       : 'rounded-xl border border-[#e3e3e3] hover:border-[#0778ba]/40'
                   }`}
                 >
-                  {/* Checkbox indicator */}
                   <div
                     className={`mt-0.5 shrink-0 size-4 rounded border-2 flex items-center justify-center transition-colors ${
                       isSelected ? 'border-[#0778ba] bg-[#0778ba]' : 'border-[#d4d4d8] bg-white'
@@ -361,28 +334,19 @@ export default function ChooseTreatmentsPage() {
                   >
                     {isSelected && (
                       <svg viewBox="0 0 10 8" fill="none" className="size-2.5">
-                        <path
-                          d="M1 4l3 3 5-6"
-                          stroke="white"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
+                        <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5"
+                          strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0 flex flex-col gap-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className={`text-lg font-semibold leading-5 ${
-                          isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'
-                        }`}
-                      >
+                      <span className={`text-lg font-medium leading-7 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
                         {t.name}
                       </span>
                       {isGoalMatch && (
-                        <span className="text-xs font-semibold tracking-widest uppercase text-[#055e68] bg-[#e0f7fa] px-1.5 py-0.5 rounded-full leading-none">
+                        <span className="text-[11px] font-semibold tracking-[1.5px] uppercase text-[#07808d] leading-none">
                           GOAL MATCH
                         </span>
                       )}
@@ -393,6 +357,33 @@ export default function ChooseTreatmentsPage() {
                 </div>
               )
             })}
+
+            {/* ── Unavailable section ── */}
+            {ineligibleIds.size > 0 && (
+              <>
+                <div className="flex items-center gap-3 pt-3">
+                  <span className="text-[12px] font-medium tracking-[1.5px] uppercase text-[#71717a] shrink-0">
+                    Unavailable
+                  </span>
+                  <div className="flex-1 h-px bg-[#e4e4e7]" aria-hidden="true" />
+                </div>
+                <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
+                  Based on your information, we&rsquo;re unable to offer:
+                </p>
+                {sortedTreatments.filter(t => ineligibleIds.has(t.id)).map((t) => (
+                  <div
+                    key={t.id}
+                    aria-disabled="true"
+                    className="w-full px-4 py-3 rounded-lg border border-[#e3e3e3] flex flex-col gap-1"
+                  >
+                    <span className="text-lg font-medium leading-7 text-[rgba(0,0,0,0.87)]">
+                      {t.name}
+                    </span>
+                    <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">{t.description}</p>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
           )}
 
@@ -401,8 +392,13 @@ export default function ChooseTreatmentsPage() {
 
       {/* ── Sticky CTA ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4"
-        style={{ background: 'linear-gradient(to top, white 60%, rgba(255,255,255,0))' }}
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4"
+        style={{
+          background: 'linear-gradient(to top, white 60%, rgba(255,255,255,0))',
+          opacity: done ? 1 : 0,
+          pointerEvents: done ? 'auto' : 'none',
+          transition: 'opacity 0.5s',
+        }}
       >
         <button
           type="button"

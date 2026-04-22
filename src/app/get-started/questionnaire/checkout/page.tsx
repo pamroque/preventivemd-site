@@ -20,6 +20,15 @@ const BADGE_HIPAA = '/assets/badge-hipaa.png'
 const BADGE_SSL = '/assets/badge-ssl.png'
 const BADGE_LEGIT = '/assets/badge-legit.png'
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatPhone(digits: string): string {
+  if (digits.length === 0) return ''
+  if (digits.length <= 3) return `(${digits}`
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+}
+
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
 function ChevronUpDownIcon() {
@@ -36,6 +45,7 @@ function ChevronUpDownIcon() {
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
 const checkoutSchema = z.object({
+  phone: z.string().regex(/^\d{10}$/, 'Enter a valid 10-digit US phone number'),
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
   street: z.string().min(1, 'Street address is required'),
   apt: z.string().optional(),
@@ -68,12 +78,12 @@ const checkoutSchema = z.object({
     if (!data.cardName?.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Cardholder name is required', path: ['cardName'] })
     }
-  }
-  if (!data.sameAsDelivery) {
-    if (!data.billingStreet?.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Street address is required', path: ['billingStreet'] })
-    if (!data.billingCity?.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'City is required', path: ['billingCity'] })
-    if (!data.billingState) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'State is required', path: ['billingState'] })
-    if (!data.billingZip || !/^\d{5}$/.test(data.billingZip)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid ZIP', path: ['billingZip'] })
+    if (!data.sameAsDelivery) {
+      if (!data.billingStreet?.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Street address is required', path: ['billingStreet'] })
+      if (!data.billingCity?.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'City is required', path: ['billingCity'] })
+      if (!data.billingState) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'State is required', path: ['billingState'] })
+      if (!data.billingZip || !/^\d{5}$/.test(data.billingZip)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid ZIP', path: ['billingZip'] })
+    }
   }
 })
 
@@ -96,7 +106,7 @@ function FieldError({ message }: { message?: string }) {
 function SectionHeader({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-xs font-semibold tracking-widest uppercase text-[rgba(0,0,0,0.45)] shrink-0">
+      <span className="text-[12px] font-medium tracking-[1.5px] uppercase text-[rgba(0,0,0,0.45)] shrink-0">
         {label}
       </span>
       <div className="flex-1 h-px bg-[#e4e4e7]" />
@@ -116,14 +126,20 @@ const PROGRESS = 90
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const [phone, setPhone] = useState('')
   const [dueToday, setDueToday] = useState(0)
   const [cartItems, setCartItems] = useState<string[]>([])
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
+  const [isAndroid, setIsAndroid] = useState(false)
+
+  // Read step 0 synchronously so values are available for useForm defaultValues
+  const step0Snapshot = getStepValues(0)
+  const stateFromStep0 = typeof step0Snapshot.state === 'string' ? step0Snapshot.state : ''
+  const phoneFromStep0 = typeof step0Snapshot.phone === 'string' ? step0Snapshot.phone : ''
+
+  const [phoneDisplay, setPhoneDisplay] = useState(() => formatPhone(phoneFromStep0))
 
   useEffect(() => {
-    const step0 = getStepValues(0)
-    if (typeof step0.phone === 'string') setPhone(step0.phone)
+    setIsAndroid(/android/i.test(navigator.userAgent))
 
     const prior = getPriorSteps(14)
     const last = prior[prior.length - 1]
@@ -146,7 +162,7 @@ export default function CheckoutPage() {
     }
 
     const TREATMENT_NAMES: Record<string, string> = {
-      'ghk-cu': 'GHK-Cu', 'glp-1': 'GLP-1', 'glutathione': 'Glutathione',
+      'ghk-cu': 'GHK-Copper', 'glp-1': 'GLP-1', 'glutathione': 'Glutathione',
       'nad-plus': 'NAD+', 'sermorelin': 'Sermorelin',
     }
 
@@ -156,7 +172,7 @@ export default function CheckoutPage() {
       const c = choices[id]
       const plan = c?.plan
       if (plan) total += PLAN_PRICES[plan] ?? 0
-      let name = id === 'glp-1' && c?.type
+      const name = id === 'glp-1' && c?.type
         ? (c.type === 'semaglutide' ? 'Semaglutide' : 'Tirzepatide')
         : (TREATMENT_NAMES[id] ?? id)
       const form = c?.form === 'injection' ? 'Injections' : c?.form === 'oral' ? 'Oral Tablets' : null
@@ -176,17 +192,29 @@ export default function CheckoutPage() {
   } = useForm<FormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
+      phone: phoneFromStep0,
       paymentMethod: 'card',
       sameAsDelivery: true,
+      deliveryState: stateFromStep0,
     },
   })
 
   const paymentMethod = watch('paymentMethod')
   const sameAsDelivery = watch('sameAsDelivery')
+  const isAltPay = paymentMethod === 'pay'
+  const altPayLabel = isAndroid ? 'Google Pay' : 'Apple Pay'
 
   const priorBubbleCount = currentStep?.bubbles.length ?? 0
   const { animateBubbles, visibleWords, typingStarted, done, words } =
     useEveTyping(QUESTION_TEXT, priorBubbleCount)
+
+  const { ref: phoneRef } = register('phone')
+
+  function handlePhoneInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+    setPhoneDisplay(formatPhone(digits))
+    setValue('phone', digits, { shouldValidate: false })
+  }
 
   function handleCardInput(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 16)
@@ -227,7 +255,7 @@ export default function CheckoutPage() {
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: '7rem',
+          paddingBottom: '9rem',
         }}
       >
         <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
@@ -272,417 +300,470 @@ export default function CheckoutPage() {
 
           {/* ── Form ── */}
           {done && (
-          <form
-            id="checkout-form"
-            onSubmit={handleSubmit(onSubmit)}
-            noValidate
-            className="flex flex-col gap-6 animate-[fadeIn_0.4s_ease_forwards]"
-          >
+            <form
+              id="checkout-form"
+              onSubmit={handleSubmit(onSubmit)}
+              noValidate
+              className="flex flex-col gap-12 animate-[fadeIn_0.4s_ease_forwards]"
+            >
 
-            {/* ACCOUNT DETAILS */}
-            <div className="flex flex-col gap-4">
-              <SectionHeader label="Account Details" />
+              {/* ACCOUNT DETAILS */}
+              <div className="flex flex-col gap-4">
+                <SectionHeader label="Account Details" />
 
-              {/* Phone — read-only */}
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-[#09090b] leading-5">
-                  Mobile number
-                </label>
-                <div className={`${inputBase} flex items-center gap-0 !px-0 overflow-hidden opacity-70`}>
-                  <span className="px-3 text-sm text-[#09090b] opacity-50 shrink-0">+1</span>
-                  <span className="flex-1 py-1.5 pr-3 text-base text-[rgba(0,0,0,0.87)]">{phone}</span>
+                {/* Phone — pre-filled, editable, required */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="phone" className="text-sm font-medium text-[#09090b] leading-5">
+                    Mobile number <span className="text-red-500">*</span>
+                  </label>
+                  <input type="hidden" ref={phoneRef} name="phone" />
+                  <div className={`${inputBase} flex items-center !px-0 overflow-hidden ${errors.phone ? inputErrorCls : ''}`}>
+                    <span className="px-3 text-base text-[rgba(0,0,0,0.87)] opacity-50 shrink-0 border-r border-[#e4e4e7]">+1</span>
+                    <input
+                      id="phone"
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      placeholder="(###) ###-####"
+                      value={phoneDisplay}
+                      onChange={handlePhoneInput}
+                      className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
+                      aria-invalid={!!errors.phone}
+                    />
+                  </div>
+                  <FieldError message={errors.phone?.message} />
+                  <p className="text-xs font-bold text-[#0778ba] leading-4">
+                    Will be used to sign in to your Care Portal
+                  </p>
                 </div>
-                <p className="text-xs font-semibold text-[#0778ba] leading-4">
-                  Will be used to sign in to your Care Portal
+
+                {/* Email */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="email" className="text-sm font-medium text-[#09090b] leading-5">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    {...register('email')}
+                    className={`${inputBase} ${errors.email ? inputErrorCls : ''}`}
+                    aria-invalid={!!errors.email}
+                  />
+                  <FieldError message={errors.email?.message} />
+                </div>
+              </div>
+
+              {/* DELIVERY ADDRESS */}
+              <div className="flex flex-col gap-4">
+                <SectionHeader label="Delivery Address" />
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="street" className="text-sm font-medium text-[#09090b] leading-5">
+                    Street address <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="street"
+                    type="text"
+                    autoComplete="address-line1"
+                    {...register('street')}
+                    className={`${inputBase} ${errors.street ? inputErrorCls : ''}`}
+                    aria-invalid={!!errors.street}
+                  />
+                  <FieldError message={errors.street?.message} />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="apt" className="text-sm font-medium text-[#09090b] leading-5">
+                    Apt, suite, etc.
+                  </label>
+                  <input
+                    id="apt"
+                    type="text"
+                    autoComplete="address-line2"
+                    {...register('apt')}
+                    className={inputBase}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="city" className="text-sm font-medium text-[#09090b] leading-5">
+                    City <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="city"
+                    type="text"
+                    autoComplete="address-level2"
+                    {...register('city')}
+                    className={`${inputBase} ${errors.city ? inputErrorCls : ''}`}
+                    aria-invalid={!!errors.city}
+                  />
+                  <FieldError message={errors.city?.message} />
+                </div>
+
+                <div className="flex gap-3 items-start">
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <label htmlFor="deliveryState" className="text-sm font-medium text-[#09090b] leading-5">
+                      State <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative opacity-50">
+                      <select
+                        id="deliveryState"
+                        value={stateFromStep0}
+                        disabled
+                        onChange={() => {}}
+                        className={`${inputBase} appearance-none pr-8 cursor-not-allowed`}
+                        aria-disabled="true"
+                      >
+                        <option value="" disabled />
+                        {US_STATES.map(({ value, label }) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
+                        <ChevronUpDownIcon />
+                      </span>
+                    </div>
+                    <FieldError message={errors.deliveryState?.message} />
+                  </div>
+
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <label htmlFor="zip" className="text-sm font-medium text-[#09090b] leading-5">
+                      ZIP code <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="zip"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      maxLength={5}
+                      {...register('zip')}
+                      className={`${inputBase} ${errors.zip ? inputErrorCls : ''}`}
+                      aria-invalid={!!errors.zip}
+                    />
+                    <FieldError message={errors.zip?.message} />
+                  </div>
+                </div>
+              </div>
+
+              {/* PAYMENT DETAILS */}
+              <div className="flex flex-col gap-4">
+                <SectionHeader label="Payment Details" />
+
+                {/* Card / Apple Pay (or Google Pay) toggle */}
+                <div className="flex rounded-lg border border-[#e4e4e7] overflow-hidden shadow-sm">
+                  {(['card', 'pay'] as const).map(method => {
+                    const isActive = paymentMethod === method
+                    const label = method === 'card' ? 'Card' : altPayLabel
+                    return (
+                      <button
+                        key={method}
+                        type="button"
+                        onClick={() => setValue('paymentMethod', method, { shouldValidate: false })}
+                        className={`flex-1 h-10 text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-[#0778ba] text-white'
+                            : 'bg-white text-[rgba(0,0,0,0.6)] hover:bg-gray-50'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* OR divider + card fields — hidden when Apple/Google Pay selected */}
+                {!isAltPay && (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-[#e4e4e7]" />
+                      <span className="text-xs font-medium text-[rgba(0,0,0,0.45)]">OR</span>
+                      <div className="flex-1 h-px bg-[#e4e4e7]" />
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="cardNumber" className="text-sm font-medium text-[#09090b] leading-5">
+                          Card number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="cardNumber"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="cc-number"
+                          placeholder="0000 0000 0000 0000"
+                          {...register('cardNumber')}
+                          onChange={handleCardInput}
+                          className={`${inputBase} ${errors.cardNumber ? inputErrorCls : ''}`}
+                          aria-invalid={!!errors.cardNumber}
+                        />
+                        <FieldError message={errors.cardNumber?.message} />
+                      </div>
+
+                      <div className="flex gap-3 items-start">
+                        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                          <label htmlFor="expiration" className="text-sm font-medium text-[#09090b] leading-5">
+                            Expiration <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="expiration"
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="cc-exp"
+                            placeholder="MM/YY"
+                            {...register('expiration')}
+                            onChange={handleExpInput}
+                            className={`${inputBase} ${errors.expiration ? inputErrorCls : ''}`}
+                            aria-invalid={!!errors.expiration}
+                          />
+                          <FieldError message={errors.expiration?.message} />
+                        </div>
+                        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                          <label htmlFor="security" className="text-sm font-medium text-[#09090b] leading-5">
+                            Security code <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="security"
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="cc-csc"
+                            placeholder="CVV"
+                            maxLength={4}
+                            {...register('security')}
+                            className={`${inputBase} ${errors.security ? inputErrorCls : ''}`}
+                            aria-invalid={!!errors.security}
+                          />
+                          <FieldError message={errors.security?.message} />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="cardName" className="text-sm font-medium text-[#09090b] leading-5">
+                          Cardholder name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="cardName"
+                          type="text"
+                          autoComplete="cc-name"
+                          {...register('cardName')}
+                          className={`${inputBase} ${errors.cardName ? inputErrorCls : ''}`}
+                          aria-invalid={!!errors.cardName}
+                        />
+                        <FieldError message={errors.cardName?.message} />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* BILLING ADDRESS — hidden when Apple/Google Pay selected */}
+              {!isAltPay && (
+                <div className="flex flex-col gap-4">
+                  <SectionHeader label="Billing Address" />
+
+                  <div className="flex gap-3 items-start">
+                    <div className="flex items-center justify-center h-5 w-4 shrink-0 mt-0.5">
+                      <input
+                        id="sameAsDelivery"
+                        type="checkbox"
+                        {...register('sameAsDelivery')}
+                        className="size-4 rounded border-[#e4e4e7] accent-[#0778ba] focus-visible:ring-2 focus-visible:ring-[#0778ba] cursor-pointer"
+                      />
+                    </div>
+                    <label htmlFor="sameAsDelivery" className="text-sm font-medium text-[#09090b] leading-5 cursor-pointer">
+                      Same as delivery address
+                    </label>
+                  </div>
+
+                  {!sameAsDelivery && (
+                    <div className="flex flex-col gap-4 animate-[fadeIn_0.3s_ease_forwards]">
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="billingStreet" className="text-sm font-medium text-[#09090b] leading-5">
+                          Street address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="billingStreet"
+                          type="text"
+                          autoComplete="billing address-line1"
+                          {...register('billingStreet')}
+                          className={`${inputBase} ${errors.billingStreet ? inputErrorCls : ''}`}
+                          aria-invalid={!!errors.billingStreet}
+                        />
+                        <FieldError message={errors.billingStreet?.message} />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="billingApt" className="text-sm font-medium text-[#09090b] leading-5">
+                          Apt, suite, etc.
+                        </label>
+                        <input
+                          id="billingApt"
+                          type="text"
+                          autoComplete="billing address-line2"
+                          {...register('billingApt')}
+                          className={inputBase}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="billingCity" className="text-sm font-medium text-[#09090b] leading-5">
+                          City <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="billingCity"
+                          type="text"
+                          autoComplete="billing address-level2"
+                          {...register('billingCity')}
+                          className={`${inputBase} ${errors.billingCity ? inputErrorCls : ''}`}
+                          aria-invalid={!!errors.billingCity}
+                        />
+                        <FieldError message={errors.billingCity?.message} />
+                      </div>
+
+                      <div className="flex gap-3 items-start">
+                        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                          <label htmlFor="billingState" className="text-sm font-medium text-[#09090b] leading-5">
+                            State <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <select
+                              id="billingState"
+                              {...register('billingState')}
+                              defaultValue=""
+                              className={`${inputBase} appearance-none pr-8 ${errors.billingState ? inputErrorCls : ''}`}
+                              aria-invalid={!!errors.billingState}
+                            >
+                              <option value="" disabled />
+                              {US_STATES.map(({ value, label }) => (
+                                <option key={value} value={value}>{label}</option>
+                              ))}
+                            </select>
+                            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
+                              <ChevronUpDownIcon />
+                            </span>
+                          </div>
+                          <FieldError message={errors.billingState?.message} />
+                        </div>
+
+                        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                          <label htmlFor="billingZip" className="text-sm font-medium text-[#09090b] leading-5">
+                            ZIP code <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            id="billingZip"
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="billing postal-code"
+                            maxLength={5}
+                            {...register('billingZip')}
+                            className={`${inputBase} ${errors.billingZip ? inputErrorCls : ''}`}
+                            aria-invalid={!!errors.billingZip}
+                          />
+                          <FieldError message={errors.billingZip?.message} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Authorization text */}
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
+                  By submitting, you authorize ${dueToday.toLocaleString()} today and, if your prescription is approved, recurring charges of ${dueToday.toLocaleString()} per your selected billing cycle until you cancel.
+                </p>
+                <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
+                  Payment does not guarantee a prescription. If treatment is not approved, you will receive a refund.
                 </p>
               </div>
 
-              {/* Email */}
-              <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="text-sm font-medium text-[#09090b] leading-5">
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  {...register('email')}
-                  className={`${inputBase} ${errors.email ? inputErrorCls : ''}`}
-                  aria-invalid={!!errors.email}
-                />
-                <FieldError message={errors.email?.message} />
-              </div>
-            </div>
-
-            {/* DELIVERY ADDRESS */}
-            <div className="flex flex-col gap-4">
-              <SectionHeader label="Delivery Address" />
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="street" className="text-sm font-medium text-[#09090b] leading-5">
-                  Street address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="street"
-                  type="text"
-                  autoComplete="address-line1"
-                  {...register('street')}
-                  className={`${inputBase} ${errors.street ? inputErrorCls : ''}`}
-                  aria-invalid={!!errors.street}
-                />
-                <FieldError message={errors.street?.message} />
+              {/* Trust badges — same 1x display dimensions as /get-started */}
+              <div className="flex items-center justify-center gap-4 py-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={BADGE_HIPAA} alt="HIPAA Compliant" className="object-contain shrink-0" style={{ width: 46, height: 54 }} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={BADGE_SSL} alt="SSL Secure" className="object-contain shrink-0" style={{ width: 48, height: 48 }} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={BADGE_LEGIT} alt="LegitScript Certified" className="object-contain shrink-0" style={{ width: 50, height: 54 }} />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="apt" className="text-sm font-medium text-[#09090b] leading-5">
-                  Apt, suite, etc.
-                </label>
-                <input
-                  id="apt"
-                  type="text"
-                  autoComplete="address-line2"
-                  {...register('apt')}
-                  className={inputBase}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="city" className="text-sm font-medium text-[#09090b] leading-5">
-                  City <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="city"
-                  type="text"
-                  autoComplete="address-level2"
-                  {...register('city')}
-                  className={`${inputBase} ${errors.city ? inputErrorCls : ''}`}
-                  aria-invalid={!!errors.city}
-                />
-                <FieldError message={errors.city?.message} />
-              </div>
-
-              <div className="flex gap-3 items-start">
-                <div className="flex-1 min-w-0 flex flex-col gap-2">
-                  <label htmlFor="deliveryState" className="text-sm font-medium text-[#09090b] leading-5">
-                    State <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="deliveryState"
-                      {...register('deliveryState')}
-                      defaultValue=""
-                      className={`${inputBase} appearance-none pr-8 ${errors.deliveryState ? inputErrorCls : ''}`}
-                      aria-invalid={!!errors.deliveryState}
-                    >
-                      <option value="" disabled />
-                      {US_STATES.map(({ value, label }) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
-                      <ChevronUpDownIcon />
-                    </span>
-                  </div>
-                  <FieldError message={errors.deliveryState?.message} />
-                </div>
-
-                <div className="flex-1 min-w-0 flex flex-col gap-2">
-                  <label htmlFor="zip" className="text-sm font-medium text-[#09090b] leading-5">
-                    ZIP code <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="zip"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="postal-code"
-                    maxLength={5}
-                    {...register('zip')}
-                    className={`${inputBase} ${errors.zip ? inputErrorCls : ''}`}
-                    aria-invalid={!!errors.zip}
-                  />
-                  <FieldError message={errors.zip?.message} />
-                </div>
-              </div>
-            </div>
-
-            {/* PAYMENT DETAILS */}
-            <div className="flex flex-col gap-4">
-              <SectionHeader label="Payment Details" />
-
-              {/* Card / Pay toggle */}
-              <div className="flex rounded-lg border border-[#e4e4e7] overflow-hidden shadow-sm">
-                {(['card', 'pay'] as const).map(method => {
-                  const isActive = paymentMethod === method
-                  return (
-                    <button
-                      key={method}
-                      type="button"
-                      onClick={() => setValue('paymentMethod', method, { shouldValidate: false })}
-                      className={`flex-1 h-10 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-[#0778ba] text-white border-2 border-[#0778ba]'
-                          : 'bg-white text-[rgba(0,0,0,0.6)] hover:bg-gray-50'
-                      }`}
-                    >
-                      {method === 'card' ? 'Card' : 'Pay'}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {paymentMethod === 'card' && (
-                <>
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="cardNumber" className="text-sm font-medium text-[#09090b] leading-5">
-                      Card number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="cardNumber"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="cc-number"
-                      placeholder="0000 0000 0000 0000"
-                      {...register('cardNumber')}
-                      onChange={handleCardInput}
-                      className={`${inputBase} ${errors.cardNumber ? inputErrorCls : ''}`}
-                      aria-invalid={!!errors.cardNumber}
-                    />
-                    <FieldError message={errors.cardNumber?.message} />
-                  </div>
-
-                  <div className="flex gap-3 items-start">
-                    <div className="flex-1 min-w-0 flex flex-col gap-2">
-                      <label htmlFor="expiration" className="text-sm font-medium text-[#09090b] leading-5">
-                        Expiration <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="expiration"
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="cc-exp"
-                        placeholder="MM/YY"
-                        {...register('expiration')}
-                        onChange={handleExpInput}
-                        className={`${inputBase} ${errors.expiration ? inputErrorCls : ''}`}
-                        aria-invalid={!!errors.expiration}
-                      />
-                      <FieldError message={errors.expiration?.message} />
-                    </div>
-                    <div className="flex-1 min-w-0 flex flex-col gap-2">
-                      <label htmlFor="security" className="text-sm font-medium text-[#09090b] leading-5">
-                        Security code <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="security"
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="cc-csc"
-                        placeholder="CVV"
-                        maxLength={4}
-                        {...register('security')}
-                        className={`${inputBase} ${errors.security ? inputErrorCls : ''}`}
-                        aria-invalid={!!errors.security}
-                      />
-                      <FieldError message={errors.security?.message} />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="cardName" className="text-sm font-medium text-[#09090b] leading-5">
-                      Cardholder name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="cardName"
-                      type="text"
-                      autoComplete="cc-name"
-                      {...register('cardName')}
-                      className={`${inputBase} ${errors.cardName ? inputErrorCls : ''}`}
-                      aria-invalid={!!errors.cardName}
-                    />
-                    <FieldError message={errors.cardName?.message} />
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* BILLING ADDRESS */}
-            <div className="flex flex-col gap-4">
-              <SectionHeader label="Billing Address" />
-
-              <div className="flex gap-3 items-start">
-                <div className="flex items-center justify-center h-5 w-4 shrink-0 mt-0.5">
-                  <input
-                    id="sameAsDelivery"
-                    type="checkbox"
-                    {...register('sameAsDelivery')}
-                    className="size-4 rounded border-[#e4e4e7] text-[#0778ba] focus:ring-[#0778ba] cursor-pointer accent-[#0778ba]"
-                  />
-                </div>
-                <label htmlFor="sameAsDelivery" className="text-sm font-medium text-[#09090b] leading-5 cursor-pointer">
-                  Same as delivery address
-                </label>
-              </div>
-
-              {!sameAsDelivery && (
-                <div className="flex flex-col gap-4 animate-[fadeIn_0.3s_ease_forwards]">
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="billingStreet" className="text-sm font-medium text-[#09090b] leading-5">
-                      Street address <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="billingStreet"
-                      type="text"
-                      autoComplete="billing address-line1"
-                      {...register('billingStreet')}
-                      className={`${inputBase} ${errors.billingStreet ? inputErrorCls : ''}`}
-                      aria-invalid={!!errors.billingStreet}
-                    />
-                    <FieldError message={errors.billingStreet?.message} />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="billingApt" className="text-sm font-medium text-[#09090b] leading-5">
-                      Apt, suite, etc.
-                    </label>
-                    <input
-                      id="billingApt"
-                      type="text"
-                      autoComplete="billing address-line2"
-                      {...register('billingApt')}
-                      className={inputBase}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="billingCity" className="text-sm font-medium text-[#09090b] leading-5">
-                      City <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="billingCity"
-                      type="text"
-                      autoComplete="billing address-level2"
-                      {...register('billingCity')}
-                      className={`${inputBase} ${errors.billingCity ? inputErrorCls : ''}`}
-                      aria-invalid={!!errors.billingCity}
-                    />
-                    <FieldError message={errors.billingCity?.message} />
-                  </div>
-
-                  <div className="flex gap-3 items-start">
-                    <div className="flex-1 min-w-0 flex flex-col gap-2">
-                      <label htmlFor="billingState" className="text-sm font-medium text-[#09090b] leading-5">
-                        State <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <select
-                          id="billingState"
-                          {...register('billingState')}
-                          defaultValue=""
-                          className={`${inputBase} appearance-none pr-8 ${errors.billingState ? inputErrorCls : ''}`}
-                          aria-invalid={!!errors.billingState}
-                        >
-                          <option value="" disabled />
-                          {US_STATES.map(({ value, label }) => (
-                            <option key={value} value={value}>{label}</option>
-                          ))}
-                        </select>
-                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
-                          <ChevronUpDownIcon />
-                        </span>
-                      </div>
-                      <FieldError message={errors.billingState?.message} />
-                    </div>
-
-                    <div className="flex-1 min-w-0 flex flex-col gap-2">
-                      <label htmlFor="billingZip" className="text-sm font-medium text-[#09090b] leading-5">
-                        ZIP code <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="billingZip"
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="billing postal-code"
-                        maxLength={5}
-                        {...register('billingZip')}
-                        className={`${inputBase} ${errors.billingZip ? inputErrorCls : ''}`}
-                        aria-invalid={!!errors.billingZip}
-                      />
-                      <FieldError message={errors.billingZip?.message} />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Legal / disclaimer */}
-            <div className="flex flex-col gap-3">
-              <p className="text-xs text-[rgba(0,0,0,0.5)] leading-5">
-                By submitting this request, you agree to our{' '}
-                <span className="text-[#0778ba]">Terms of Service</span> and{' '}
-                <span className="text-[#0778ba]">Privacy Policy</span>. Your information is protected and will only be used to process your request. A licensed provider will review your information before anything is prescribed.
-              </p>
-              <p className="text-xs text-[rgba(0,0,0,0.45)] leading-5">
-                Your card will be charged upon provider approval. If your request is not approved, you will not be charged.
-              </p>
-            </div>
-
-            {/* Trust badges */}
-            <div className="flex items-center justify-center gap-4 py-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={BADGE_HIPAA} alt="HIPAA Compliant" className="h-8 object-contain" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={BADGE_SSL} alt="SSL Secure" className="h-8 object-contain" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={BADGE_LEGIT} alt="LegitScript Certified" className="h-8 object-contain" />
-            </div>
-
-          </form>
+            </form>
           )}
         </div>
       </main>
 
-      {/* ── Sticky submit footer ── */}
+      {/* ── Sticky CTA ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4"
-        style={{ background: 'linear-gradient(to top, white 60%, rgba(255,255,255,0))' }}
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4"
+        style={{
+          background: 'linear-gradient(to top, white 60%, rgba(255,255,255,0))',
+          opacity: done ? 1 : 0,
+          pointerEvents: done ? 'auto' : 'none',
+          transition: 'opacity 0.5s',
+        }}
       >
-        <div className="w-full md:w-[480px] flex flex-col gap-2">
+        <div className="w-full md:w-[480px] flex flex-col">
 
-          {/* Cart badges */}
-          {cartItems.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {cartItems.map((item, i) => (
-                <span
-                  key={i}
-                  className="text-xs bg-[#f4f4f5] rounded-full px-2.5 py-1 text-[rgba(0,0,0,0.6)]"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          )}
-
+          {/* Submit request button */}
           <button
             type="submit"
             form="checkout-form"
             disabled={isSubmitting}
             className="
-              w-full h-[42px] flex items-center justify-between px-5
-              rounded-br-[36px] rounded-tl-[36px]
-              text-white text-base font-medium leading-6
+              w-full h-[42px] flex items-center justify-center gap-3 px-4
+              rounded-tl-[36px]
+              text-white text-base font-medium leading-6 whitespace-nowrap
               transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
               shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
             "
-            style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+            style={{
+              background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)',
+            }}
           >
-            <span>{isSubmitting ? 'Submitting…' : 'Submit request'}</span>
-            {dueToday > 0 && (
-              <span className="text-sm font-semibold text-white/90">
-                DUE TODAY ${dueToday.toLocaleString()}
-              </span>
-            )}
+            {isSubmitting ? 'Submitting…' : 'Submit request'}
           </button>
+
+          {/* Cart bar */}
+          <div
+            className="flex items-center justify-center gap-4 px-4 py-3 rounded-br-[36px] overflow-x-auto"
+            style={{ background: 'rgba(29,45,68,0.95)', backdropFilter: 'blur(2px)' }}
+          >
+            {/* Medication badges — stacked vertically */}
+            <div className="flex flex-col gap-1 items-start justify-center shrink-0">
+              {cartItems.length > 0
+                ? cartItems.map((item, i) => (
+                    <span
+                      key={i}
+                      className="text-[12px] font-normal leading-4 text-[rgba(255,255,255,0.7)] border rounded-xl whitespace-nowrap"
+                      style={{
+                        background: 'rgba(244,244,245,0.08)',
+                        borderColor: 'rgba(244,244,245,0.12)',
+                        padding: '4px 6px',
+                      }}
+                    >
+                      {item}
+                    </span>
+                  ))
+                : (
+                  <span className="text-[12px] text-white/40">No items selected</span>
+                )
+              }
+            </div>
+
+            {/* Vertical divider */}
+            <div className="w-px self-stretch bg-[rgba(255,255,255,0.1)] shrink-0" />
+
+            {/* Due Today */}
+            <div className="flex flex-col items-start shrink-0">
+              <span className="text-[12px] font-light text-white tracking-[1.5px] uppercase leading-4">
+                Due Today
+              </span>
+              <span className="text-[24px] font-normal text-white leading-8 tracking-[-0.6px]">
+                ${dueToday.toLocaleString()}
+              </span>
+            </div>
+          </div>
 
         </div>
       </div>

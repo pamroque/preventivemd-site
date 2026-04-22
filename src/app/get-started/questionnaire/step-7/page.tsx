@@ -233,11 +233,14 @@ export default function QuestionnaireStep7() {
         </div>
       </main>
 
-      {/* ── Sticky CTA — always visible ── */}
+      {/* ── Sticky CTA ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4"
         style={{
           background: 'linear-gradient(to top, white 60%, rgba(255,255,255,0))',
+          opacity: done ? 1 : 0,
+          pointerEvents: done ? 'auto' : 'none',
+          transition: 'opacity 0.5s',
         }}
       >
         <button

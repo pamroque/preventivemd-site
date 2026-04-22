@@ -144,6 +144,15 @@ interface GoalOption {
   Icon?: () => React.ReactElement
 }
 
+const PEPTIDE_TO_GOAL: Record<string, GoalId> = {
+  Semaglutide: 'weight',
+  Tirzepatide: 'weight',
+  'NAD+': 'energy',
+  Sermorelin: 'recovery',
+  Glutathione: 'energy',
+  'GHK-Cu': 'inflammation',
+}
+
 const GOALS: GoalOption[] = [
   { id: 'weight', label: 'Support healthy weight management', Icon: GlobeAltIcon },
   { id: 'sleep', label: 'Improve sleep quality', Icon: MoonIcon },
@@ -185,15 +194,9 @@ export default function QuestionnaireStep3() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
-
-  useEffect(() => {
-    const prior = getPriorSteps(2)
-    const mapped: PriorStep[] = prior.map((s, i) => ({
-      ...s,
-      editHref: i === 0 ? '/get-started' : `/get-started/questionnaire${i === 1 ? '' : `/step-${i}`}`,
-    }))
-    setCurrentStep(mapped[mapped.length - 1] ?? null)
-  }, [])
+  const [showPreNote, setShowPreNote] = useState(false)
+  const [preNoteName, setPreNoteName] = useState('')
+  const [orderedGoals, setOrderedGoals] = useState<GoalOption[]>(GOALS)
 
   // BMI is derived from step 2's saved values
   const bmi = useMemo(() => computeBmi(getStepValues(1)), [])
@@ -220,10 +223,37 @@ export default function QuestionnaireStep3() {
     },
   })
 
+  useEffect(() => {
+    const prior = getPriorSteps(2)
+    const mapped: PriorStep[] = prior.map((s, i) => ({
+      ...s,
+      editHref: i === 0 ? '/get-started' : `/get-started/questionnaire${i === 1 ? '' : `/step-${i}`}`,
+    }))
+    setCurrentStep(mapped[mapped.length - 1] ?? null)
+
+    // Pre-select goal based on treatment the user started from, only if they
+    // haven't already answered this step.
+    if (savedGoals.length === 0) {
+      const intro = getStepValues(99)
+      const peptide = typeof intro.peptide === 'string' ? intro.peptide : ''
+      const preGoal = peptide ? PEPTIDE_TO_GOAL[peptide] : undefined
+      if (preGoal) {
+        setValue('goals', [preGoal], { shouldValidate: false })
+        setPreNoteName(peptide)
+        setShowPreNote(true)
+        setOrderedGoals([
+          ...GOALS.filter((g) => g.id === preGoal),
+          ...GOALS.filter((g) => g.id !== preGoal),
+        ])
+      }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const selectedGoals = watch('goals') ?? []
   const otherChecked = selectedGoals.includes('other')
 
   function toggleGoal(id: GoalId) {
+    setShowPreNote(false)
     const next = selectedGoals.includes(id)
       ? selectedGoals.filter((g) => g !== id)
       : [...selectedGoals, id]
@@ -311,6 +341,11 @@ export default function QuestionnaireStep3() {
                   </>
                 )}
               </p>
+              {done && showPreNote && preNoteName && (
+                <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
+                  The first goal has been pre-checked based on your initial interest in {preNoteName}.
+                </p>
+              )}
               {errors.goals && (
                 <p
                   id="goals-error"
@@ -338,7 +373,7 @@ export default function QuestionnaireStep3() {
                 {QUESTION_TEXT}
               </span>
 
-              {GOALS.map((goal) => {
+              {orderedGoals.map((goal) => {
                 const checked = selectedGoals.includes(goal.id)
                 const showBmi = goal.id === 'weight' && bmi?.isOverweightOrAbove
                 return (
@@ -394,7 +429,7 @@ export default function QuestionnaireStep3() {
 
       {/* ── Sticky CTA — fixed to viewport bottom, appears with the form ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4 transition-all duration-500"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4 transition-all duration-500"
         style={{
           opacity: done ? 1 : 0,
           pointerEvents: done ? 'auto' : 'none',

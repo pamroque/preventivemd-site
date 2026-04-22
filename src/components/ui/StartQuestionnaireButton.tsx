@@ -45,7 +45,7 @@ export default function StartQuestionnaireButton({ peptide }: { peptide?: string
       className="
         relative flex items-center justify-center gap-3
         w-full h-[42px] px-4 py-2 overflow-hidden
-        rounded-[21px]
+        rounded-tl-[36px] rounded-br-[36px] rounded-tr-none rounded-bl-none
         text-white text-base font-medium leading-6 whitespace-nowrap
         transition-opacity hover:opacity-90
         shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]

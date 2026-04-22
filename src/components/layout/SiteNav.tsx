@@ -203,7 +203,7 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="flex md:hidden fixed bottom-4 left-4 right-4 z-50 h-16 rounded-br-[36px] rounded-tl-[36px] border border-[#d1d1d1] overflow-hidden"
+      className="flex md:hidden fixed bottom-2 left-2 right-2 z-50 h-16 rounded-br-[36px] rounded-tl-[36px] border border-[#d1d1d1] overflow-hidden"
       style={{
         backgroundImage:
           'linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.9) 29.69%, rgb(255,255,255) 69.53%, rgb(255,255,255) 100%)',

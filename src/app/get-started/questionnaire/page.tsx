@@ -520,7 +520,7 @@ export default function QuestionnaireStep1() {
 
       {/* ── Sticky CTA — appears with the form ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4 transition-all duration-500"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4 transition-all duration-500"
         style={{
           opacity: done ? 1 : 0,
           pointerEvents: done ? 'auto' : 'none',
