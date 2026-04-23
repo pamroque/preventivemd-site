@@ -98,19 +98,19 @@ const CONDITIONS: Condition[] = [
     id: 'cancer',
     label: 'Cancer now, cancer in the past, or a family history of cancer',
     maleHidden: false,
-    disqualifying: true,
+    disqualifying: false,
   },
   {
     id: 'mtc',
     label: 'Medullary thyroid cancer (MTC) or family history',
     maleHidden: false,
-    disqualifying: true,
+    disqualifying: false,
   },
   {
     id: 'men2',
     label: 'Multiple Endocrine Neoplasia syndrome type 2 (MEN2)',
     maleHidden: false,
-    disqualifying: true,
+    disqualifying: false,
   },
   {
     id: 'pituitary',
@@ -207,11 +207,13 @@ export default function QuestionnaireStep5() {
       <IntakeHeader backHref="/get-started/questionnaire/step-4" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: hasSelection ? '7rem' : '2rem',
+          paddingBottom: done && hasSelection ? '7rem' : '2rem',
         }}
       >
         <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
@@ -223,7 +225,7 @@ export default function QuestionnaireStep5() {
           />
 
           {/* ── Eve's question ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -241,7 +243,7 @@ export default function QuestionnaireStep5() {
                 {typingStarted && (
                   <>
                     {QUESTION_WORDS.slice(0, visibleWords).map((word, i) => (
-                      <span key={i} className={word === '*' ? 'text-red-500' : undefined}>
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
                         {word}
                         {i < visibleWords - 1 ? ' ' : ''}
                       </span>
@@ -315,10 +317,10 @@ export default function QuestionnaireStep5() {
 
       {/* ── Sticky CTA — visible only when at least one condition selected ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4 transition-all duration-500"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4 transition-all duration-500"
         style={{
-          opacity: hasSelection ? 1 : 0,
-          pointerEvents: hasSelection ? 'auto' : 'none',
+          opacity: done && hasSelection ? 1 : 0,
+          pointerEvents: done && hasSelection ? 'auto' : 'none',
           background: 'linear-gradient(to top, white 60%, rgba(255,255,255,0))',
         }}
       >

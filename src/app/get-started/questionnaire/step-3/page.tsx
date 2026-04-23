@@ -9,6 +9,7 @@ import IntakeHeader from '@/components/ui/IntakeHeader'
 import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { computeBmi } from '@/lib/bmi'
+import { clearGoalQuestionData, getFirstGoalQuestionRoute } from '@/lib/goal-routing'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -144,6 +145,15 @@ interface GoalOption {
   Icon?: () => React.ReactElement
 }
 
+const PEPTIDE_TO_GOAL: Record<string, GoalId> = {
+  Semaglutide: 'weight',
+  Tirzepatide: 'weight',
+  'NAD+': 'energy',
+  Sermorelin: 'recovery',
+  Glutathione: 'energy',
+  'GHK-Cu': 'inflammation',
+}
+
 const GOALS: GoalOption[] = [
   { id: 'weight', label: 'Support healthy weight management', Icon: GlobeAltIcon },
   { id: 'sleep', label: 'Improve sleep quality', Icon: MoonIcon },
@@ -185,15 +195,9 @@ export default function QuestionnaireStep3() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
-
-  useEffect(() => {
-    const prior = getPriorSteps(2)
-    const mapped: PriorStep[] = prior.map((s, i) => ({
-      ...s,
-      editHref: i === 0 ? '/get-started' : `/get-started/questionnaire${i === 1 ? '' : `/step-${i}`}`,
-    }))
-    setCurrentStep(mapped[mapped.length - 1] ?? null)
-  }, [])
+  const [showPreNote, setShowPreNote] = useState(false)
+  const [preNoteName, setPreNoteName] = useState('')
+  const [orderedGoals, setOrderedGoals] = useState<GoalOption[]>(GOALS)
 
   // BMI is derived from step 2's saved values
   const bmi = useMemo(() => computeBmi(getStepValues(1)), [])
@@ -220,10 +224,37 @@ export default function QuestionnaireStep3() {
     },
   })
 
+  useEffect(() => {
+    const prior = getPriorSteps(2)
+    const mapped: PriorStep[] = prior.map((s, i) => ({
+      ...s,
+      editHref: i === 0 ? '/get-started' : `/get-started/questionnaire${i === 1 ? '' : `/step-${i}`}`,
+    }))
+    setCurrentStep(mapped[mapped.length - 1] ?? null)
+
+    // Pre-select goal based on treatment the user started from, only if they
+    // haven't already answered this step.
+    if (savedGoals.length === 0) {
+      const intro = getStepValues(99)
+      const peptide = typeof intro.peptide === 'string' ? intro.peptide : ''
+      const preGoal = peptide ? PEPTIDE_TO_GOAL[peptide] : undefined
+      if (preGoal) {
+        setValue('goals', [preGoal], { shouldValidate: false })
+        setPreNoteName(peptide)
+        setShowPreNote(true)
+        setOrderedGoals([
+          ...GOALS.filter((g) => g.id === preGoal),
+          ...GOALS.filter((g) => g.id !== preGoal),
+        ])
+      }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const selectedGoals = watch('goals') ?? []
   const otherChecked = selectedGoals.includes('other')
 
   function toggleGoal(id: GoalId) {
+    setShowPreNote(false)
     const next = selectedGoals.includes(id)
       ? selectedGoals.filter((g) => g !== id)
       : [...selectedGoals, id]
@@ -241,20 +272,13 @@ export default function QuestionnaireStep3() {
       data.goals.includes('other') && data.otherText?.trim()
         ? [...labels.filter((l) => l !== 'Others'), `Other: ${data.otherText.trim()}`]
         : labels
+    clearGoalQuestionData()
     saveStep(
       2,
       { question: QUESTION_TEXT, bubbles },
       { goals: data.goals.join(','), otherText: data.otherText ?? '' },
     )
-    // When "Lose weight" goal is selected, goal-weight / prior-weight-management /
-    // GLP-1 screens will be inserted here before reaching Recent weight change.
-    const hasWeightLossGoal = data.goals.includes('weight')
-    if (hasWeightLossGoal) {
-      // TODO: route to goal-weight step once built
-      router.push('/get-started/questionnaire/step-4')
-    } else {
-      router.push('/get-started/questionnaire/step-4')
-    }
+    router.push(getFirstGoalQuestionRoute(data.goals))
   }
 
   return (
@@ -262,7 +286,9 @@ export default function QuestionnaireStep3() {
       <IntakeHeader backHref="/get-started/questionnaire/step-2" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -278,7 +304,7 @@ export default function QuestionnaireStep3() {
           />
 
           {/* ── Eve's new question — types in ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -297,7 +323,7 @@ export default function QuestionnaireStep3() {
                 {typingStarted && (
                   <>
                     {QUESTION_WORDS.slice(0, visibleWords).map((word, i) => (
-                      <span key={i} className={word === '*' ? 'text-red-500' : undefined}>
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
                         {word}
                         {i < visibleWords - 1 ? ' ' : ''}
                       </span>
@@ -311,10 +337,15 @@ export default function QuestionnaireStep3() {
                   </>
                 )}
               </p>
+              {done && showPreNote && preNoteName && (
+                <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
+                  The first goal has been pre-checked based on your initial interest in {preNoteName}.
+                </p>
+              )}
               {errors.goals && (
                 <p
                   id="goals-error"
-                  className="text-sm text-red-500 leading-5"
+                  className="text-sm text-red-600 leading-5"
                   role="alert"
                 >
                   {errors.goals.message}
@@ -338,7 +369,7 @@ export default function QuestionnaireStep3() {
                 {QUESTION_TEXT}
               </span>
 
-              {GOALS.map((goal) => {
+              {orderedGoals.map((goal) => {
                 const checked = selectedGoals.includes(goal.id)
                 const showBmi = goal.id === 'weight' && bmi?.isOverweightOrAbove
                 return (
@@ -363,7 +394,8 @@ export default function QuestionnaireStep3() {
                     htmlFor="otherText"
                     className="text-sm font-medium text-[rgba(0,0,0,0.87)]"
                   >
-                    Please specify <span className="text-red-500">*</span>
+                    Please specify <span className="text-red-600" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <textarea
                     id="otherText"
@@ -372,15 +404,15 @@ export default function QuestionnaireStep3() {
                     className={`
                       w-full min-h-[99px] px-3 py-1.5 bg-white border rounded-lg shadow-sm
                       text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
-                      focus:outline-none focus:ring-2 focus:ring-[#0778ba] focus:border-[#0778ba]
-                      transition-colors resize-y
-                      ${errors.otherText ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : 'border-[#e4e4e7]'}
+                      focus:outline-none transition-colors resize-y
+                      ${errors.otherText ? 'border-red-600 focus:border-red-600' : 'border-[#e4e4e7] focus:border-[#0778ba]'}
                     `}
                     aria-invalid={!!errors.otherText}
                     aria-describedby={errors.otherText ? 'otherText-error' : undefined}
+                    aria-required="true"
                   />
                   {errors.otherText && (
-                    <p id="otherText-error" className="text-xs text-red-500 leading-4" role="alert">
+                    <p id="otherText-error" className="text-xs text-red-600 leading-4" role="alert">
                       {errors.otherText.message}
                     </p>
                   )}
@@ -394,7 +426,7 @@ export default function QuestionnaireStep3() {
 
       {/* ── Sticky CTA — fixed to viewport bottom, appears with the form ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4 transition-all duration-500"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4 transition-all duration-500"
         style={{
           opacity: done ? 1 : 0,
           pointerEvents: done ? 'auto' : 'none',
@@ -453,6 +485,7 @@ function GoalCard({
       className={`
         flex items-center gap-4 md:gap-6 px-4 py-3 bg-white cursor-pointer
         transition-colors
+        focus-within:ring-2 focus-within:ring-[#0778ba] focus-within:ring-offset-1
         ${checked
           ? 'rounded-[6px]'
           : 'rounded-lg border border-[#e3e3e3] hover:border-[#0778ba]/40'}

@@ -101,9 +101,11 @@ function AccessibilityMenuButton() {
   )
 }
 
+const DISQUALIFICATION_PATH = '/get-started/questionnaire/disqualification'
+
 /** Desktop navbar — shown on md+ screens */
 function DesktopNav({ pathname }: { pathname: string }) {
-  if (pathname.startsWith('/get-started/questionnaire')) return null
+  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) return null
   return (
     <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 h-14 items-center justify-between px-4 backdrop-blur-sm bg-white/90 border-b border-[#e3e3e3]">
       {/* Leading */}
@@ -172,7 +174,7 @@ function DesktopNav({ pathname }: { pathname: string }) {
 
 /** Mobile top header — shown on <md screens, hidden during intake */
 function MobileHeader({ pathname }: { pathname: string }) {
-  if (pathname.startsWith('/get-started/questionnaire')) return null
+  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) return null
   return (
     <header className="flex md:hidden fixed top-0 left-0 right-0 z-50 h-12 items-center justify-between px-4 py-2 backdrop-blur-sm bg-white/90 border-b border-[#e3e3e3]">
       <Link href="/" aria-label="PreventiveMD home" className="flex items-center">
@@ -197,13 +199,13 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
   // sign-in is not a "welcome" page but keep fallback
   const isSignIn = pathname.startsWith('/sign-in')
 
-  // Hide during intake questionnaire flow
-  if (pathname.startsWith('/get-started/questionnaire')) return null
+  // Hide during intake questionnaire flow (except disqualification, which uses the full site nav)
+  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) return null
 
   return (
     <nav
       aria-label="Mobile navigation"
-      className="flex md:hidden fixed bottom-4 left-4 right-4 z-50 h-16 rounded-br-[36px] rounded-tl-[36px] border border-[#d1d1d1] overflow-hidden"
+      className="flex md:hidden fixed bottom-2 left-2 right-2 z-50 h-16 rounded-br-[36px] rounded-tl-[36px] border border-[#d1d1d1] overflow-hidden"
       style={{
         backgroundImage:
           'linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.9) 29.69%, rgb(255,255,255) 69.53%, rgb(255,255,255) 100%)',

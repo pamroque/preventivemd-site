@@ -167,11 +167,13 @@ export default function QuestionnaireStep6() {
       <IntakeHeader backHref="/get-started/questionnaire/step-5" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: hasSelection ? '7rem' : '2rem',
+          paddingBottom: done && hasSelection ? '7rem' : '2rem',
         }}
       >
         <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
@@ -183,7 +185,7 @@ export default function QuestionnaireStep6() {
           />
 
           {/* ── Eve's question ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -201,7 +203,7 @@ export default function QuestionnaireStep6() {
                 {typingStarted && (
                   <>
                     {QUESTION_WORDS.slice(0, visibleWords).map((word, i) => (
-                      <span key={i} className={word === '*' ? 'text-red-500' : undefined}>
+                      <span key={i} className={word === '*' ? 'text-red-600' : undefined}>
                         {word}
                         {i < visibleWords - 1 ? ' ' : ''}
                       </span>
@@ -271,14 +273,15 @@ export default function QuestionnaireStep6() {
                           value={othersText}
                           onChange={(e) => setOthersText(e.target.value)}
                           rows={4}
+                          aria-label="List other medications, supplements, or therapies"
                           placeholder="Other prescription and over-the-counter medicines, vitamins, supplements, hormones, injections, and IV therapies"
                           className="
                             w-full px-3 py-1.5 rounded-lg
                             border border-[#e4e4e7] bg-white
                             text-base leading-6 text-[rgba(0,0,0,0.87)]
                             placeholder:text-[#71717a]
-                            shadow-sm resize-y
-                            focus:outline-none focus:ring-2 focus:ring-[#0778ba] focus:ring-offset-1
+                            shadow-sm resize-y transition-colors
+                            focus:outline-none focus:border-[#0778ba]
                           "
                         />
                       </div>
@@ -294,10 +297,10 @@ export default function QuestionnaireStep6() {
 
       {/* ── Sticky CTA — visible only when at least one medication selected ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4 transition-all duration-500"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4 transition-all duration-500"
         style={{
-          opacity: hasSelection ? 1 : 0,
-          pointerEvents: hasSelection ? 'auto' : 'none',
+          opacity: done && hasSelection ? 1 : 0,
+          pointerEvents: done && hasSelection ? 'auto' : 'none',
           background: 'linear-gradient(to top, white 60%, rgba(255,255,255,0))',
         }}
       >

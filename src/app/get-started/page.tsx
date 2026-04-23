@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import MedicationCarousel from '@/components/ui/MedicationCarousel'
 import StartQuestionnaireButton from '@/components/ui/StartQuestionnaireButton'
+import ReactivationGate from '@/components/ui/ReactivationGate'
 
 // Local assets — exported at 2x, rendered at 1x display size
 const AVATAR_URL = '/assets/avatar-eve.png'
@@ -54,7 +55,12 @@ function ChevronRightIcon({ className }: { className?: string }) {
   )
 }
 
-export default function GetStartedPage() {
+export default async function GetStartedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ peptide?: string }>
+}) {
+  const { peptide } = await searchParams
   return (
     /*
      * pt-12 → clears mobile top header (h-12)
@@ -62,6 +68,7 @@ export default function GetStartedPage() {
      * pb-28 → clears mobile bottom nav bar (h-16) + 16px gap + safe area
      */
     <main id="main-content" tabIndex={-1} className="min-h-screen bg-white pt-12 pb-28 md:pt-14 md:pb-12 focus:outline-none">
+      <ReactivationGate />
       <div className="mx-auto w-full px-4 py-9 md:max-w-lg md:px-0 md:py-12 lg:max-w-[480px] flex flex-col gap-9 md:gap-12">
 
         {/* ── Greeting ── */}
@@ -136,7 +143,7 @@ export default function GetStartedPage() {
           <h2 id="cta-heading" className="sr-only">Start your intake</h2>
 
           {/* Primary CTA button — saves get-started Q&A to session store */}
-          <StartQuestionnaireButton />
+          <StartQuestionnaireButton peptide={peptide} />
 
           {/* Legal copy */}
           <p className="text-sm text-[#71717a] text-center leading-5">

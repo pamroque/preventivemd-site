@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,6 +12,15 @@ import { saveStep, getStepValues } from '@/lib/intake-session-store'
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
 const AVATAR_URL = '/assets/avatar-eve.png'
+
+// ─── Phone formatting ─────────────────────────────────────────────────────────
+
+function formatPhone(digits: string): string {
+  if (digits.length === 0) return ''
+  if (digits.length <= 3) return `(${digits}`
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+}
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
@@ -59,15 +68,6 @@ function MaleIcon({ active }: { active: boolean }) {
   )
 }
 
-function PencilSquareIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-      className="size-5 shrink-0 text-[#71717a]" aria-hidden="true">
-      <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
-      <path d="M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z" />
-    </svg>
-  )
-}
 
 // ─── 3-phase animation sequence ──────────────────────────────────────────────
 //
@@ -176,14 +176,14 @@ type FormValues = z.infer<typeof schema>
 const inputBase =
   'w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm ' +
   'text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] ' +
-  'focus:outline-none focus:ring-2 focus:ring-[#0778ba] focus:border-[#0778ba] transition-colors'
+  'focus:outline-none focus:border-[#0778ba] focus-within:border-[#0778ba] transition-colors'
 
-const inputErrorCls = 'border-red-400 focus:ring-red-400 focus:border-red-400'
+const inputErrorCls = 'border-red-600 focus:border-red-600 focus-within:border-red-600'
 
-function FieldError({ message }: { message?: string }) {
+function FieldError({ id, message }: { id?: string; message?: string }) {
   if (!message) return null
   return (
-    <p className="text-xs text-red-500 leading-4 mt-1" role="alert">
+    <p id={id} className="text-xs text-red-600 leading-4 mt-1" role="alert">
       {message}
     </p>
   )
@@ -215,11 +215,15 @@ export default function QuestionnaireStep1() {
       dateOfBirth: typeof saved.dateOfBirth === 'string' ? saved.dateOfBirth : '',
       state: typeof saved.state === 'string' ? saved.state : '',
       phone: typeof saved.phone === 'string' ? saved.phone : '',
-      smsConsent: typeof saved.smsConsent === 'boolean' ? saved.smsConsent : false,
+      smsConsent: typeof saved.smsConsent === 'boolean' ? saved.smsConsent : true,
     },
   })
 
   const selectedSex = watch('sex')
+
+  const [phoneDisplay, setPhoneDisplay] = useState<string>(() =>
+    formatPhone(typeof saved.phone === 'string' ? saved.phone : '')
+  )
 
   function handleDateInput(e: React.ChangeEvent<HTMLInputElement>) {
     let v = e.target.value.replace(/\D/g, '')
@@ -233,8 +237,8 @@ export default function QuestionnaireStep1() {
 
   function handlePhoneInput(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
-    setValue('phone', digits, { shouldValidate: false })
-    e.target.value = digits
+    setPhoneDisplay(formatPhone(digits))
+    setValue('phone', digits, { shouldValidate: false, shouldDirty: true })
   }
 
   async function onSubmit(data: FormValues) {
@@ -244,7 +248,7 @@ export default function QuestionnaireStep1() {
       data.sex === 'female' ? 'Female' : 'Male',
       data.dateOfBirth,
       stateName,
-      `+1 ${data.phone}`,
+      `+1 ${formatPhone(data.phone)}`,
       ...(data.smsConsent ? ['Opt in to promotional texts'] : []),
     ]
     saveStep(
@@ -264,7 +268,7 @@ export default function QuestionnaireStep1() {
     <>
       <IntakeHeader backHref="/get-started" progress={PROGRESS} />
 
-      <main className="min-h-screen bg-white pt-12 pb-28 md:pt-14">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-white pt-12 pb-28 md:pt-14 focus:outline-none">
         <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
 
           {/* ── Previous question — static, no animation ── */}
@@ -273,14 +277,6 @@ export default function QuestionnaireStep1() {
               <p className="flex-1 text-sm md:text-base font-medium leading-6 text-[rgba(0,0,0,0.87)]">
                 Hi, I&rsquo;m Eve, and I&rsquo;ll be your concierge. Getting started is simple.
               </p>
-              <button
-                type="button"
-                aria-label="Edit previous answer"
-                onClick={() => router.push('/get-started')}
-                className="shrink-0 hover:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] rounded"
-              >
-                <PencilSquareIcon />
-              </button>
             </div>
 
             {/* ── Response bubble — fades up into place ── */}
@@ -300,7 +296,7 @@ export default function QuestionnaireStep1() {
           </div>
 
           {/* ── Phase 2: Eve's question types in word-by-word ── */}
-          <div id="main-content" tabIndex={-1} className="flex items-start gap-3 w-full focus:outline-none">
+          <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -329,7 +325,7 @@ export default function QuestionnaireStep1() {
               {/* Phase 3: subtext fades in after typing */}
               {done && (
                 <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5 animate-[fadeIn_0.3s_ease_forwards]">
-                  Fields marked with an asterisk (<span className="text-red-500">*</span>) are required.
+                  Fields marked with an asterisk (<span className="text-red-600" aria-hidden="true">*</span>) are required.
                 </p>
               )}
             </div>
@@ -347,7 +343,8 @@ export default function QuestionnaireStep1() {
               <div className="flex gap-3 items-start">
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <label htmlFor="firstName" className="text-sm font-medium text-[#09090b] leading-5">
-                    First name <span className="text-red-500">*</span>
+                    First name <span className="text-red-600" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <input
                     id="firstName"
@@ -356,12 +353,15 @@ export default function QuestionnaireStep1() {
                     autoComplete="given-name"
                     className={`${inputBase} ${errors.firstName ? inputErrorCls : ''}`}
                     aria-invalid={!!errors.firstName}
+                    aria-describedby={errors.firstName ? 'firstName-error' : undefined}
+                    aria-required="true"
                   />
-                  <FieldError message={errors.firstName?.message} />
+                  <FieldError id="firstName-error" message={errors.firstName?.message} />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <label htmlFor="lastName" className="text-sm font-medium text-[#09090b] leading-5">
-                    Last name <span className="text-red-500">*</span>
+                    Last name <span className="text-red-600" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <input
                     id="lastName"
@@ -370,40 +370,51 @@ export default function QuestionnaireStep1() {
                     autoComplete="family-name"
                     className={`${inputBase} ${errors.lastName ? inputErrorCls : ''}`}
                     aria-invalid={!!errors.lastName}
+                    aria-describedby={errors.lastName ? 'lastName-error' : undefined}
+                    aria-required="true"
                   />
-                  <FieldError message={errors.lastName?.message} />
+                  <FieldError id="lastName-error" message={errors.lastName?.message} />
                 </div>
               </div>
 
               {/* Sex assigned at birth — gap-3 (12px) between label and buttons per Figma */}
-              <div role="group" aria-labelledby="sex-label" className="flex flex-col gap-3">
-                <p id="sex-label" className="text-sm font-medium text-[#09090b] leading-5">
-                  Sex assigned at birth <span className="text-red-500">*</span>
-                </p>
-                <div className="flex gap-3">
+              <fieldset
+                className="flex flex-col gap-3 border-0 p-0 m-0"
+                aria-describedby={errors.sex ? 'sex-error' : undefined}
+              >
+                <legend id="sex-label" className="text-sm font-medium text-[#09090b] leading-5">
+                  Sex assigned at birth <span className="text-red-600" aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
+                </legend>
+                <div role="radiogroup" aria-labelledby="sex-label" className="flex gap-3">
                   {(['female', 'male'] as const).map((sex) => {
                     const isSelected = selectedSex === sex
                     return (
                       /* Gradient border technique:
-                         Selected → outer div has gradient bg + p-[2px] + rounded-lg,
-                         inner button has white bg filling the interior.
-                         Unselected → plain 1px border on the button itself. */
-                      <div
+                         Selected → outer label has gradient bg + p-[2px] + rounded-lg,
+                         inner chrome has white bg filling the interior.
+                         Unselected → plain 1px border on the chrome itself. */
+                      <label
                         key={sex}
-                        className="flex-1 rounded-lg"
+                        className="flex-1 rounded-lg cursor-pointer"
                         style={isSelected ? {
                           padding: '2px',
                           background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
                         } : undefined}
                       >
-                        <button
-                          type="button"
-                          onClick={() => setValue('sex', sex, { shouldValidate: true })}
-                          aria-pressed={isSelected}
+                        <input
+                          type="radio"
+                          name="sex"
+                          value={sex}
+                          checked={isSelected}
+                          onChange={() => setValue('sex', sex, { shouldValidate: true })}
+                          className="peer sr-only"
+                        />
+                        <span
                           className={`
                             flex w-full items-center justify-center gap-3 h-10 px-4
                             rounded-[6px] shadow-sm text-base font-medium transition-colors
-                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#0778ba]
+                            peer-focus-visible:ring-2 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-[#0778ba]
                             ${isSelected
                               ? 'bg-white text-[#0778ba]'
                               : 'bg-white border border-[#e4e4e7] text-[#09090b] hover:bg-gray-50'}
@@ -414,23 +425,24 @@ export default function QuestionnaireStep1() {
                             : <MaleIcon active={isSelected} />
                           }
                           {sex === 'female' ? 'Female' : 'Male'}
-                        </button>
-                      </div>
+                        </span>
+                      </label>
                     )
                   })}
                 </div>
                 {errors.sex && (
-                  <p className="text-xs text-red-500 leading-4" role="alert">
+                  <p id="sex-error" className="text-xs text-red-600 leading-4" role="alert">
                     {errors.sex.message}
                   </p>
                 )}
-              </div>
+              </fieldset>
 
               {/* Date of birth + State */}
               <div className="flex gap-3 items-start">
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <label htmlFor="dob" className="text-sm font-medium text-[#09090b] leading-5">
-                    Date of birth <span className="text-red-500">*</span>
+                    Date of birth <span className="text-red-600" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <input
                     id="dob"
@@ -442,13 +454,16 @@ export default function QuestionnaireStep1() {
                     onChange={handleDateInput}
                     className={`${inputBase} ${errors.dateOfBirth ? inputErrorCls : ''}`}
                     aria-invalid={!!errors.dateOfBirth}
+                    aria-describedby={errors.dateOfBirth ? 'dob-error' : undefined}
+                    aria-required="true"
                   />
-                  <FieldError message={errors.dateOfBirth?.message} />
+                  <FieldError id="dob-error" message={errors.dateOfBirth?.message} />
                 </div>
 
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <label htmlFor="state" className="text-sm font-medium text-[#09090b] leading-5">
-                    State <span className="text-red-500">*</span>
+                    State <span className="text-red-600" aria-hidden="true">*</span>
+                    <span className="sr-only">(required)</span>
                   </label>
                   <div className="relative">
                     <select
@@ -457,8 +472,10 @@ export default function QuestionnaireStep1() {
                       defaultValue=""
                       className={`${inputBase} appearance-none pr-8 ${errors.state ? inputErrorCls : ''}`}
                       aria-invalid={!!errors.state}
+                      aria-describedby={errors.state ? 'state-error' : undefined}
+                      aria-required="true"
                     >
-                      <option value="" disabled />
+                      <option value="" disabled>Select a state</option>
                       {US_STATES.map(({ value, label }) => (
                         <option key={value} value={value}>{label}</option>
                       ))}
@@ -467,17 +484,18 @@ export default function QuestionnaireStep1() {
                       <ChevronUpDownIcon />
                     </span>
                   </div>
-                  <FieldError message={errors.state?.message} />
+                  <FieldError id="state-error" message={errors.state?.message} />
                 </div>
               </div>
 
               {/* Mobile number */}
               <div className="flex flex-col gap-2">
                 <label htmlFor="phone" className="text-sm font-medium text-[#09090b] leading-5">
-                  Mobile number <span className="text-red-500">*</span>
+                  Mobile number <span className="text-red-600" aria-hidden="true">*</span>
+                  <span className="sr-only">(required)</span>
                 </label>
-                <div className={`${inputBase} flex items-center gap-0 !px-0 overflow-hidden`}>
-                  <span className="px-3 text-sm text-[#09090b] opacity-50 shrink-0 leading-5">
+                <div className={`${inputBase} flex items-center gap-0 !px-0 overflow-hidden ${errors.phone ? inputErrorCls : ''}`}>
+                  <span aria-hidden="true" className="px-3 text-sm text-[#09090b] opacity-50 shrink-0 leading-5">
                     +1
                   </span>
                   <input
@@ -485,13 +503,16 @@ export default function QuestionnaireStep1() {
                     type="tel"
                     inputMode="numeric"
                     autoComplete="tel-national"
-                    {...register('phone')}
+                    placeholder="(###) ###-####"
+                    value={phoneDisplay}
                     onChange={handlePhoneInput}
                     className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 py-1.5 pr-3"
                     aria-invalid={!!errors.phone}
+                    aria-describedby={errors.phone ? 'phone-error' : undefined}
+                    aria-required="true"
                   />
                 </div>
-                <FieldError message={errors.phone?.message} />
+                <FieldError id="phone-error" message={errors.phone?.message} />
               </div>
 
               {/* SMS consent */}
@@ -506,7 +527,7 @@ export default function QuestionnaireStep1() {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label htmlFor="smsConsent" className="text-sm font-medium text-[#09090b] leading-5 cursor-pointer">
-                    I&rsquo;d like to receive recurring promotional texts from Preventive.
+                    I&rsquo;d like to receive recurring promotional texts from PreventiveMD.
                   </label>
                   <p className="text-sm text-[#71717a] leading-5">
                     Msg &amp; data rates may apply. Message frequency varies. Reply STOP to opt out and HELP for help. Consent is not a condition of purchase.
@@ -520,7 +541,7 @@ export default function QuestionnaireStep1() {
 
       {/* ── Sticky CTA — appears with the form ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-12 pt-4 transition-all duration-500"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4 transition-all duration-500"
         style={{
           opacity: done ? 1 : 0,
           pointerEvents: done ? 'auto' : 'none',

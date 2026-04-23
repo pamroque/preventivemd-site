@@ -1,9 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import IntakeHeader from '@/components/ui/IntakeHeader'
-import { getStepValues, saveStep } from '@/lib/intake-session-store'
+import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
+import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
+import { useEveTyping } from '@/lib/useEveTyping'
+
+const QUESTION_TEXT = 'Choose your desired medication and subscription.'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -22,28 +26,29 @@ function ChevronRightIcon() {
   )
 }
 
-function CheckCircleIcon() {
+function CheckFilledIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"
-      className="size-3.5 shrink-0 text-[#00b4c8]" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+      className="size-5 shrink-0 text-[#00b4c8]" aria-hidden="true">
       <path fillRule="evenodd"
-        d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm3.844 4.574a.75.75 0 0 0-1.188-.918L7.172 8.35 5.28 6.483a.75.75 0 0 0-1.06 1.06l2.5 2.5a.75.75 0 0 0 1.12-.08l4.004-5.39Z"
+        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
         clipRule="evenodd" />
     </svg>
   )
 }
 
-// ─── Treatment names ──────────────────────────────────────────────────────────
+// ─── Data ────────────────────────────────────────────────────────────────────
+
+// Mirrors the display order on the choose-treatments page (alphabetical by name)
+const TREATMENT_ORDER = ['ghk-cu', 'glp-1', 'glutathione', 'nad-plus', 'sermorelin']
 
 const TREATMENT_NAMES: Record<string, string> = {
-  'ghk-cu': 'GHK-Cu',
+  'ghk-cu': 'GHK-Copper',
   'glp-1': 'GLP-1',
   'glutathione': 'Glutathione',
   'nad-plus': 'NAD+',
   'sermorelin': 'Sermorelin',
 }
-
-// ─── Option sets ──────────────────────────────────────────────────────────────
 
 const GLP1_TYPES = [
   { id: 'semaglutide', label: 'Semaglutide', sub: 'As low as $99/mo' },
@@ -51,15 +56,15 @@ const GLP1_TYPES = [
 ] as const
 
 const FORM_OPTIONS = [
-  { id: 'injection', label: 'Injection', sub: 'Once-weekly' },
-  { id: 'oral', label: 'Oral tablets', sub: 'Once-daily' },
+  { id: 'injection', label: 'Injection vials', sub: 'Once-weekly' },
+  { id: 'oral', label: 'Pills', sub: 'Once-daily' },
 ] as const
 
 const PLAN_OPTIONS = [
-  { id: '1mo', label: '1-month supply', price: 149, perMonth: null, tag: null, badge: null },
-  { id: '3mo', label: '3-month supply', price: 417, perMonth: '$139/mo', tag: 'MOST POPULAR', badge: 'SAVE $30' },
-  { id: '6mo', label: '6-month supply*', price: 774, perMonth: '$129/mo', tag: null, badge: 'SAVE $60' },
-  { id: '12mo', label: '12-month supply*', price: 1188, perMonth: '$99/mo', tag: 'BEST VALUE', badge: 'SAVE $600' },
+  { id: '1mo',  label: '1-month supply',   price: 149,  perMonth: null,       tag: null,           badge: null },
+  { id: '3mo',  label: '3-month supply',   price: 417,  perMonth: '$139/mo',  tag: 'Most Popular', badge: 'SAVE $30' },
+  { id: '6mo',  label: '6-month supply*',  price: 774,  perMonth: '$129/mo',  tag: null,           badge: 'SAVE $60' },
+  { id: '12mo', label: '12-month supply*', price: 1188, perMonth: '$99/mo',   tag: 'Best Value',   badge: 'SAVE $600' },
 ] as const
 
 const PLAN_PRICES: Record<string, number> = { '1mo': 149, '3mo': 417, '6mo': 774, '12mo': 1188 }
@@ -76,17 +81,18 @@ interface MedChoice {
   plan: MedPlan | null
 }
 
-// ─── Progress ────────────────────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-const PROGRESS = 80
+function SectionLabel({ id, children }: { id?: string; children: React.ReactNode }) {
+  return (
+    <p id={id} className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+      {children} <span className="text-[#b91c1c]" aria-hidden="true">*</span>
+      <span className="sr-only">(required)</span>
+    </p>
+  )
+}
 
-// ─── Routes ──────────────────────────────────────────────────────────────────
-
-const NEXT_STEP = '/get-started/questionnaire/checkout'
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function RadioCard({
+function MedOptionCard({
   isSelected,
   onClick,
   label,
@@ -99,8 +105,9 @@ function RadioCard({
 }) {
   return (
     <div
+      className="flex-1"
       style={isSelected ? {
-        padding: '2px',
+        padding: 2,
         background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
         borderRadius: 10,
       } : undefined}
@@ -108,18 +115,93 @@ function RadioCard({
       <button
         type="button"
         onClick={onClick}
-        className={`w-full flex flex-col items-center justify-center gap-0.5 py-3 px-2 transition-colors ${
+        aria-pressed={isSelected}
+        className={`w-full flex flex-col items-start gap-1 px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
           isSelected
-            ? 'rounded-[8px] bg-white text-[#0778ba]'
-            : 'rounded-lg border border-[#e4e4e7] bg-white text-[rgba(0,0,0,0.87)] hover:border-[#0778ba]/40'
+            ? 'rounded-[8px] bg-white'
+            : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#0778ba]/40'
         }`}
       >
-        <span className="text-sm font-semibold">{label}</span>
-        <span className={`text-xs ${isSelected ? 'text-[#0778ba]/70' : 'text-[rgba(0,0,0,0.5)]'}`}>{sub}</span>
+        <span className={`text-[18px] font-medium leading-7 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+          {label}
+        </span>
+        <span className={`text-sm leading-5 ${isSelected ? 'text-[#0778ba]/70' : 'text-[rgba(0,0,0,0.6)]'}`}>
+          {sub}
+        </span>
       </button>
     </div>
   )
 }
+
+function PlanRow({
+  opt,
+  isSelected,
+  onClick,
+}: {
+  opt: typeof PLAN_OPTIONS[number]
+  isSelected: boolean
+  onClick: () => void
+}) {
+  return (
+    <div
+      style={isSelected ? {
+        padding: 2,
+        background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+        borderRadius: 10,
+      } : undefined}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={isSelected}
+        className={`w-full flex flex-col gap-1 p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
+          isSelected
+            ? 'rounded-[8px] bg-white'
+            : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#0778ba]/40'
+        }`}
+      >
+        {/* Supply label + optional inline tag */}
+        <div className="flex items-center gap-2">
+          <span className={`text-base font-normal leading-6 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+            {opt.label}
+          </span>
+          {opt.tag && (
+            <span className="text-[12px] font-semibold tracking-[1.5px] uppercase text-[#07808d]">
+              {opt.tag}
+            </span>
+          )}
+        </div>
+
+        {/* Price row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-baseline gap-1.5">
+            <span className={`text-[24px] font-normal leading-8 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+              ${opt.price.toLocaleString()}
+            </span>
+            {opt.perMonth && (
+              <span className="text-sm text-[rgba(0,0,0,0.6)]">
+                ({opt.perMonth})
+              </span>
+            )}
+          </div>
+          {opt.badge && (
+            <span className="text-xs font-normal text-[#047857] bg-[#d1fae5] px-1.5 py-1 rounded-xl">
+              {opt.badge}
+            </span>
+          )}
+        </div>
+      </button>
+    </div>
+  )
+}
+
+// ─── Progress ────────────────────────────────────────────────────────────────
+
+const PROGRESS = 80
+
+// ─── Routes ──────────────────────────────────────────────────────────────────
+
+const NEXT_STEP = '/get-started/questionnaire/checkout'
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
@@ -127,7 +209,17 @@ export default function ChooseMedicationsPage() {
   const router = useRouter()
   const [treatments, setTreatments] = useState<string[]>([])
   const [choices, setChoices] = useState<Record<string, MedChoice>>({})
+  const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, { type?: boolean; form?: boolean; plan?: boolean }>>({})
+  const [loaded, setLoaded] = useState(false)
+  const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  useEffect(() => {
+    if (loaded && treatments.length === 0) {
+      router.replace('/get-started/questionnaire/choose-treatments')
+    }
+  }, [loaded, treatments, router])
 
   useEffect(() => {
     const step12 = getStepValues(12)
@@ -135,6 +227,8 @@ export default function ChooseMedicationsPage() {
     if (typeof step12.treatments === 'string') {
       try { ids = JSON.parse(step12.treatments) } catch { /* ignore */ }
     }
+    // Sort to match choose-treatments page display order
+    ids.sort((a, b) => TREATMENT_ORDER.indexOf(a) - TREATMENT_ORDER.indexOf(b))
     setTreatments(ids)
 
     const initial: Record<string, MedChoice> = {}
@@ -148,7 +242,21 @@ export default function ChooseMedicationsPage() {
       } catch { /* ignore */ }
     }
     setChoices(initial)
+
+    const prior = getPriorSteps(13)
+    const last = prior[prior.length - 1]
+    if (last && Array.isArray(last.bubbles)) {
+      setCurrentStep({
+        ...last,
+        editHref: '/get-started/questionnaire/choose-treatments',
+      })
+    }
+    setLoaded(true)
   }, [])
+
+  const priorBubbleCount = currentStep?.bubbles.length ?? 0
+  const { animateBubbles, visibleWords, typingStarted, done, words } =
+    useEveTyping(QUESTION_TEXT, priorBubbleCount)
 
   function removeTreatment(id: string) {
     setTreatments(prev => prev.filter(t => t !== id))
@@ -164,6 +272,16 @@ export default function ChooseMedicationsPage() {
       ...prev,
       [treatmentId]: { ...prev[treatmentId], [field]: value },
     }))
+    setFieldErrors(prev => {
+      if (!prev[treatmentId]?.[field]) return prev
+      const updated = { ...prev[treatmentId] }
+      delete updated[field as keyof typeof updated]
+      if (Object.keys(updated).length === 0) {
+        const { [treatmentId]: _, ...rest } = prev
+        return rest
+      }
+      return { ...prev, [treatmentId]: updated }
+    })
   }
 
   const isComplete =
@@ -180,21 +298,34 @@ export default function ChooseMedicationsPage() {
     return sum + (plan ? (PLAN_PRICES[plan] ?? 0) : 0)
   }, 0)
 
-  const cartItems = treatments.map(id => {
-    const c = choices[id]
-    let name: string
-    if (id === 'glp-1' && c?.type) {
-      name = c.type === 'semaglutide' ? 'Semaglutide' : 'Tirzepatide'
-    } else {
-      name = TREATMENT_NAMES[id] ?? id
-    }
-    const form = c?.form === 'injection' ? 'Injections' : c?.form === 'oral' ? 'Oral Tablets' : null
-    const plan = c?.plan ? c.plan.replace('mo', ' mo') : null
-    return [name, form, plan].filter(Boolean).join(' ') + (plan ? ` (${plan})` : '')
-  }).filter(item => !!choices[item.split(' ')[0]?.toLowerCase()] || true)
-
   function handleContinue() {
-    if (isNavigating || !isComplete) return
+    if (isNavigating) return
+    const errors: Record<string, { type?: boolean; form?: boolean; plan?: boolean }> = {}
+    treatments.forEach(id => {
+      const c = choices[id]
+      const err: { type?: boolean; form?: boolean; plan?: boolean } = {}
+      if (id === 'glp-1' && !c?.type) err.type = true
+      if (!c?.form) err.form = true
+      if (!c?.plan) err.plan = true
+      if (Object.keys(err).length > 0) errors[id] = err
+    })
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      // Scroll to the first unfilled required field
+      for (const id of treatments) {
+        if (!errors[id]) continue
+        const fields = (id === 'glp-1' ? ['type', 'form', 'plan'] : ['form', 'plan']) as ('type' | 'form' | 'plan')[]
+        for (const field of fields) {
+          if (errors[id]?.[field]) {
+            sectionRefs.current.get(`${id}-${field}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            break
+          }
+        }
+        break
+      }
+      return
+    }
+    setFieldErrors({})
     setIsNavigating(true)
     const bubbles = treatments.map(id => {
       const c = choices[id]
@@ -204,13 +335,13 @@ export default function ChooseMedicationsPage() {
       } else {
         name = TREATMENT_NAMES[id] ?? id
       }
-      const form = c?.form === 'injection' ? 'Injections' : 'Oral Tablets'
-      const plan = c?.plan ? c.plan.replace('mo', ' mo') : ''
-      return `${name} ${form} (${plan})`
+      const form = c?.form === 'injection' ? 'Injection vials' : 'Pills'
+      const plan = c?.plan ?? ''
+      return `${name} · ${form} · ${plan}`
     })
     saveStep(
       13,
-      { question: 'Choose your medications', bubbles },
+      { question: QUESTION_TEXT, bubbles },
       { choices: JSON.stringify(choices) }
     )
     router.push(NEXT_STEP)
@@ -218,17 +349,25 @@ export default function ChooseMedicationsPage() {
 
   return (
     <>
-      <IntakeHeader backHref="/get-started/questionnaire/review" progress={PROGRESS} />
+      <IntakeHeader backHref="/get-started/questionnaire/choose-treatments" progress={PROGRESS} />
 
       <main
-        className="overflow-y-auto bg-white"
+        id="main-content"
+        tabIndex={-1}
+        className="overflow-y-auto bg-white focus:outline-none"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: '10rem',
+          paddingBottom: '12rem',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-9 py-6 md:py-9">
+        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+
+          <ChatHistory
+            historicSteps={[]}
+            currentStep={currentStep}
+            animateCurrentStep={animateBubbles}
+          />
 
           {/* ── Eve's message ── */}
           <div className="flex items-start gap-3 w-full">
@@ -237,177 +376,177 @@ export default function ChooseMedicationsPage() {
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)]">
-                Now, choose your medication details.
+              <p
+                className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
+                aria-live="polite"
+                aria-label={QUESTION_TEXT}
+              >
+                {typingStarted && (
+                  <>
+                    {words.slice(0, visibleWords).map((word, i) => (
+                      <span key={i}>
+                        {word}
+                        {i < visibleWords - 1 ? ' ' : ''}
+                      </span>
+                    ))}
+                    {visibleWords < words.length && (
+                      <span
+                        className="inline-block w-[2px] h-[1em] bg-current align-middle ml-[1px] animate-pulse"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </>
+                )}
               </p>
             </div>
           </div>
 
-          {/* ── Treatment sections ── */}
-          {treatments.length === 0 ? (
-            <p className="text-sm text-[rgba(0,0,0,0.6)]">
-              No treatments selected.{' '}
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="text-[#0778ba] underline"
-              >
-                Go back to add some.
-              </button>
-            </p>
-          ) : (
-            <div className="flex flex-col gap-9">
+          {/* ── Medication sections ── */}
+          {done && (
+            <div className="flex flex-col gap-12 animate-[fadeIn_0.4s_ease_forwards]">
               {treatments.map((tid) => {
-                const choice = choices[tid] ?? { type: null, form: null, plan: null }
-                return (
-                  <div key={tid} className="flex flex-col gap-5">
+                  const choice = choices[tid] ?? { type: null, form: null, plan: null }
+                  const name = TREATMENT_NAMES[tid] ?? tid
 
-                    {/* Header chip */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 bg-[#f4f4f5] rounded-full px-3 py-1.5">
-                        <span className="text-sm font-semibold text-[rgba(0,0,0,0.87)]">
-                          {TREATMENT_NAMES[tid] ?? tid}
-                        </span>
+                  return (
+                    <div key={tid} className="flex flex-col gap-6">
+
+                      {/* ── Treatment heading: name + divider + Remove ── */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-1 items-center gap-3 min-w-0">
+                          <div className="shrink-0 bg-[#f0f0f0] rounded-[20px] px-3 py-1.5">
+                            <span className="text-[20px] font-semibold leading-7 tracking-[-0.5px] text-[#09090b]">
+                              {name}
+                            </span>
+                          </div>
+                          <div className="flex-1 h-px bg-[#e4e4e7]" aria-hidden="true" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeTreatment(tid)}
+                          className="shrink-0 border border-[#e4e4e7] rounded-md px-2 py-1 text-xs font-medium text-[#09090b] bg-white shadow-sm hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+                        >
+                          Remove
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeTreatment(tid)}
-                        className="text-xs font-medium text-[#0778ba] underline hover:opacity-70 transition-opacity shrink-0"
-                      >
-                        Remove
-                      </button>
-                    </div>
 
-                    {/* TYPE — GLP-1 only */}
-                    {tid === 'glp-1' && (
-                      <div className="flex flex-col gap-3">
-                        <p className="text-xs font-semibold tracking-widest uppercase text-[rgba(0,0,0,0.5)]">
-                          Type
-                        </p>
-                        <div className="grid grid-cols-2 gap-3">
-                          {GLP1_TYPES.map(opt => (
-                            <RadioCard
+                      {/* ── Which type? (GLP-1 only) ── */}
+                      {tid === 'glp-1' && (
+                        <div
+                          ref={el => { if (el) sectionRefs.current.set(`${tid}-type`, el); else sectionRefs.current.delete(`${tid}-type`) }}
+                          className="flex flex-col gap-2"
+                        >
+                          <SectionLabel id={`${tid}-type-label`}>Which type?</SectionLabel>
+                          <div
+                            role="group"
+                            aria-labelledby={`${tid}-type-label`}
+                            aria-describedby={fieldErrors[tid]?.type ? `${tid}-type-error` : undefined}
+                            className="flex gap-2"
+                          >
+                            {GLP1_TYPES.map(opt => (
+                              <MedOptionCard
+                                key={opt.id}
+                                isSelected={choice.type === opt.id}
+                                onClick={() => setChoice(tid, 'type', opt.id as Glp1Type)}
+                                label={opt.label}
+                                sub={opt.sub}
+                              />
+                            ))}
+                          </div>
+                          {fieldErrors[tid]?.type && (
+                            <p id={`${tid}-type-error`} role="alert" className="text-xs text-red-600 leading-4">Please select a type.</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ── How would you like to take it? ── */}
+                      <div
+                        ref={el => { if (el) sectionRefs.current.set(`${tid}-form`, el); else sectionRefs.current.delete(`${tid}-form`) }}
+                        className="flex flex-col gap-2"
+                      >
+                        <SectionLabel id={`${tid}-form-label`}>How would you like to take it?</SectionLabel>
+                        <div
+                          role="group"
+                          aria-labelledby={`${tid}-form-label`}
+                          aria-describedby={fieldErrors[tid]?.form ? `${tid}-form-error` : undefined}
+                          className="flex gap-2"
+                        >
+                          {FORM_OPTIONS.map(opt => (
+                            <MedOptionCard
                               key={opt.id}
-                              isSelected={choice.type === opt.id}
-                              onClick={() => setChoice(tid, 'type', opt.id as Glp1Type)}
+                              isSelected={choice.form === opt.id}
+                              onClick={() => setChoice(tid, 'form', opt.id as MedForm)}
                               label={opt.label}
                               sub={opt.sub}
                             />
                           ))}
                         </div>
+                        {fieldErrors[tid]?.form && (
+                          <p id={`${tid}-form-error`} role="alert" className="text-xs text-red-600 leading-4">Please select a form.</p>
+                        )}
                       </div>
-                    )}
 
-                    {/* HOW YOU'LL TAKE IT */}
-                    <div className="flex flex-col gap-3">
-                      <p className="text-xs font-semibold tracking-widest uppercase text-[rgba(0,0,0,0.5)]">
-                        How you&rsquo;ll take it
-                      </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        {FORM_OPTIONS.map(opt => (
-                          <RadioCard
-                            key={opt.id}
-                            isSelected={choice.form === opt.id}
-                            onClick={() => setChoice(tid, 'form', opt.id as MedForm)}
-                            label={opt.label}
-                            sub={opt.sub}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* SUBSCRIPTION PLAN */}
-                    <div className="flex flex-col gap-3">
-                      <p className="text-xs font-semibold tracking-widest uppercase text-[rgba(0,0,0,0.5)]">
-                        Subscription plan
-                      </p>
-                      <div className="flex flex-col gap-2">
-                        {PLAN_OPTIONS.map(opt => {
-                          const isSelected = choice.plan === opt.id
-                          return (
-                            <button
+                      {/* ── Prescription plan ── */}
+                      <div
+                        ref={el => { if (el) sectionRefs.current.set(`${tid}-plan`, el); else sectionRefs.current.delete(`${tid}-plan`) }}
+                        className="flex flex-col gap-2"
+                      >
+                        <SectionLabel id={`${tid}-plan-label`}>Prescription plan</SectionLabel>
+                        <div
+                          role="group"
+                          aria-labelledby={`${tid}-plan-label`}
+                          aria-describedby={fieldErrors[tid]?.plan ? `${tid}-plan-error` : undefined}
+                          className="flex flex-col gap-3"
+                        >
+                          {PLAN_OPTIONS.map(opt => (
+                            <PlanRow
                               key={opt.id}
-                              type="button"
+                              opt={opt}
+                              isSelected={choice.plan === opt.id}
                               onClick={() => setChoice(tid, 'plan', opt.id as MedPlan)}
-                              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${
-                                isSelected
-                                  ? 'border-2 border-[#0778ba]'
-                                  : 'border border-[#e4e4e7] hover:border-[#0778ba]/40'
-                              }`}
-                            >
-                              <div className="flex flex-col items-start gap-0.5">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className={`text-sm font-semibold ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
-                                    {opt.label}
-                                  </span>
-                                  {opt.tag && (
-                                    <span className="text-[10px] font-semibold tracking-widest uppercase text-[#0778ba] bg-blue-50 px-1.5 py-0.5 rounded-full leading-none">
-                                      {opt.tag}
-                                    </span>
-                                  )}
-                                </div>
-                                {opt.perMonth && (
-                                  <span className="text-xs text-[rgba(0,0,0,0.5)]">{opt.perMonth}</span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {opt.badge && (
-                                  <span className="text-[10px] font-semibold tracking-widest uppercase text-[#047857] bg-[#d1fae5] px-1.5 py-0.5 rounded-full leading-none">
-                                    {opt.badge}
-                                  </span>
-                                )}
-                                <span className={`text-base font-bold ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
-                                  ${opt.price}
-                                </span>
-                              </div>
-                            </button>
-                          )
-                        })}
+                            />
+                          ))}
+                        </div>
+                        {fieldErrors[tid]?.plan && (
+                          <p id={`${tid}-plan-error`} role="alert" className="text-xs text-red-600 leading-4">Please select a plan.</p>
+                        )}
+                        <p className="text-xs text-[#71717a] leading-4">
+                          *For 6- and 12-month plans, medication will be shipped 3 months at a time.
+                        </p>
                       </div>
-                      <p className="text-xs text-[rgba(0,0,0,0.45)] leading-4">
-                        *For 6- and 12-month plans, medication will be shipped 3 months at a time.
-                      </p>
-                    </div>
 
-                  </div>
-                )
-              })}
+                    </div>
+                  )
+                })}
             </div>
           )}
 
         </div>
       </main>
 
-      {/* ── Sticky compound CTA ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 md:pb-8">
+      {/* ── Sticky CTA ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-8 pt-4"
+        style={{
+          background: 'linear-gradient(to top, white 70%, rgba(255,255,255,0))',
+          opacity: done ? 1 : 0,
+          pointerEvents: done ? 'auto' : 'none',
+          transition: 'opacity 0.5s',
+        }}
+      >
         <div className="w-full md:w-[480px] flex flex-col">
 
-          {/* Cart pills */}
-          {cartItems.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2 px-1">
-              {cartItems.map((item, i) => (
-                <span
-                  key={i}
-                  className="text-xs bg-white border border-[#e4e4e7] rounded-full px-2.5 py-1 text-[rgba(0,0,0,0.6)] shadow-sm"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Button */}
+          {/* Save and continue button */}
           <button
             type="button"
             onClick={handleContinue}
-            disabled={isNavigating || !isComplete}
+            disabled={isNavigating}
             className="
-              w-full h-[42px] flex items-center justify-center gap-3 px-4
-              rounded-tl-[36px]
+              relative w-full h-[42px] flex items-center justify-center gap-3 px-4
+              rounded-tl-[36px] cursor-pointer
               text-white text-base font-medium leading-6 whitespace-nowrap
-              transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
+              transition-opacity hover:opacity-90 disabled:opacity-60
               shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
             "
             style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
           >
@@ -415,28 +554,34 @@ export default function ChooseMedicationsPage() {
             <ChevronRightIcon />
           </button>
 
-          {/* Inclusions bar */}
+          {/* Inclusions bar — image left, list right */}
           <div
-            className="w-full px-4 py-3 rounded-br-[36px]"
-            style={{ background: 'rgba(29,45,68,0.95)', backdropFilter: 'blur(8px)' }}
+            className="w-full flex items-center justify-center gap-6 p-4 rounded-br-[36px] backdrop-blur-sm"
+            style={{ background: 'rgba(29,45,68,0.95)' }}
           >
-            <p className="text-[10px] font-semibold tracking-widest uppercase text-white/50 mb-2">
-              Included with your meds
-            </p>
-            <div className="flex flex-col gap-1.5">
-              {['Licensed provider review', 'Delivery to your doorstep', 'Ongoing 24/7 support'].map(item => (
-                <div key={item} className="flex items-center gap-2">
-                  <CheckCircleIcon />
-                  <span className="text-xs text-white/80">{item}</span>
-                </div>
-              ))}
-            </div>
-            {dueToday > 0 && (
-              <p className="text-xs text-white/60 mt-2.5">
-                DUE TODAY{' '}
-                <span className="text-sm font-bold text-white">${dueToday.toLocaleString()}</span>
+            {/* Product image */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/cta-medications.png"
+              alt=""
+              className="shrink-0 size-[84px] object-contain"
+              aria-hidden="true"
+            />
+
+            {/* Text */}
+            <div className="flex flex-col gap-1">
+              <p className="text-[12px] font-normal leading-4 tracking-[1.5px] uppercase text-white">
+                Included with your meds
               </p>
-            )}
+              <div className="flex flex-col gap-1">
+                {['Licensed provider review', 'Delivery to your doorstep', 'Ongoing 24/7 support'].map(item => (
+                  <div key={item} className="flex items-center gap-2">
+                    <CheckFilledIcon />
+                    <span className="text-[12px] font-normal leading-4 text-white whitespace-nowrap">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
         </div>

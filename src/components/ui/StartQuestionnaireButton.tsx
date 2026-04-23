@@ -18,26 +18,22 @@ function ChevronRightIcon() {
  * The "Start medical questionnaire" button on the get-started page.
  * Saves the get-started Q&A as step 0 in the session store so it
  * appears in the chat history on step 1.
+ *
+ * The optional `peptide` prop carries the treatment highlight from the
+ * `/treatments/[slug]?peptide=...` entry point so the choose-treatments
+ * page can pre-check the corresponding card.
  */
-export default function StartQuestionnaireButton() {
+export default function StartQuestionnaireButton({ peptide }: { peptide?: string }) {
   const router = useRouter()
 
   function handleClick() {
-    // Save the get-started Q as the very first chat history entry (index -1 / slot 0
-    // in the history that step 1 will display above its own Q)
     saveStep(
-      // We use a separate key 'intro' by storing at index 0 of a pre-steps slot.
-      // Step 1 reads getPriorSteps(0) which returns steps before index 0 = empty,
-      // but the get-started bubble is hardcoded in step 1's JSX.
-      // What we DO need to persist is the bubble TEXT so step 1 shows it correctly.
-      // We store this as a special "pre" entry at index -1 conceptually,
-      // but since our store uses array indices we use a large sentinel: 99
       99,
       {
         question: "Hi, I'm Eve, and I'll be your concierge. Getting started is simple.",
         bubbles: ['Agree to Terms & Conditions and acknowledge Privacy Policy'],
       },
-      {}
+      peptide ? { peptide } : {}
     )
     router.push('/get-started/questionnaire')
   }
@@ -49,7 +45,7 @@ export default function StartQuestionnaireButton() {
       className="
         relative flex items-center justify-center gap-3
         w-full h-[42px] px-4 py-2 overflow-hidden
-        rounded-[21px]
+        rounded-tl-[36px] rounded-br-[36px] rounded-tr-none rounded-bl-none
         text-white text-base font-medium leading-6 whitespace-nowrap
         transition-opacity hover:opacity-90
         shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]

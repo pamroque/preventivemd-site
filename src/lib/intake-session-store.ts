@@ -71,3 +71,14 @@ export function clearSession() {
   if (typeof window === 'undefined') return
   sessionStorage.removeItem(STORAGE_KEY)
 }
+
+/** Clear a range of step indices (e.g. goal-question slots when goals change) */
+export function clearStepRange(from: number, to: number) {
+  if (typeof window === 'undefined') return
+  const session = load()
+  for (let i = from; i <= to; i++) {
+    delete session.steps[i]
+    delete session.values[i]
+  }
+  save(session)
+}

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import SiteNav from '@/components/layout/SiteNav'
 import SkipLink from '@/components/a11y/SkipLink'
+import RouteFocus from '@/components/a11y/RouteFocus'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -26,6 +27,7 @@ export default function RootLayout({
           Children receive appropriate top/bottom padding via their own page layouts.
         */}
         <SkipLink />
+        <RouteFocus />
         <SiteNav />
         {children}
       </body>
