@@ -459,8 +459,8 @@ export default function ConfirmationPage() {
                   </div>
                   <p className="flex-1 min-w-0 text-base font-medium leading-6 text-[rgba(0,0,0,0.87)]">
                     {isConsultation
-                    ? 'To manage your appointment and get ongoing support, sign in to your Care Portal'
-                    : 'To manage your treatments and get ongoing support, sign in to your Care Portal'
+                    ? 'Manage your appointment and get ongoing support, all in your Care Portal'
+                    : 'Stay on top of your treatments and get ongoing support, all in your Care Portal'
                   }
                   </p>
                 </div>

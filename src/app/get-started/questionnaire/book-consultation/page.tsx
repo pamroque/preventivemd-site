@@ -374,9 +374,9 @@ export default function BookConsultationPage() {
                         formatError ? 'border-red-600' : 'border-[#e4e4e7]'
                       }`}
                     >
-                      {!requiresSync && <option value="" disabled hidden>Select a format</option>}
-                      <option value="Video">Video</option>
+                      {!requiresSync && <option value="" disabled hidden>Phone / Video</option>}
                       {!requiresSync && <option value="Phone">Phone</option>}
+                      <option value="Video">Video</option>
                     </select>
                     <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
                       <ChevronUpDownIcon />
