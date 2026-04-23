@@ -245,10 +245,10 @@ export default function QPriorGlp1HistoryPage() {
               className="flex flex-col gap-6 animate-[fadeIn_0.4s_ease_forwards]"
             >
 
-              {/* GLP-1 name */}
+              {/* GLP-1 medication */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="glp1Name" className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-                  GLP-1 name <span className="text-red-600" aria-hidden="true">*</span>
+                  GLP-1 medication <span className="text-red-600" aria-hidden="true">*</span>
                   <span className="sr-only">(required)</span>
                 </label>
                 <div className={`${selectWrapperCls} ${errors.glp1Name ? 'border-red-600 focus-within:border-red-600' : ''}`}>
@@ -260,7 +260,7 @@ export default function QPriorGlp1HistoryPage() {
                     aria-describedby={errors.glp1Name ? 'glp1Name-error' : undefined}
                     aria-required="true"
                   >
-                    <option value="" disabled hidden>Select a medication</option>
+                    <option value="" disabled hidden></option>
                     {GLP1_OPTIONS.map(o => (
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
@@ -270,11 +270,11 @@ export default function QPriorGlp1HistoryPage() {
                 <FieldError id="glp1Name-error" message={errors.glp1Name?.message} />
               </div>
 
-              {/* How you took it + Dosage (2-up) */}
+              {/* Administration + Dosage (2-up) */}
               <div className="flex gap-2">
                 <div className="flex-1 flex flex-col gap-1.5">
                   <label htmlFor="howTaken" className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
-                    How you took it
+                    Administration
                   </label>
                   <div className={selectWrapperCls}>
                     <select

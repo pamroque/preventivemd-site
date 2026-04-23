@@ -13,10 +13,17 @@ export interface StepAnswers {
 
 const STORAGE_KEY = 'pmd_intake'
 
+export interface Submission {
+  requestId: string
+  submittedAt: number
+}
+
 export interface IntakeSession {
   steps: StepAnswers[]
   /** Persisted form values keyed by step index */
   values: Record<number, Record<string, string | boolean>>
+  /** Set once the user reaches the confirmation page */
+  submission?: Submission
 }
 
 function load(): IntakeSession {
@@ -93,6 +100,22 @@ export function getSavedValue(stepIndex: number, field: string): string | boolea
 export function clearSession() {
   if (typeof window === 'undefined') return
   sessionStorage.removeItem(STORAGE_KEY)
+}
+
+/**
+ * Record that the intake has been submitted. Idempotent — callers can pass
+ * an existing submission back in and it will be left alone.
+ */
+export function markSubmitted(sub: Submission): void {
+  const session = load()
+  session.submission = sub
+  save(session)
+}
+
+/** Read the submission record if the intake has already been submitted. */
+export function getSubmission(): Submission | null {
+  const session = load()
+  return session.submission ?? null
 }
 
 /** Clear a range of step indices (e.g. goal-question slots when goals change) */

@@ -314,10 +314,10 @@ export default function QuestionnaireStep4() {
 
               {/* Was it intentional? */}
               <fieldset
-                className="flex flex-col gap-2 border-0 p-0 m-0"
+                className="flex flex-col border-0 p-0 m-0"
                 aria-describedby={errors.intentional ? 'intentional-error' : undefined}
               >
-                <legend className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+                <legend className="text-sm font-medium text-[rgba(0,0,0,0.87)] mb-1.5">
                   Was it intentional? <span className="text-red-600" aria-hidden="true">*</span>
                   <span className="sr-only">(required)</span>
                 </legend>

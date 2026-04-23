@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getStepValues } from '@/lib/intake-session-store'
+import { getStepValues, getSubmission, markSubmitted } from '@/lib/intake-session-store'
 import { usePrefersReducedMotion } from '@/lib/useEveTyping'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
@@ -202,7 +202,20 @@ function usePageAnimation(firstName: string) {
 
 export default function ConfirmationPage() {
   const [firstName, setFirstName] = useState('')
-  const [requestId] = useState(() => generateRequestId())
+  // Read-or-create: preserves the ID across page refreshes and revisits. The
+  // existing submission record is consulted first so a user coming back to
+  // /confirmation (or redirected here by ReactivationGate) sees the same
+  // Request #XYZ they saw the first time. The actual persistence happens in
+  // the useEffect below so we don't write to sessionStorage during render.
+  const [requestId] = useState(() => {
+    const existing = getSubmission()
+    return existing ? existing.requestId : generateRequestId()
+  })
+
+  useEffect(() => {
+    if (getSubmission()) return
+    markSubmitted({ requestId, submittedAt: Date.now() })
+  }, [requestId])
   const [medicationItems, setMedicationItems] = useState<
     { id: string; label: string; badgeBg: string; badgeText: string }[]
   >([])
@@ -492,7 +505,7 @@ export default function ConfirmationPage() {
                     "
                     style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
                   >
-                    {isSigningIn ? 'Signing in…' : 'Sign in'}
+                    {isSigningIn ? 'Signing in…' : 'Get a passcode'}
                     <ChevronRightIcon />
                   </button>
                 </div>

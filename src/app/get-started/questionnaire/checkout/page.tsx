@@ -326,6 +326,9 @@ export default function CheckoutPage() {
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
           paddingBottom: `${stickyCtaHeight + 16}px`,
+          // Match the CTA height so focus-into-view never lands a field
+          // underneath the sticky cart bar (WCAG 2.4.11).
+          scrollPaddingBottom: `${stickyCtaHeight + 16}px`,
         }}
       >
         <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
@@ -382,7 +385,7 @@ export default function CheckoutPage() {
                 <SectionHeader label="Account Details" />
 
                 <p className="text-sm font-bold leading-5 text-[#0778ba]">
-                  To log in to your Care Portal later, please ensure that you are able to access your mobile number or email to get a secure sign-in link.
+                  To sign in to your Care Portal later, make sure you have access to your mobile number or email so we can send you a one-time passcode (OTP).
                 </p>
 
                 {/* Phone — pre-filled, editable, required */}

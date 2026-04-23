@@ -30,6 +30,21 @@ body {
   overflow-x: hidden;
 }
 
+/*
+ * WCAG 2.4.11 Focus Not Obscured (Minimum, AA).
+ * The intake flow renders a fixed-position CTA at the bottom of the viewport;
+ * without scroll padding, focusing the last field in a form can land the
+ * input underneath the sticky CTA. Reserving ~10rem at the bottom of every
+ * potential scroll container (html for body-scrolling pages, main for pages
+ * that use inner overflow-y-auto) keeps the focused control in view.
+ * Checkout overrides this dynamically to match its measured cart-bar height.
+ */
+html,
+body,
+main {
+  scroll-padding-bottom: 10rem;
+}
+
 /* ── GRADIENT TEXT UTILITY ── */
 /* Use: className="gradient-text" for the blue→teal text effect */
 .gradient-text {

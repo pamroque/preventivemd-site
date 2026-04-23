@@ -489,7 +489,7 @@ export default function QuestionnaireStep1() {
                       aria-describedby={errors.state ? 'state-error' : undefined}
                       aria-required="true"
                     >
-                      <option value="" disabled>Select a state</option>
+                      <option value="" disabled hidden></option>
                       {US_STATES.map(({ value, label }) => (
                         <option key={value} value={value}>{label}</option>
                       ))}

@@ -574,7 +574,7 @@ export default function ChooseMedicationsPage() {
                 Included with your meds
               </p>
               <div className="flex flex-col gap-1">
-                {['Licensed provider review', 'Delivery to your doorstep', 'Ongoing 24/7 support'].map(item => (
+                {['Licensed provider review', 'Delivery to your doorstep', 'Ongoing support'].map(item => (
                   <div key={item} className="flex items-center gap-2">
                     <CheckFilledIcon />
                     <span className="text-[12px] font-normal leading-4 text-white whitespace-nowrap">{item}</span>
