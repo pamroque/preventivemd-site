@@ -10,6 +10,7 @@
  */
 
 import { getStepValues, clearStepRange } from './intake-session-store'
+import { getSelectedApproaches, getApproachSubquestionSequence } from './approach-routing'
 
 const STEP3_INDEX = 2
 
@@ -70,11 +71,20 @@ export function getPrevGoalRoute(currentRoute: string, selectedGoals: string[]):
   return seq[idx - 1].route
 }
 
-/** Back href for step-4: last goal question if any, otherwise step-3 */
+/**
+ * Back href for step-4: last question the user actually answered before step-4.
+ * Priority: approach sub-question → goal question → step-3.
+ */
 export function getStep4BackHref(): string {
+  const approaches = getSelectedApproaches()
+  const approachSeq = getApproachSubquestionSequence(approaches)
+  if (approachSeq.length > 0) return approachSeq[approachSeq.length - 1].route
+
   const goals = getSelectedGoals()
   const seq = getGoalQuestionSequence(goals)
-  return seq.length > 0 ? seq[seq.length - 1].route : '/get-started/questionnaire/step-3'
+  if (seq.length > 0) return seq[seq.length - 1].route
+
+  return '/get-started/questionnaire/step-3'
 }
 
 /** Wipe goal-question session data (call when step-3 is resubmitted) */

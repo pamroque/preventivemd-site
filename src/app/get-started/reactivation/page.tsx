@@ -81,8 +81,8 @@ function getResumeCopy(): string {
   const s11 = getStepValues(11)
   if (typeof s11.visitType === 'string') {
     return s11.visitType === 'consult'
-      ? 'Continue booking a consultation'
-      : 'Continue medication request'
+      ? 'Continue booking'
+      : 'Request treatment'
   }
   return 'Continue questionnaire'
 }
@@ -129,7 +129,7 @@ function ReactivationContent() {
       tabIndex={-1}
       className="min-h-screen bg-white pt-12 md:pt-14 pb-24 focus:outline-none"
     >
-      <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 py-6 md:py-9">
+      <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 py-9 md:py-12">
 
         {/* ── Eve's message ── */}
         <div className="flex items-start gap-3 w-full">
@@ -137,7 +137,7 @@ function ReactivationContent() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
           </div>
-          <p
+          <h1
             className="flex-1 min-w-0 text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
             aria-live="polite"
             aria-label={questionText ?? undefined}
@@ -160,7 +160,7 @@ function ReactivationContent() {
                 )}
               </>
             )}
-          </p>
+          </h1>
         </div>
 
         {/* ── CTAs ── */}

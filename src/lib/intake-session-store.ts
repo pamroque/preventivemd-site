@@ -51,8 +51,31 @@ export function getPriorSteps(upToIndex: number): StepAnswers[] {
   const session = load()
   // Include the get-started intro (stored at slot 99) first, then numbered steps
   const intro = session.steps[99] ? [session.steps[99]] : []
-  const numbered = session.steps.slice(0, upToIndex)
+  // Walk each index explicitly so sparse holes (from non-contiguous slots
+  // like goal questions at 50+) don't leak through as `undefined`.
+  const numbered: StepAnswers[] = []
+  for (let i = 0; i < upToIndex; i++) {
+    const s = session.steps[i]
+    if (s) numbered.push(s)
+  }
   return [...intro, ...numbered]
+}
+
+/**
+ * Find the most recently answered step across every slot, excluding the
+ * intro at slot 99. Used by pages that sit after a variable-length detour
+ * (e.g. step-4, which can come after goal questions or approach sub-
+ * questions) and need to show whichever bubble was most recently saved.
+ */
+export function getLastAnsweredStep(): StepAnswers | null {
+  const session = load()
+  let maxIdx = -1
+  for (const key of Object.keys(session.steps)) {
+    const i = Number(key)
+    if (!Number.isFinite(i) || i === 99) continue
+    if (i > maxIdx && session.steps[i]) maxIdx = i
+  }
+  return maxIdx >= 0 ? session.steps[maxIdx] : null
 }
 
 /** Get saved form values for a specific step (for pre-filling on back navigation) */

@@ -25,10 +25,6 @@
 }
 
 /* ── BASE RESETS ── */
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   color: var(--navy);
   overflow-x: hidden;

@@ -43,20 +43,25 @@ function ChevronUpDownIcon() {
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const GLP1_OPTIONS = [
-  { value: 'wegovy',   label: 'Wegovy\u00ae (semaglutide)' },
-  { value: 'ozempic',  label: 'Ozempic\u00ae (semaglutide)' },
-  { value: 'zepbound', label: 'Zepbound\u00ae (tirzepatide)' },
-  { value: 'mounjaro', label: 'Mounjaro\u00ae (tirzepatide)' },
-  { value: 'saxenda',  label: 'Saxenda\u00ae (liraglutide)' },
-  { value: 'rybelsus', label: 'Rybelsus\u00ae (oral semaglutide)' },
-  { value: 'other',    label: 'Other' },
+  { value: 'compounded-semaglutide', label: 'Compounded Semaglutide' },
+  { value: 'compounded-tirzepatide', label: 'Compounded Tirzepatide' },
+  { value: 'foundayo',               label: 'Foundayo\u2122 (orforglipron)' },
+  { value: 'mounjaro',               label: 'Mounjaro\u00ae (tirzepatide)' },
+  { value: 'ozempic',                label: 'Ozempic\u00ae (semaglutide)' },
+  { value: 'rybelsus',               label: 'Rybelsus\u00ae (semaglutide)' },
+  { value: 'saxenda',                label: 'Saxenda\u00ae (liraglutide)' },
+  { value: 'wegovy',                 label: 'Wegovy\u00ae (semaglutide)' },
+  { value: 'zepbound',               label: 'Zepbound\u00ae (tirzepatide)' },
+  { value: 'other',                  label: 'Other' },
 ]
 
 const HOW_TAKEN_OPTIONS = [
-  { value: 'weekly-injection',    label: 'Weekly injection' },
-  { value: 'biweekly-injection',  label: 'Bi-weekly injection' },
-  { value: 'daily-injection',     label: 'Daily injection' },
-  { value: 'oral',                label: 'Oral tablet' },
+  { value: 'daily-injection',  label: 'Injections - Daily' },
+  { value: 'weekly-injection', label: 'Injections - Weekly' },
+  { value: 'nasal-spray',      label: 'Nasal spray' },
+  { value: 'odt',              label: 'Orally disintegrating tablets (ODT)' },
+  { value: 'oral',             label: 'Pills' },
+  { value: 'other',            label: 'Other' },
 ]
 
 const DOSAGE_OPTIONS = [
@@ -79,7 +84,9 @@ const schema = z.object({
   glp1Name:          z.string().min(1, 'Required'),
   howTaken:          z.string().optional(),
   dosage:            z.string().optional(),
-  timeSinceLastDose: z.enum(TIME_OPTIONS, { required_error: 'Required' }),
+  timeSinceLastDose: z.enum(TIME_OPTIONS, {
+    errorMap: () => ({ message: 'Required' }),
+  }),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -159,8 +166,16 @@ export default function QPriorGlp1HistoryPage() {
     if (isNavigating) return
     setIsNavigating(true)
     const nameLabel = GLP1_OPTIONS.find(o => o.value === data.glp1Name)?.label ?? data.glp1Name
+    const howTakenLabel = data.howTaken
+      ? HOW_TAKEN_OPTIONS.find(o => o.value === data.howTaken)?.label ?? data.howTaken
+      : ''
     const timeLabel = TIME_LABELS[data.timeSinceLastDose]
-    const bubbles = [nameLabel, timeLabel]
+    const bubbles = [
+      nameLabel,
+      ...(howTakenLabel ? [howTakenLabel] : []),
+      ...(data.dosage ? [data.dosage] : []),
+      timeLabel,
+    ]
     saveStep(
       SESSION_INDEX,
       { question: QUESTION_TEXT, bubbles },
@@ -199,7 +214,7 @@ export default function QPriorGlp1HistoryPage() {
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
             <div className="flex-1 min-w-0">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={QUESTION_TEXT}
@@ -217,7 +232,7 @@ export default function QPriorGlp1HistoryPage() {
                     )}
                   </>
                 )}
-              </p>
+              </h1>
             </div>
           </div>
 
@@ -297,10 +312,10 @@ export default function QPriorGlp1HistoryPage() {
 
               {/* Time since last dose */}
               <fieldset
-                className="flex flex-col gap-4 border-0 p-0 m-0"
+                className="flex flex-col border-0 p-0 m-0"
                 aria-describedby={errors.timeSinceLastDose ? 'timeSinceLastDose-error' : undefined}
               >
-                <legend className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+                <legend className="text-sm font-medium text-[rgba(0,0,0,0.87)] mb-1.5">
                   Time since last dose <span className="text-red-600" aria-hidden="true">*</span>
                   <span className="sr-only">(required)</span>
                 </legend>

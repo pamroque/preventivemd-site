@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getStepValues } from '@/lib/intake-session-store'
+import { usePrefersReducedMotion } from '@/lib/useEveTyping'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,12 @@ const TREATMENT_NAMES: Record<string, string> = {
 
 function MedicationItem({ label, badgeBg, badgeText }: { label: string; badgeBg: string; badgeText: string }) {
   return (
-    <div className="flex items-center gap-1 shrink-0" aria-label={label}>
+    <div
+      role="listitem"
+      tabIndex={0}
+      aria-label={label}
+      className="flex items-center gap-1 shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-2"
+    >
       <div className="h-[72px] w-[38px] relative shrink-0 overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -147,6 +153,7 @@ const SUFFIX_WORDS = 'you are now one step closer to preventive care.'.split(' '
 const WORD_DELAY_MS = 80
 
 function usePageAnimation(firstName: string) {
+  const reducedMotion = usePrefersReducedMotion()
   const [animateBubble, setAnimateBubble] = useState(false)
   const [typingStarted, setTypingStarted] = useState(false)
   const [visibleWords, setVisibleWords] = useState(0)
@@ -155,17 +162,28 @@ function usePageAnimation(firstName: string) {
   const words = firstName ? [`${firstName},`, ...SUFFIX_WORDS] : SUFFIX_WORDS
 
   useEffect(() => {
-    const t = setTimeout(() => setAnimateBubble(true), 100)
-    return () => clearTimeout(t)
-  }, [])
+    if (!reducedMotion) return
+    setAnimateBubble(true)
+    setTypingStarted(true)
+    setVisibleWords(words.length)
+    setDone(true)
+  }, [reducedMotion, words.length])
 
   useEffect(() => {
+    if (reducedMotion) return
+    const t = setTimeout(() => setAnimateBubble(true), 100)
+    return () => clearTimeout(t)
+  }, [reducedMotion])
+
+  useEffect(() => {
+    if (reducedMotion) return
     if (!animateBubble) return
     const t = setTimeout(() => setTypingStarted(true), 600)
     return () => clearTimeout(t)
-  }, [animateBubble])
+  }, [reducedMotion, animateBubble])
 
   useEffect(() => {
+    if (reducedMotion) return
     if (!typingStarted) return
     const wordCount = firstName ? SUFFIX_WORDS.length + 1 : SUFFIX_WORDS.length
     if (visibleWords < wordCount) {
@@ -175,7 +193,7 @@ function usePageAnimation(firstName: string) {
       const t = setTimeout(() => setDone(true), 200)
       return () => clearTimeout(t)
     }
-  }, [typingStarted, visibleWords, firstName])
+  }, [reducedMotion, typingStarted, visibleWords, firstName])
 
   return { animateBubble, typingStarted, visibleWords, done, words }
 }
@@ -300,7 +318,7 @@ export default function ConfirmationPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
-            <p
+            <h1
               className="flex-1 min-w-0 text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
               aria-live="polite"
               aria-label={firstName
@@ -323,7 +341,7 @@ export default function ConfirmationPage() {
                   )}
                 </>
               )}
-            </p>
+            </h1>
           </div>
 
           {/* ── Timeline + sign-in card ── */}
@@ -377,6 +395,8 @@ export default function ConfirmationPage() {
                           style={{ background: 'linear-gradient(to left, white, transparent)' }}
                         />
                         <div
+                          role="list"
+                          aria-label="Your selected medications"
                           className="flex gap-4 items-center overflow-x-auto"
                           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                         >

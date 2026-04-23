@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import IntakeHeader from '@/components/ui/IntakeHeader'
 import { US_STATES } from '@/lib/us-states'
 import { saveStep, getStepValues } from '@/lib/intake-session-store'
+import { usePrefersReducedMotion } from '@/lib/useEveTyping'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -85,26 +86,39 @@ const WORD_DELAY_MS = 80
 // 2 → subtext + form fade in (after typing completes)
 
 function useAnimationSequence() {
+  const reducedMotion = usePrefersReducedMotion()
   const [showBubble, setShowBubble] = useState(false)
   const [visibleWords, setVisibleWords] = useState(0)
   const [typingStarted, setTypingStarted] = useState(false)
   const [done, setDone] = useState(false)
 
+  // Reduced motion: skip straight to the end state.
+  useEffect(() => {
+    if (!reducedMotion) return
+    setShowBubble(true)
+    setTypingStarted(true)
+    setVisibleWords(QUESTION_WORDS.length)
+    setDone(true)
+  }, [reducedMotion])
+
   // Phase 0: bubble fades up shortly after mount
   useEffect(() => {
+    if (reducedMotion) return
     const t = setTimeout(() => setShowBubble(true), 100)
     return () => clearTimeout(t)
-  }, [])
+  }, [reducedMotion])
 
   // Phase 1: typing starts after bubble has settled
   useEffect(() => {
+    if (reducedMotion) return
     if (!showBubble) return
     const t = setTimeout(() => setTypingStarted(true), 600)
     return () => clearTimeout(t)
-  }, [showBubble])
+  }, [reducedMotion, showBubble])
 
   // Phase 1 continued: advance words one at a time
   useEffect(() => {
+    if (reducedMotion) return
     if (!typingStarted) return
     if (visibleWords < QUESTION_WORDS.length) {
       const t = setTimeout(() => setVisibleWords((w) => w + 1), WORD_DELAY_MS)
@@ -114,7 +128,7 @@ function useAnimationSequence() {
       const t = setTimeout(() => setDone(true), 200)
       return () => clearTimeout(t)
     }
-  }, [typingStarted, visibleWords])
+  }, [reducedMotion, typingStarted, visibleWords])
 
   return { showBubble, visibleWords, typingStarted, done }
 }
@@ -307,7 +321,7 @@ export default function QuestionnaireStep1() {
             </div>
 
             <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={QUESTION_TEXT}
@@ -320,7 +334,7 @@ export default function QuestionnaireStep1() {
                     aria-hidden="true"
                   />
                 )}
-              </p>
+              </h1>
 
               {/* Phase 3: subtext fades in after typing */}
               {done && (

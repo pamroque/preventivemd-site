@@ -131,7 +131,7 @@ export default function QTargetWeightPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
-            <p
+            <h1
               className="flex-1 min-w-0 text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
               aria-live="polite"
               aria-label={QUESTION_TEXT.replace(' *', '')}
@@ -151,7 +151,7 @@ export default function QTargetWeightPage() {
                   )}
                 </>
               )}
-            </p>
+            </h1>
           </div>
 
           {/* ── Form ── */}

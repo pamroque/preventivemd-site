@@ -133,7 +133,7 @@ export default function QPriorGlp1ReactionsPage() {
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
             <div className="flex-1 min-w-0">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={QUESTION_TEXT.replace(' *', '')}
@@ -153,7 +153,7 @@ export default function QPriorGlp1ReactionsPage() {
                     )}
                   </>
                 )}
-              </p>
+              </h1>
             </div>
           </div>
 

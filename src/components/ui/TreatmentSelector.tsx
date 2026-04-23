@@ -74,8 +74,9 @@ function GradientCard({
     >
       <button
         type="button"
+        role="checkbox"
+        aria-checked={isSelected}
         onClick={onToggle}
-        aria-pressed={isSelected}
         className={`w-full text-left p-4 flex items-start gap-3 transition-colors ${
           isSelected
             ? 'rounded-[10px] bg-white'
@@ -125,32 +126,46 @@ function PlainCard({
   onToggle: () => void
 }) {
   return (
-    <label className="flex items-center gap-4 px-4 py-3 rounded-lg border border-[#e3e3e3] cursor-pointer transition-colors hover:border-[#0778ba]/40">
-      <input
-        type="checkbox"
-        checked={isSelected}
-        onChange={onToggle}
-        className="
-          shrink-0 size-4 rounded-[4px] border border-[#e4e4e7]
-          accent-[#0778ba]
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1
-          cursor-pointer
-        "
-      />
-      <div className="flex-1 min-w-0 flex flex-col gap-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[18px] font-medium leading-7 text-[rgba(0,0,0,0.87)]">
-            {treatment.name}
-          </span>
-          {isGoalMatch && (
-            <span className="text-[11px] font-semibold tracking-[1.5px] uppercase text-[#07808d] leading-none">
-              GOAL MATCH
+    <div
+      style={isSelected ? {
+        padding: '2px',
+        background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+        borderRadius: 12,
+      } : undefined}
+    >
+      <label
+        className={`flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors bg-white ${
+          isSelected
+            ? 'rounded-[10px]'
+            : 'rounded-lg border border-[#e3e3e3] hover:border-[#0778ba]/40'
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onToggle}
+          className="
+            shrink-0 size-4 rounded-[4px] border border-[#e4e4e7]
+            accent-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1
+            cursor-pointer
+          "
+        />
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[18px] font-medium leading-7 text-[rgba(0,0,0,0.87)]">
+              {treatment.name}
             </span>
-          )}
+            {isGoalMatch && (
+              <span className="text-[11px] font-semibold tracking-[1.5px] uppercase text-[#07808d] leading-none">
+                GOAL MATCH
+              </span>
+            )}
+          </div>
+          <TreatmentDescription treatment={treatment} boldFirst={true} />
         </div>
-        <TreatmentDescription treatment={treatment} boldFirst={true} />
-      </div>
-    </label>
+      </label>
+    </div>
   )
 }
 
@@ -347,7 +362,7 @@ export default function TreatmentSelector({
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
             <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={questionText}
@@ -368,7 +383,7 @@ export default function TreatmentSelector({
                     )}
                   </>
                 )}
-              </p>
+              </h1>
               {done && preCheckedId && showPreCheckedNote && (
                 <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
                   {TREATMENTS.find(t => t.id === preCheckedId)?.name ?? preCheckedId} has been pre-checked based on your initial interest.
@@ -445,7 +460,6 @@ export default function TreatmentSelector({
                   {sortedTreatments.ineligible.map((t) => (
                     <div
                       key={t.id}
-                      aria-disabled="true"
                       className="w-full px-4 py-3 rounded-lg border border-[#e3e3e3] flex flex-col gap-1"
                     >
                       <span className="text-lg font-medium leading-7 text-[rgba(0,0,0,0.87)]">

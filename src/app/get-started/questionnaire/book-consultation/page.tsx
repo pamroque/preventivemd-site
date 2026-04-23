@@ -302,7 +302,7 @@ export default function BookConsultationPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
-            <p
+            <h1
               className="flex-1 min-w-0 text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
               aria-live="polite"
               aria-label={QUESTION_TEXT}
@@ -320,7 +320,7 @@ export default function BookConsultationPage() {
                   )}
                 </>
               )}
-            </p>
+            </h1>
           </div>
 
           {/* Booking form */}
@@ -477,7 +477,7 @@ export default function BookConsultationPage() {
                             setViewMonth({ year: pickerYear, month: mi })
                             setShowMonthPicker(false)
                           }}
-                          aria-pressed={isActive}
+                          aria-current={isActive ? 'true' : undefined}
                           className={`h-9 rounded-full text-[14px] leading-[1.43] tracking-[0.17px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
                             isActive
                               ? 'bg-[#1d2d44] text-white'
@@ -526,7 +526,7 @@ export default function BookConsultationPage() {
                                   type="button"
                                   onClick={() => handleDayClick(day)}
                                   disabled={variant === 'past'}
-                                  aria-pressed={variant === 'selected'}
+                                  aria-current={variant === 'selected' ? 'date' : undefined}
                                   aria-label={`${MONTH_NAMES[viewMonth.month]} ${day}${variant === 'today' ? ', today' : ''}${variant === 'selected' ? ', selected' : ''}`}
                                   className={`flex items-center justify-center size-9 rounded-full text-[14px] leading-[1.43] tracking-[0.17px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
                                     variant === 'selected'
