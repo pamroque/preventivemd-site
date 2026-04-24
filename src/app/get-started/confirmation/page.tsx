@@ -505,7 +505,7 @@ export default function ConfirmationPage() {
                     "
                     style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
                   >
-                    {isSigningIn ? 'Signing in…' : 'Get a passcode'}
+                    {isSigningIn ? 'Signing in…' : 'Sign in'}
                     <ChevronRightIcon />
                   </button>
                 </div>
