@@ -56,7 +56,7 @@ Prefer calm, simple UI over flashy or overly clever interactions.
 - Ensure keyboard accessibility and visible focus states
 - Use accessible labels, descriptions, and button text
 - Connect validation errors to fields correctly
-- Avoid placeholder-only labeling
+- Use placeholders for optional example text only — every input must still have a visible `<label>`, `aria-label`, or `aria-labelledby`
 
 ## Figma implementation rules
 - Treat Auto Layout as flex/grid guidance

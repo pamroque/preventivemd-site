@@ -109,7 +109,7 @@ export default function QPriorWeightManagementPage() {
 
   const priorBubbleCount = currentStep?.bubbles.length ?? 0
   const { animateBubbles, visibleWords, typingStarted, done, words } =
-    useEveTyping(FULL_TEXT, priorBubbleCount)
+    useEveTyping(FULL_TEXT, priorBubbleCount, { pauseBeforeWord: BREAK_BEFORE })
 
   const hasSelection = selected.size > 0
 
@@ -172,7 +172,7 @@ export default function QPriorWeightManagementPage() {
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
             <div className="flex-1 min-w-0">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={QUESTION_TEXT}
@@ -201,7 +201,7 @@ export default function QPriorWeightManagementPage() {
                     )}
                   </>
                 )}
-              </p>
+              </h1>
             </div>
           </div>
 
@@ -269,7 +269,7 @@ export default function QPriorWeightManagementPage() {
                           {approach.label}
                         </span>
                         {approach.sub && (
-                          <span className={`text-sm leading-5 ${isSelected ? 'text-[#0778ba]/70' : 'text-[rgba(0,0,0,0.6)]'}`}>
+                          <span className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
                             {approach.sub}
                           </span>
                         )}

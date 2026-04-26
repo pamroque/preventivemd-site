@@ -137,7 +137,7 @@ export default function QuestionnaireStep8() {
               />
             </div>
             <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={QUESTION_TEXT}
@@ -158,7 +158,7 @@ export default function QuestionnaireStep8() {
                     )}
                   </>
                 )}
-              </p>
+              </h1>
             </div>
           </div>
 

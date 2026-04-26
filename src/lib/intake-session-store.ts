@@ -13,10 +13,17 @@ export interface StepAnswers {
 
 const STORAGE_KEY = 'pmd_intake'
 
+export interface Submission {
+  requestId: string
+  submittedAt: number
+}
+
 export interface IntakeSession {
   steps: StepAnswers[]
   /** Persisted form values keyed by step index */
   values: Record<number, Record<string, string | boolean>>
+  /** Set once the user reaches the confirmation page */
+  submission?: Submission
 }
 
 function load(): IntakeSession {
@@ -51,8 +58,31 @@ export function getPriorSteps(upToIndex: number): StepAnswers[] {
   const session = load()
   // Include the get-started intro (stored at slot 99) first, then numbered steps
   const intro = session.steps[99] ? [session.steps[99]] : []
-  const numbered = session.steps.slice(0, upToIndex)
+  // Walk each index explicitly so sparse holes (from non-contiguous slots
+  // like goal questions at 50+) don't leak through as `undefined`.
+  const numbered: StepAnswers[] = []
+  for (let i = 0; i < upToIndex; i++) {
+    const s = session.steps[i]
+    if (s) numbered.push(s)
+  }
   return [...intro, ...numbered]
+}
+
+/**
+ * Find the most recently answered step across every slot, excluding the
+ * intro at slot 99. Used by pages that sit after a variable-length detour
+ * (e.g. step-4, which can come after goal questions or approach sub-
+ * questions) and need to show whichever bubble was most recently saved.
+ */
+export function getLastAnsweredStep(): StepAnswers | null {
+  const session = load()
+  let maxIdx = -1
+  for (const key of Object.keys(session.steps)) {
+    const i = Number(key)
+    if (!Number.isFinite(i) || i === 99) continue
+    if (i > maxIdx && session.steps[i]) maxIdx = i
+  }
+  return maxIdx >= 0 ? session.steps[maxIdx] : null
 }
 
 /** Get saved form values for a specific step (for pre-filling on back navigation) */
@@ -70,6 +100,22 @@ export function getSavedValue(stepIndex: number, field: string): string | boolea
 export function clearSession() {
   if (typeof window === 'undefined') return
   sessionStorage.removeItem(STORAGE_KEY)
+}
+
+/**
+ * Record that the intake has been submitted. Idempotent — callers can pass
+ * an existing submission back in and it will be left alone.
+ */
+export function markSubmitted(sub: Submission): void {
+  const session = load()
+  session.submission = sub
+  save(session)
+}
+
+/** Read the submission record if the intake has already been submitted. */
+export function getSubmission(): Submission | null {
+  const session = load()
+  return session.submission ?? null
 }
 
 /** Clear a range of step indices (e.g. goal-question slots when goals change) */

@@ -136,10 +136,14 @@ export default function QuestionnaireStep2() {
     setCurrentStep(mapped[mapped.length - 1] ?? null)
   }, [])
 
-  const [firstName] = useState<string>(() => {
+  // Initialize empty so server/client first render match, then hydrate from
+  // sessionStorage after mount — avoids an aria-label hydration mismatch.
+  const [firstName, setFirstName] = useState<string>('')
+
+  useEffect(() => {
     const v = getStepValues(0)
-    return typeof v.firstName === 'string' ? v.firstName : ''
-  })
+    if (typeof v.firstName === 'string') setFirstName(v.firstName)
+  }, [])
 
   // Build question words once first name is known
   const questionText = buildQuestion(firstName)
@@ -213,7 +217,7 @@ export default function QuestionnaireStep2() {
             </div>
 
             <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={questionText}
@@ -238,7 +242,7 @@ export default function QuestionnaireStep2() {
                     )}
                   </>
                 )}
-              </p>
+              </h1>
             </div>
           </div>
 
@@ -250,11 +254,11 @@ export default function QuestionnaireStep2() {
               noValidate
               className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease_forwards]"
             >
-              <div className="flex flex-col gap-1.5">
-                <span className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+              <fieldset className="flex flex-col border-0 p-0 m-0">
+                <legend className="text-sm font-medium text-[rgba(0,0,0,0.87)] mb-1.5">
                   Height <span className="text-red-600" aria-hidden="true">*</span>
                   <span className="sr-only">(required)</span>
-                </span>
+                </legend>
                 <div className="flex gap-2">
                   <div className="flex-1 flex flex-col gap-1">
                     <div className={`${inputWrapperCls} ${errors.heightFeet ? inputErrorCls : ''}`}>
@@ -299,7 +303,7 @@ export default function QuestionnaireStep2() {
                     <FieldError id="heightInches-error" message={errors.heightInches?.message} />
                   </div>
                 </div>
-              </div>
+              </fieldset>
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="weight" className="text-sm font-medium text-[rgba(0,0,0,0.87)]">

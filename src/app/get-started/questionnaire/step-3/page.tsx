@@ -10,6 +10,7 @@ import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/componen
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { computeBmi } from '@/lib/bmi'
 import { clearGoalQuestionData, getFirstGoalQuestionRoute } from '@/lib/goal-routing'
+import { usePrefersReducedMotion } from '@/lib/useEveTyping'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -96,23 +97,35 @@ const QUESTION_WORDS = QUESTION_TEXT.split(' ')
 const WORD_DELAY_MS = 80
 
 function useAnimationSequence(currentBubbleCount: number) {
+  const reducedMotion = usePrefersReducedMotion()
   const [animateBubbles, setAnimateBubbles] = useState(false)
   const [visibleWords, setVisibleWords] = useState(0)
   const [typingStarted, setTypingStarted] = useState(false)
   const [done, setDone] = useState(false)
 
   useEffect(() => {
-    const t = setTimeout(() => setAnimateBubbles(true), 100)
-    return () => clearTimeout(t)
-  }, [])
+    if (!reducedMotion) return
+    setAnimateBubbles(true)
+    setTypingStarted(true)
+    setVisibleWords(QUESTION_WORDS.length)
+    setDone(true)
+  }, [reducedMotion])
 
   useEffect(() => {
+    if (reducedMotion) return
+    const t = setTimeout(() => setAnimateBubbles(true), 100)
+    return () => clearTimeout(t)
+  }, [reducedMotion])
+
+  useEffect(() => {
+    if (reducedMotion) return
     if (!animateBubbles) return
     const t = setTimeout(() => setTypingStarted(true), currentStepAnimDuration(currentBubbleCount))
     return () => clearTimeout(t)
-  }, [animateBubbles, currentBubbleCount])
+  }, [reducedMotion, animateBubbles, currentBubbleCount])
 
   useEffect(() => {
+    if (reducedMotion) return
     if (!typingStarted) return
     if (visibleWords < QUESTION_WORDS.length) {
       const t = setTimeout(() => setVisibleWords((w) => w + 1), WORD_DELAY_MS)
@@ -121,7 +134,7 @@ function useAnimationSequence(currentBubbleCount: number) {
       const t = setTimeout(() => setDone(true), 200)
       return () => clearTimeout(t)
     }
-  }, [typingStarted, visibleWords])
+  }, [reducedMotion, typingStarted, visibleWords])
 
   return { animateBubbles, visibleWords, typingStarted, done }
 }
@@ -315,7 +328,7 @@ export default function QuestionnaireStep3() {
             </div>
 
             <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={QUESTION_TEXT}
@@ -336,7 +349,7 @@ export default function QuestionnaireStep3() {
                     )}
                   </>
                 )}
-              </p>
+              </h1>
               {done && showPreNote && preNoteName && (
                 <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
                   The first goal has been pre-checked based on your initial interest in {preNoteName}.
@@ -361,31 +374,31 @@ export default function QuestionnaireStep3() {
               onSubmit={handleSubmit(onSubmit)}
               noValidate
               className="flex flex-col gap-4 animate-[fadeIn_0.4s_ease_forwards]"
-              role="group"
-              aria-labelledby="step3-legend"
-              aria-describedby={errors.goals ? 'goals-error' : undefined}
             >
-              <span id="step3-legend" className="sr-only">
-                {QUESTION_TEXT}
-              </span>
+              <fieldset
+                className="flex flex-col gap-4 border-0 p-0 m-0"
+                aria-describedby={errors.goals ? 'goals-error' : undefined}
+              >
+                <legend className="sr-only">{QUESTION_TEXT}</legend>
 
-              {orderedGoals.map((goal) => {
-                const checked = selectedGoals.includes(goal.id)
-                const showBmi = goal.id === 'weight' && bmi?.isOverweightOrAbove
-                return (
-                  <GoalCard
-                    key={goal.id}
-                    goal={goal}
-                    checked={checked}
-                    onToggle={() => toggleGoal(goal.id)}
-                    subtext={
-                      showBmi
-                        ? `Your body mass index (BMI) is ${bmi!.value} (${bmi!.category})`
-                        : undefined
-                    }
-                  />
-                )
-              })}
+                {orderedGoals.map((goal) => {
+                  const checked = selectedGoals.includes(goal.id)
+                  const showBmi = goal.id === 'weight' && bmi?.isOverweightOrAbove
+                  return (
+                    <GoalCard
+                      key={goal.id}
+                      goal={goal}
+                      checked={checked}
+                      onToggle={() => toggleGoal(goal.id)}
+                      subtext={
+                        showBmi
+                          ? `Your body mass index (BMI) is ${bmi!.value} (${bmi!.category})`
+                          : undefined
+                      }
+                    />
+                  )
+                })}
+              </fieldset>
 
               {/* ── Conditional "Please specify" textarea — only when Others is checked ── */}
               {otherChecked && (
@@ -497,7 +510,8 @@ function GoalCard({
           checked={checked}
           onChange={onToggle}
           className="sr-only"
-          aria-label={goal.label}
+          aria-labelledby={`${goal.id}-label`}
+          aria-describedby={subtext ? `${goal.id}-desc` : undefined}
         />
         <span
           className={`
@@ -514,6 +528,7 @@ function GoalCard({
 
       <span className="flex-1 min-w-0 flex flex-col gap-1">
         <span
+          id={`${goal.id}-label`}
           className={`text-base font-medium leading-6 ${
             checked ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'
           }`}
@@ -521,7 +536,7 @@ function GoalCard({
           {goal.label}
         </span>
         {subtext && (
-          <span className="text-sm font-bold leading-5 text-[#0778ba]">
+          <span id={`${goal.id}-desc`} className="text-sm font-bold leading-5 text-[#0778ba]">
             {subtext}
           </span>
         )}

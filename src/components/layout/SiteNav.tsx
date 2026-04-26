@@ -47,9 +47,9 @@ function WelcomeIcon({ active }: { active: boolean }) {
 function TreatmentsIcon({ active }: { active: boolean }) {
   return (
     <span className={`size-8 flex items-center justify-center ${active ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M22.3903 8.50873H10.1496C8.22911 8.50873 6.66667 10.0712 6.66667 11.9906V27.1848C6.66667 29.1052 8.22911 30.6667 10.1496 30.6667H22.3893C24.3098 30.6667 25.8722 29.1052 25.8722 27.1848V11.9906C25.8722 10.0712 24.3108 8.50873 22.3903 8.50873ZM10.1496 10.4081H22.3893C23.2618 10.4081 23.9718 11.1191 23.9718 11.9906V12.835H8.56707V11.9906C8.56707 11.1191 9.27708 10.4081 10.1496 10.4081ZM11.4242 20.9982V18.4409H14.9933V14.8748H17.5496V18.4409H21.1157V20.9982H17.5496V24.5653H14.9933V20.9982H11.4242ZM22.3903 28.7673H10.1496C9.27708 28.7673 8.56707 28.0572 8.56707 27.1848V26.6041H23.9718V27.1848C23.9728 28.0572 23.2628 28.7673 22.3903 28.7673Z" fill="currentColor"/>
-        <path d="M11.2958 7.66429H21.244C22.0443 7.66429 22.6911 7.01645 22.6911 6.21818V2.78042C22.6911 1.98115 22.0433 1.33331 21.244 1.33331H11.2958C10.4955 1.33331 9.84866 1.98115 9.84866 2.78042V6.21818C9.84866 7.01745 10.4955 7.66429 11.2958 7.66429ZM19.7969 3.00707H20.883V5.99154H19.7969V3.00707ZM17.0842 3.00707H18.1693V5.99154H17.0842V3.00707ZM14.3705 3.00707H15.4556V5.99154H14.3705V3.00707ZM11.6568 3.00707H12.7419V5.99154H11.6568V3.00707Z" fill="currentColor"/>
+      <svg height="32" viewBox="0 0 19 29.3334" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M3.3006 29.3334H15.6569C17.4902 29.3334 18.9941 27.8294 18.9941 25.9961L18.9927 10.3398C18.9927 8.50652 17.4888 7.0026 15.6554 7.0026H13.8594V5.64623H14.5196C14.8863 5.64623 15.2157 5.35261 15.2157 4.95015L15.2172 0.696099C15.2172 0.329433 14.9235 2.02656e-05 14.5211 2.02656e-05H4.47371C4.10704 2.02656e-05 3.77763 0.293639 3.77763 0.696099V4.95015C3.77763 5.31682 4.07125 5.64623 4.47371 5.64623H5.134V7.0026H3.33792C1.50459 7.0026 0.000677031 8.50652 0.000677031 10.3398V25.9961C-0.0365615 27.8294 1.46727 29.3334 3.3006 29.3334ZM5.16975 1.39379H13.8594V4.28986H5.13235L5.13378 1.39379H5.16975ZM12.5031 5.64638V7.00275L6.49048 7.00418V5.64781L12.5031 5.64638ZM1.35716 10.3401C1.35716 9.27732 2.23657 8.39645 3.30078 8.39645H15.6585C16.7213 8.39645 17.6021 9.27586 17.6021 10.3401V25.9963C17.6021 27.0591 16.7227 27.9399 15.6585 27.9399H3.30078C2.23804 27.9399 1.35716 27.0605 1.35716 25.9963V10.3401Z" fill="currentColor"/>
+        <path d="M10.1333 12.8C10.1333 12.3582 9.77516 12 9.33333 12C8.89151 12 8.53333 12.3582 8.53333 12.8V16.5334H4.8C4.35817 16.5334 4 16.8915 4 17.3334C4 17.7752 4.35817 18.1334 4.8 18.1334L8.53333 18.1334V21.8667C8.53333 22.3085 8.89151 22.6667 9.33333 22.6667C9.77516 22.6667 10.1333 22.3085 10.1333 21.8667V18.1334L13.8667 18.1334C14.3085 18.1334 14.6667 17.7752 14.6667 17.3334C14.6667 16.8915 14.3085 16.5334 13.8667 16.5334H10.1333V12.8Z" fill="currentColor"/>
       </svg>
     </span>
   )
@@ -102,10 +102,23 @@ function AccessibilityMenuButton() {
 }
 
 const DISQUALIFICATION_PATH = '/get-started/questionnaire/disqualification'
+const VERIFY_PATH = '/sign-in/verify'
+
+/**
+ * Pages that suppress the entire SiteNav (top header + bottom mobile nav)
+ * because they render their own minimal back-header chrome.
+ */
+function shouldHideAllChrome(pathname: string): boolean {
+  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) {
+    return true
+  }
+  if (pathname === VERIFY_PATH) return true
+  return false
+}
 
 /** Desktop navbar — shown on md+ screens */
 function DesktopNav({ pathname }: { pathname: string }) {
-  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) return null
+  if (shouldHideAllChrome(pathname)) return null
   return (
     <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 h-14 items-center justify-between px-4 backdrop-blur-sm bg-white/90 border-b border-[#e3e3e3]">
       {/* Leading */}
@@ -174,7 +187,7 @@ function DesktopNav({ pathname }: { pathname: string }) {
 
 /** Mobile top header — shown on <md screens, hidden during intake */
 function MobileHeader({ pathname }: { pathname: string }) {
-  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) return null
+  if (shouldHideAllChrome(pathname)) return null
   return (
     <header className="flex md:hidden fixed top-0 left-0 right-0 z-50 h-12 items-center justify-between px-4 py-2 backdrop-blur-sm bg-white/90 border-b border-[#e3e3e3]">
       <Link href="/" aria-label="PreventiveMD home" className="flex items-center">
@@ -193,14 +206,16 @@ function MobileHeader({ pathname }: { pathname: string }) {
 
 /** Mobile bottom navigation bar — shown on <md screens */
 function MobileBottomNav({ pathname }: { pathname: string }) {
+  if (shouldHideAllChrome(pathname)) return null
+
+  // Post-auth Care Portal pages get a distinct nav variant.
+  if (pathname === '/journey') return <JourneyBottomNav pathname={pathname} />
+
   const isGetStarted = pathname.startsWith('/get-started')
   const isTreatments = pathname.startsWith('/treatments')
   const isHome = pathname === '/'
   // sign-in is not a "welcome" page but keep fallback
   const isSignIn = pathname.startsWith('/sign-in')
-
-  // Hide during intake questionnaire flow (except disqualification, which uses the full site nav)
-  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) return null
 
   return (
     <nav
@@ -258,6 +273,115 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
           <UserCircleIcon className={`size-8 ${isSignIn ? 'text-[#0778ba]' : 'text-[#71717a]'}`} />
           <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isSignIn ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
             Sign in
+          </span>
+        </Link>
+      </div>
+    </nav>
+  )
+}
+
+/** Chat-bubble + "+" — Support tab on the post-auth Journey nav.
+ *  Sourced from /public/assets/icon-support.svg, inlined so it can inherit
+ *  active/inactive color via currentColor. */
+function ChatSupportIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      className={`size-8 ${active ? 'text-[#0778ba]' : 'text-[#71717a]'}`}
+      aria-hidden="true"
+    >
+      <path
+        d="M3 17.0125C3 19.1472 4.49788 21.0054 6.60995 21.3159C8.05809 21.5289 9.52201 21.6933 11 21.8075V28L16.578 22.422C16.8536 22.1464 17.2258 21.9897 17.6155 21.98C20.2496 21.9148 22.8441 21.6904 25.39 21.3161C27.5021 21.0056 29 19.1474 29 17.0126V8.98741C29 6.85261 27.5021 4.99444 25.39 4.68391C22.3254 4.23335 19.1901 4 16.0004 4C12.8103 4 9.67482 4.23339 6.60996 4.68403C4.49789 4.99458 3 6.85275 3 8.98752V17.0125Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16.8 8.8C16.8 8.35817 16.4418 8 16 8C15.5582 8 15.2 8.35817 15.2 8.8V12.5333H11.4667C11.0248 12.5333 10.6667 12.8915 10.6667 13.3333C10.6667 13.7752 11.0248 14.1333 11.4667 14.1333L15.2 14.1333V17.8667C15.2 18.3085 15.5582 18.6667 16 18.6667C16.4418 18.6667 16.8 18.3085 16.8 17.8667V14.1333L20.5333 14.1333C20.9752 14.1333 21.3333 13.7752 21.3333 13.3333C21.3333 12.8915 20.9752 12.5333 20.5333 12.5333H16.8V8.8Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+/**
+ * Bottom navigation for post-auth Care Portal pages: Journey / Treatments /
+ * Support / <user avatar>. Mirrors the pre-auth MobileBottomNav layout but
+ * with different items.
+ */
+function JourneyBottomNav({ pathname }: { pathname: string }) {
+  const isJourney = pathname === '/journey'
+  const isTreatments = pathname.startsWith('/treatments')
+  const isSupport = pathname === '/support'
+  const isProfile = pathname === '/profile'
+
+  // Placeholder initials — will come from the authenticated session later.
+  const initials = 'JD'
+
+  return (
+    <nav
+      aria-label="Care portal navigation"
+      className="flex md:hidden fixed bottom-2 left-2 right-2 z-50 h-16 rounded-br-[36px] rounded-tl-[36px] border border-[#d1d1d1] overflow-hidden"
+      style={{
+        backgroundImage:
+          'linear-gradient(180deg, rgba(255,255,255,0.56) 0%, rgba(255,255,255,0.72) 30%, rgba(255,255,255,0.8) 70%, rgba(255,255,255,0.8) 100%)',
+        backdropFilter: 'blur(2px)',
+      }}
+    >
+      <div className="flex flex-1 items-stretch">
+        <Link
+          href="/journey"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+          aria-current={isJourney ? 'page' : undefined}
+        >
+          <WelcomeIcon active={isJourney} />
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isJourney ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
+            Journey
+          </span>
+        </Link>
+
+        <Link
+          href="/treatments"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+          aria-current={isTreatments ? 'page' : undefined}
+        >
+          <TreatmentsIcon active={isTreatments} />
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isTreatments ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
+            Treatments
+          </span>
+        </Link>
+
+        <Link
+          href="/support"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+          aria-current={isSupport ? 'page' : undefined}
+        >
+          <ChatSupportIcon active={isSupport} />
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isSupport ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
+            Support
+          </span>
+        </Link>
+
+        <Link
+          href="/profile"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+          aria-current={isProfile ? 'page' : undefined}
+        >
+          <span
+            className={`size-8 flex items-center justify-center ${isProfile ? 'text-[#0778ba]' : 'text-[#71717a]'}`}
+            aria-hidden="true"
+          >
+            <span className="size-6 rounded-full bg-[#71717a] text-white text-xs font-normal leading-4 flex items-center justify-center">
+              {initials}
+            </span>
+          </span>
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isProfile ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
+            Jane
           </span>
         </Link>
       </div>

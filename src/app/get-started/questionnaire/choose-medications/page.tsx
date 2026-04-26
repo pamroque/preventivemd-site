@@ -125,7 +125,7 @@ function MedOptionCard({
         <span className={`text-[18px] font-medium leading-7 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
           {label}
         </span>
-        <span className={`text-sm leading-5 ${isSelected ? 'text-[#0778ba]/70' : 'text-[rgba(0,0,0,0.6)]'}`}>
+        <span className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
           {sub}
         </span>
       </button>
@@ -376,7 +376,7 @@ export default function ChooseMedicationsPage() {
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
             <div className="flex-1 min-w-0">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={QUESTION_TEXT}
@@ -397,7 +397,7 @@ export default function ChooseMedicationsPage() {
                     )}
                   </>
                 )}
-              </p>
+              </h1>
             </div>
           </div>
 
@@ -574,7 +574,7 @@ export default function ChooseMedicationsPage() {
                 Included with your meds
               </p>
               <div className="flex flex-col gap-1">
-                {['Licensed provider review', 'Delivery to your doorstep', 'Ongoing 24/7 support'].map(item => (
+                {['Licensed provider review', 'Delivery to your doorstep', 'Ongoing support'].map(item => (
                   <div key={item} className="flex items-center gap-2">
                     <CheckFilledIcon />
                     <span className="text-[12px] font-normal leading-4 text-white whitespace-nowrap">{item}</span>

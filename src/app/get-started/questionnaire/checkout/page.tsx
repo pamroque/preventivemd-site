@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -158,6 +158,11 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
   const [isAndroid, setIsAndroid] = useState(false)
 
+  // The sticky CTA + cart grows with the number of treatments. Measure it so
+  // the main scroll region always has enough bottom padding to clear it.
+  const stickyCtaRef = useRef<HTMLDivElement>(null)
+  const [stickyCtaHeight, setStickyCtaHeight] = useState(144)
+
   // Detect consultation flow synchronously so backHref and CTA are correct immediately
   const [isConsultation] = useState(() => {
     const s12 = getStepValues(12)
@@ -175,6 +180,17 @@ export default function CheckoutPage() {
   const phoneFromStep0 = typeof step0Snapshot.phone === 'string' ? step0Snapshot.phone : ''
 
   const [phoneDisplay, setPhoneDisplay] = useState(() => formatPhone(phoneFromStep0))
+
+  useEffect(() => {
+    const el = stickyCtaRef.current
+    if (!el) return
+    const update = () => setStickyCtaHeight(el.getBoundingClientRect().height)
+    update()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     setIsAndroid(/android/i.test(navigator.userAgent))
@@ -309,7 +325,10 @@ export default function CheckoutPage() {
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: '9rem',
+          paddingBottom: `${stickyCtaHeight + 16}px`,
+          // Match the CTA height so focus-into-view never lands a field
+          // underneath the sticky cart bar (WCAG 2.4.11).
+          scrollPaddingBottom: `${stickyCtaHeight + 16}px`,
         }}
       >
         <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
@@ -327,7 +346,7 @@ export default function CheckoutPage() {
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
             <div className="flex-1 min-w-0">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={QUESTION_TEXT}
@@ -348,7 +367,7 @@ export default function CheckoutPage() {
                     )}
                   </>
                 )}
-              </p>
+              </h1>
             </div>
           </div>
 
@@ -364,6 +383,10 @@ export default function CheckoutPage() {
               {/* ACCOUNT DETAILS */}
               <div className="flex flex-col gap-4">
                 <SectionHeader label="Account Details" />
+
+                <p className="text-sm font-bold leading-5 text-[#0778ba]">
+                  To sign in to your Care Portal later, make sure you have access to your mobile number or email so we can send you a one-time passcode (OTP).
+                </p>
 
                 {/* Phone — pre-filled, editable, required */}
                 <div className="flex flex-col gap-1.5">
@@ -510,24 +533,35 @@ export default function CheckoutPage() {
               <div className="flex flex-col gap-4">
                 <SectionHeader label="Payment Details" />
 
-                {/* Card / Apple Pay (or Google Pay) toggle */}
-                <div className="flex rounded-lg border border-[#e4e4e7] overflow-hidden shadow-sm">
+                {/* Card / Apple Pay (or Google Pay) toggle — native radios so AT
+                    announces the group + selected state, and arrow keys work. */}
+                <div
+                  role="radiogroup"
+                  aria-label="Payment method"
+                  className="flex rounded-lg border border-[#e4e4e7] overflow-hidden shadow-sm"
+                >
                   {(['card', 'pay'] as const).map(method => {
                     const isActive = paymentMethod === method
                     const label = method === 'card' ? 'Card' : altPayLabel
                     return (
-                      <button
+                      <label
                         key={method}
-                        type="button"
-                        onClick={() => setValue('paymentMethod', method, { shouldValidate: false })}
-                        className={`flex-1 h-10 text-sm font-medium transition-colors ${
+                        className={`flex-1 h-10 flex items-center justify-center cursor-pointer text-sm font-medium transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-[#0778ba] focus-within:outline-offset-[-2px] ${
                           isActive
                             ? 'bg-[#0778ba] text-white'
                             : 'bg-white text-[rgba(0,0,0,0.6)] hover:bg-gray-50'
                         }`}
                       >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value={method}
+                          checked={isActive}
+                          onChange={() => setValue('paymentMethod', method, { shouldValidate: false })}
+                          className="sr-only"
+                        />
                         {label}
-                      </button>
+                      </label>
                     )
                   })}
                 </div>
@@ -743,37 +777,39 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Authorization text */}
-              <div className="flex flex-col gap-1">
-                {isConsultation ? (
-                  <>
-                    <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
-                      By submitting, you authorize $35 today to secure your live consultation appointment.
-                    </p>
-                    <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
-                      This fee is non-refundable if you cancel within 24 hours of your scheduled appointment.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
-                      By submitting, you authorize ${dueToday.toLocaleString()} today and, if your prescription is approved, recurring charges of ${dueToday.toLocaleString()} per your selected billing cycle until you cancel.
-                    </p>
-                    <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
-                      Payment does not guarantee a prescription. If treatment is not approved, you will receive a refund.
-                    </p>
-                  </>
-                )}
-              </div>
+              {/* Authorization text + trust badges — keep 24px between them */}
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
+                  {isConsultation ? (
+                    <>
+                      <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
+                        By securing your appointment, you authorize $35 today to schedule your live consultation.
+                      </p>
+                      <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
+                        This fee is non-refundable if you cancel within 24 hours of your scheduled appointment.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
+                        By submitting, you authorize ${dueToday.toLocaleString()} today. If your prescription is approved, you will be charged according to the plan and billing cycle you selected until you cancel.
+                      </p>
+                      <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
+                        Payment does not guarantee a prescription. If treatment is not approved, you will receive a refund.
+                      </p>
+                    </>
+                  )}
+                </div>
 
-              {/* Trust badges — same 1x display dimensions as /get-started */}
-              <div className="flex items-center justify-center gap-4 py-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={BADGE_HIPAA} alt="HIPAA Compliant" className="object-contain shrink-0" style={{ width: 46, height: 54 }} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={BADGE_SSL} alt="SSL Secure" className="object-contain shrink-0" style={{ width: 48, height: 48 }} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={BADGE_LEGIT} alt="LegitScript Certified" className="object-contain shrink-0" style={{ width: 50, height: 54 }} />
+                {/* Trust badges — same 1x display dimensions as /get-started */}
+                <div className="flex items-center justify-center gap-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={BADGE_HIPAA} alt="HIPAA Compliant" className="object-contain shrink-0" style={{ width: 46, height: 54 }} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={BADGE_SSL} alt="SSL Secure" className="object-contain shrink-0" style={{ width: 48, height: 48 }} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={BADGE_LEGIT} alt="LegitScript Certified" className="object-contain shrink-0" style={{ width: 50, height: 54 }} />
+                </div>
               </div>
 
             </form>
@@ -783,6 +819,7 @@ export default function CheckoutPage() {
 
       {/* ── Sticky CTA ── */}
       <div
+        ref={stickyCtaRef}
         className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4"
         style={{
           background: 'linear-gradient(to top, white 60%, rgba(255,255,255,0))',

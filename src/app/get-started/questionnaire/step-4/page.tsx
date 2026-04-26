@@ -7,8 +7,9 @@ import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import IntakeHeader from '@/components/ui/IntakeHeader'
 import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/components/ui/ChatHistory'
-import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
+import { getLastAnsweredStep, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { getStep4BackHref } from '@/lib/goal-routing'
+import { usePrefersReducedMotion } from '@/lib/useEveTyping'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -34,23 +35,35 @@ const QUESTION_WORDS = QUESTION_TEXT.split(' ')
 const WORD_DELAY_MS = 80
 
 function useAnimationSequence(currentBubbleCount: number) {
+  const reducedMotion = usePrefersReducedMotion()
   const [animateBubbles, setAnimateBubbles] = useState(false)
   const [visibleWords, setVisibleWords] = useState(0)
   const [typingStarted, setTypingStarted] = useState(false)
   const [done, setDone] = useState(false)
 
   useEffect(() => {
-    const t = setTimeout(() => setAnimateBubbles(true), 100)
-    return () => clearTimeout(t)
-  }, [])
+    if (!reducedMotion) return
+    setAnimateBubbles(true)
+    setTypingStarted(true)
+    setVisibleWords(QUESTION_WORDS.length)
+    setDone(true)
+  }, [reducedMotion])
 
   useEffect(() => {
+    if (reducedMotion) return
+    const t = setTimeout(() => setAnimateBubbles(true), 100)
+    return () => clearTimeout(t)
+  }, [reducedMotion])
+
+  useEffect(() => {
+    if (reducedMotion) return
     if (!animateBubbles) return
     const t = setTimeout(() => setTypingStarted(true), currentStepAnimDuration(currentBubbleCount))
     return () => clearTimeout(t)
-  }, [animateBubbles, currentBubbleCount])
+  }, [reducedMotion, animateBubbles, currentBubbleCount])
 
   useEffect(() => {
+    if (reducedMotion) return
     if (!typingStarted) return
     if (visibleWords < QUESTION_WORDS.length) {
       const t = setTimeout(() => setVisibleWords((w) => w + 1), WORD_DELAY_MS)
@@ -59,7 +72,7 @@ function useAnimationSequence(currentBubbleCount: number) {
       const t = setTimeout(() => setDone(true), 200)
       return () => clearTimeout(t)
     }
-  }, [typingStarted, visibleWords])
+  }, [reducedMotion, typingStarted, visibleWords])
 
   return { animateBubbles, visibleWords, typingStarted, done }
 }
@@ -108,15 +121,15 @@ export default function QuestionnaireStep4() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
-  const [backHref] = useState(() => getStep4BackHref())
+  const [backHref, setBackHref] = useState('/get-started/questionnaire/step-3')
 
   useEffect(() => {
-    const prior = getPriorSteps(3)
-    const mapped: PriorStep[] = prior.map((s, i) => ({
-      ...s,
-      editHref: i === 0 ? '/get-started' : `/get-started/questionnaire${i === 1 ? '' : `/step-${i}`}`,
-    }))
-    setCurrentStep(mapped[mapped.length - 1] ?? null)
+    // Compute on the client — sessionStorage is unavailable during SSR, so
+    // initializing these in useState would always fall through to step-3.
+    const prev = getStep4BackHref()
+    setBackHref(prev)
+    const last = getLastAnsweredStep()
+    if (last) setCurrentStep({ ...last, editHref: prev })
   }, [])
 
   const saved = getStepValues(3)
@@ -207,7 +220,7 @@ export default function QuestionnaireStep4() {
               />
             </div>
             <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-              <p
+              <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
                 aria-label={QUESTION_TEXT}
@@ -228,7 +241,7 @@ export default function QuestionnaireStep4() {
                     )}
                   </>
                 )}
-              </p>
+              </h1>
             </div>
           </div>
 
@@ -301,10 +314,10 @@ export default function QuestionnaireStep4() {
 
               {/* Was it intentional? */}
               <fieldset
-                className="flex flex-col gap-2 border-0 p-0 m-0"
+                className="flex flex-col border-0 p-0 m-0"
                 aria-describedby={errors.intentional ? 'intentional-error' : undefined}
               >
-                <legend className="text-sm font-medium text-[rgba(0,0,0,0.87)]">
+                <legend className="text-sm font-medium text-[rgba(0,0,0,0.87)] mb-1.5">
                   Was it intentional? <span className="text-red-600" aria-hidden="true">*</span>
                   <span className="sr-only">(required)</span>
                 </legend>
