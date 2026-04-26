@@ -47,6 +47,7 @@ import {
   AppointmentResult,
   AppointmentSlot,
   AvailableSlotQuery,
+  EhrProvider,
   EHRSyncError,
   BookingConflictError,
 } from '../types'
@@ -210,12 +211,47 @@ const Q_APPOINTMENT_TYPES = gql`
 
 const Q_PING = gql`query Ping { currentUser { id email } }`
 
+const Q_ORG_MEMBERS = gql`
+  query OrganizationMembers(
+    $licensed_in_state: String
+    $page_size: Int
+    $offset: Int
+  ) {
+    organizationMembers(
+      licensed_in_state: $licensed_in_state
+      page_size: $page_size
+      offset: $offset
+    ) {
+      id
+      first_name
+      last_name
+      email
+      phone_number
+      npi
+      is_active_provider
+      is_org_admin
+      is_owner
+      archived_at
+      preferred_language
+      state_licenses {
+        state
+      }
+    }
+  }
+`
+
 // ─── Adapter ─────────────────────────────────────────────────────────────
 
 export interface HealthieAdapterOptions {
   apiUrl:               string
   apiKey:               string
-  defaultDietitianId:   string
+  /**
+   * Fallback dietitian ID for paths that don't go through the worker's
+   * data-driven routing (e.g., the smoke test). Optional in production —
+   * the worker passes a per-call dietitianExternalId after querying
+   * providers + provider_external_ids by patient state.
+   */
+  defaultDietitianId?:  string
   /** Optional override; if absent, adapter discovers by name on first use. */
   appointmentTypeId?:   string
   /** Name to discover by. Defaults to "Initial Consultation". */
@@ -225,7 +261,7 @@ export interface HealthieAdapterOptions {
 export class HealthieAdapter implements EHRAdapter {
   readonly providerName = 'healthie' as const
   private client: GraphQLClient
-  private defaultDietitianId: string
+  private defaultDietitianId?: string
   private appointmentTypeIdOverride?: string
   private appointmentTypeName: string
   private cachedAppointmentTypeId?: string
@@ -250,6 +286,7 @@ export class HealthieAdapter implements EHRAdapter {
     patientCanonicalId:  string
     clinicalSummaryText: string
     rawIntakePayload?:   unknown
+    dietitianExternalId?: string
     address?: {
       line1:    string
       line2?:   string
@@ -260,6 +297,17 @@ export class HealthieAdapter implements EHRAdapter {
     }
   }): Promise<CreatePatientResult> {
     const { patient, clinicalSummaryText, rawIntakePayload, patientCanonicalId, address } = input
+
+    // Worker chooses provider per-call based on state-licensure routing.
+    // Fall back to the adapter's constructor default for the smoke test
+    // path (which doesn't query Supabase for routing).
+    const dietitianId = input.dietitianExternalId ?? this.defaultDietitianId
+    if (!dietitianId) {
+      throw new EHRSyncError({
+        message: 'No dietitian_id available — neither dietitianExternalId arg nor adapter default provided',
+        retryable: false,
+      })
+    }
 
     // 1. Idempotency: reuse existing client by email if present.
     let userId = await this.findClientByEmail(patient.email)
@@ -274,7 +322,7 @@ export class HealthieAdapter implements EHRAdapter {
         phone_number:      patient.phoneE164,
         dob:               patient.dob,
         gender:            genderForHealthie(patient.sex),
-        dietitian_id:      this.defaultDietitianId,
+        dietitian_id:      dietitianId,
         record_identifier: patientCanonicalId,
         timezone:          timezoneForState(patient.state),
         dont_send_welcome: false,
@@ -350,7 +398,7 @@ export class HealthieAdapter implements EHRAdapter {
         {
           resourceType: createdNew ? 'client_created' : 'client_reused',
           externalId:   userId,
-          metadata: { dietitianId: this.defaultDietitianId },
+          metadata: { dietitianId },
         },
       ],
       rawResponse: { createdNew, userId },
@@ -451,6 +499,62 @@ export class HealthieAdapter implements EHRAdapter {
         durationMinutes:    20,
         contactType:        query.contactType ?? 'video',
       }))
+  }
+
+  // ── listProviders ────────────────────────────────────────────────────
+  // Pull all org members from Healthie via the organizationMembers query.
+  // Paginates internally (page_size=100 max). Filters out clearly non-
+  // clinical accounts (org admins/owners with no licensed states) so the
+  // sync endpoint doesn't seed them as routable providers.
+  async listProviders(): Promise<EhrProvider[]> {
+    const PAGE_SIZE = 100
+    const all: any[] = []
+    let offset = 0
+
+    // Healthie returns all members; loop until we get less than a full
+    // page back or hit a sane safety cap.
+    for (let page = 0; page < 50; page++) {
+      const r: any = await this.safeRequest<any>(Q_ORG_MEMBERS, {
+        page_size: PAGE_SIZE,
+        offset,
+      })
+      const members = r?.organizationMembers ?? []
+      all.push(...members)
+      if (members.length < PAGE_SIZE) break
+      offset += PAGE_SIZE
+    }
+
+    // Map vendor shape → canonical EhrProvider.
+    return all
+      // Skip soft-deleted/archived users.
+      .filter((m: any) => !m.archived_at)
+      .map((m: any): EhrProvider => {
+        const stateLicenses: Array<{ state: string }> = m.state_licenses ?? []
+        const states = stateLicenses
+          .map((sl) => sl?.state?.toUpperCase())
+          .filter((s): s is string => !!s)
+        // Healthie tracks a single preferred_language per user. We expose
+        // it as a one-element array on canonical so multi-language EHRs
+        // can layer in seamlessly. Default to English when unset.
+        const lang = (m.preferred_language ?? '').trim()
+        const languages = lang ? [lang] : ['English']
+        return {
+          externalId:    String(m.id),
+          firstName:     m.first_name ?? '',
+          lastName:      m.last_name ?? '',
+          email:         (m.email ?? '').toLowerCase(),
+          phone:         m.phone_number ?? undefined,
+          npi:           m.npi ?? undefined,
+          licenseStates: states,
+          languages,
+          // is_active_provider is the clinical-side active flag; org
+          // admins/owners may be true here too. The sync endpoint can
+          // further filter via licenseStates.length > 0 if needed.
+          isActive:      m.is_active_provider !== false,
+          isOrgAdmin:    !!m.is_org_admin || !!m.is_owner,
+          rawResponse:   m,
+        }
+      })
   }
 
   // ── ping ─────────────────────────────────────────────────────────────

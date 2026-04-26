@@ -71,6 +71,38 @@ export interface CanonicalIntake {
   submittedAt: string;
 }
 
+// ─── Provider listing (for sync) ─────────────────────────────────────────
+// Canonical shape returned by adapter.listProviders(). The sync endpoint
+// upserts these into our providers table + provider_external_ids without
+// caring which EHR they came from.
+
+export interface EhrProvider {
+  /** Vendor's identifier for the provider. */
+  externalId:    string
+  firstName:     string
+  lastName:      string
+  email:         string
+  phone?:        string
+  npi?:          string
+  /** Two-letter US state codes the provider is licensed to practice in. */
+  licenseStates: string[]
+  /**
+   * Languages the provider can serve patients in. Healthie's User type
+   * exposes a single `preferred_language` rather than an array, so adapters
+   * for Healthie return a single-element array (or empty if not set).
+   * Future EHRs that support multi-language will return more.
+   */
+  languages?:    string[]
+  /** Whether the provider is currently active in the EHR. */
+  isActive:      boolean
+  /** True if this user has admin/owner privileges in the EHR (org admins
+   *  often appear in organizationMembers but shouldn't be in patient
+   *  routing). The sync endpoint may filter these out. */
+  isOrgAdmin?:   boolean
+  /** Vendor's raw response for debugging. */
+  rawResponse?:  unknown
+}
+
 // ─── Appointment booking ─────────────────────────────────────────────────
 
 export interface AppointmentSlot {
@@ -210,6 +242,16 @@ export interface EHRAdapter {
     clinicalSummaryText: string;
     rawIntakePayload?:   unknown;
     /**
+     * Vendor's user ID for the provider this patient is being assigned to.
+     * The worker decides this per-call based on patient state + license
+     * routing. Adapters use this as the dietitian/practitioner reference
+     * on the vendor's createClient mutation.
+     *
+     * Optional: when omitted, the adapter falls back to its constructor
+     * default (e.g., for the smoke test or single-provider sandboxes).
+     */
+    dietitianExternalId?: string;
+    /**
      * Patient delivery/mailing address. Available at /checkout submit
      * but NOT before. Adapters MUST treat this as optional and only
      * write location data when line1 is present.
@@ -223,6 +265,17 @@ export interface EHRAdapter {
       country?: string;        // default 'US'
     };
   }): Promise<CreatePatientResult>;
+
+  /**
+   * Pull the list of providers/practitioners from the EHR. Used by the
+   * /api/admin/sync-providers endpoint to populate our local providers
+   * table + provider_external_ids mappings.
+   *
+   * Should return ALL providers (handle pagination internally), not
+   * just the current page. Filter out admin-only / non-clinical accounts
+   * via isOrgAdmin if needed.
+   */
+  listProviders(): Promise<EhrProvider[]>;
 
   /**
    * Book an appointment for an existing patient.
