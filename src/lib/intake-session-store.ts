@@ -118,6 +118,35 @@ export function getSubmission(): Submission | null {
   return session.submission ?? null
 }
 
+/**
+ * Flatten every step's saved values into a single object. Useful as raw
+ * payload for debugging or serialization. Note: keys used by the form
+ * pages do NOT all match IntakeData shape — for the canonical IntakeData
+ * payload that /api/intake expects, use buildIntakeData() instead.
+ */
+export function flattenSessionValues(): Record<string, string | boolean> {
+  const session = load()
+  const out: Record<string, string | boolean> = {}
+  for (const stepValues of Object.values(session.values)) {
+    Object.assign(out, stepValues)
+  }
+  return out
+}
+
+/**
+ * Build canonical IntakeData by flattening session values and applying
+ * the form-shape → IntakeData mapping. Used by /checkout before POSTing
+ * to /api/intake.
+ *
+ * The mapping itself lives in `intake-mapping.ts` so the worker can apply
+ * the same translation server-side for old submissions.
+ */
+import { mapToIntakeData } from './intake-mapping'
+
+export function buildIntakeData(): Record<string, unknown> {
+  return mapToIntakeData(flattenSessionValues() as Record<string, unknown>)
+}
+
 /** Clear a range of step indices (e.g. goal-question slots when goals change) */
 export function clearStepRange(from: number, to: number) {
   if (typeof window === 'undefined') return
