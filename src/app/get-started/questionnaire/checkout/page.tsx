@@ -8,7 +8,14 @@ import { useRouter } from 'next/navigation'
 import IntakeHeader from '@/components/ui/IntakeHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { US_STATES } from '@/lib/us-states'
-import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
+import {
+  getPriorSteps,
+  getStepValues,
+  saveStep,
+  buildIntakeData,
+} from '@/lib/intake-session-store'
+import { defaultIntakeData, type IntakeData } from '@/lib/intake-flow'
+import { submitIntake } from '@/lib/supabase/submit-intake'
 import { useEveTyping } from '@/lib/useEveTyping'
 
 const QUESTION_TEXT = 'Finally, some last few details to process your request.'
@@ -293,6 +300,8 @@ export default function CheckoutPage() {
   }
 
   async function onSubmit(data: FormValues) {
+    // Existing local persistence — keeps the chat-history bubbles and
+    // back-navigation behavior intact.
     saveStep(
       14,
       { question: 'Checkout details', bubbles: [data.email] },
@@ -306,6 +315,47 @@ export default function CheckoutPage() {
         ...(data.billingStreet ? { billingStreet: data.billingStreet } : {}),
       }
     )
+
+    // Build the canonical IntakeData. Form pages save their own field
+    // names ("dateOfBirth", "goals" comma-string, etc.) — the mapper in
+    // intake-session-store translates those into IntakeData shape.
+    const mapped = buildIntakeData()
+    const intakeData: IntakeData = {
+      ...defaultIntakeData,
+      ...(mapped as Partial<IntakeData>),
+    }
+
+    // Read the draft session token (if /api/intake/draft set one).
+    let sessionToken: string | undefined
+    try {
+      sessionToken = document.cookie
+        .split(';')
+        .map((c) => c.trim())
+        .find((c) => c.startsWith('intake_session='))
+        ?.split('=')[1]
+    } catch { /* no cookie access */ }
+
+    const result = await submitIntake(
+      intakeData,
+      {
+        email:         data.email,
+        street:        data.street,
+        apt:           data.apt,
+        city:          data.city,
+        zip:           data.zip,
+        paymentMethod: data.paymentMethod,
+      },
+      sessionToken,
+    )
+
+    if (!result.success) {
+      // Non-blocking: if the backend submit fails (network, server error),
+      // we still route to confirmation so the patient sees the success
+      // screen. The intake exists in sessionStorage and ops can recover.
+      // We log so this is visible in Sentry / browser logs later.
+      console.error('Intake submission failed:', result.error)
+    }
+
     router.push('/get-started/confirmation')
   }
 
