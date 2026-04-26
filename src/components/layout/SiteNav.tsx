@@ -102,10 +102,23 @@ function AccessibilityMenuButton() {
 }
 
 const DISQUALIFICATION_PATH = '/get-started/questionnaire/disqualification'
+const VERIFY_PATH = '/sign-in/verify'
+
+/**
+ * Pages that suppress the entire SiteNav (top header + bottom mobile nav)
+ * because they render their own minimal back-header chrome.
+ */
+function shouldHideAllChrome(pathname: string): boolean {
+  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) {
+    return true
+  }
+  if (pathname === VERIFY_PATH) return true
+  return false
+}
 
 /** Desktop navbar — shown on md+ screens */
 function DesktopNav({ pathname }: { pathname: string }) {
-  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) return null
+  if (shouldHideAllChrome(pathname)) return null
   return (
     <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 h-14 items-center justify-between px-4 backdrop-blur-sm bg-white/90 border-b border-[#e3e3e3]">
       {/* Leading */}
@@ -174,7 +187,7 @@ function DesktopNav({ pathname }: { pathname: string }) {
 
 /** Mobile top header — shown on <md screens, hidden during intake */
 function MobileHeader({ pathname }: { pathname: string }) {
-  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) return null
+  if (shouldHideAllChrome(pathname)) return null
   return (
     <header className="flex md:hidden fixed top-0 left-0 right-0 z-50 h-12 items-center justify-between px-4 py-2 backdrop-blur-sm bg-white/90 border-b border-[#e3e3e3]">
       <Link href="/" aria-label="PreventiveMD home" className="flex items-center">
@@ -193,14 +206,16 @@ function MobileHeader({ pathname }: { pathname: string }) {
 
 /** Mobile bottom navigation bar — shown on <md screens */
 function MobileBottomNav({ pathname }: { pathname: string }) {
+  if (shouldHideAllChrome(pathname)) return null
+
+  // Post-auth Care Portal pages get a distinct nav variant.
+  if (pathname === '/journey') return <JourneyBottomNav pathname={pathname} />
+
   const isGetStarted = pathname.startsWith('/get-started')
   const isTreatments = pathname.startsWith('/treatments')
   const isHome = pathname === '/'
   // sign-in is not a "welcome" page but keep fallback
   const isSignIn = pathname.startsWith('/sign-in')
-
-  // Hide during intake questionnaire flow (except disqualification, which uses the full site nav)
-  if (pathname.startsWith('/get-started/questionnaire') && pathname !== DISQUALIFICATION_PATH) return null
 
   return (
     <nav
@@ -258,6 +273,115 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
           <UserCircleIcon className={`size-8 ${isSignIn ? 'text-[#0778ba]' : 'text-[#71717a]'}`} />
           <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isSignIn ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
             Sign in
+          </span>
+        </Link>
+      </div>
+    </nav>
+  )
+}
+
+/** Chat-bubble + "+" — Support tab on the post-auth Journey nav.
+ *  Sourced from /public/assets/icon-support.svg, inlined so it can inherit
+ *  active/inactive color via currentColor. */
+function ChatSupportIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      className={`size-8 ${active ? 'text-[#0778ba]' : 'text-[#71717a]'}`}
+      aria-hidden="true"
+    >
+      <path
+        d="M3 17.0125C3 19.1472 4.49788 21.0054 6.60995 21.3159C8.05809 21.5289 9.52201 21.6933 11 21.8075V28L16.578 22.422C16.8536 22.1464 17.2258 21.9897 17.6155 21.98C20.2496 21.9148 22.8441 21.6904 25.39 21.3161C27.5021 21.0056 29 19.1474 29 17.0126V8.98741C29 6.85261 27.5021 4.99444 25.39 4.68391C22.3254 4.23335 19.1901 4 16.0004 4C12.8103 4 9.67482 4.23339 6.60996 4.68403C4.49789 4.99458 3 6.85275 3 8.98752V17.0125Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16.8 8.8C16.8 8.35817 16.4418 8 16 8C15.5582 8 15.2 8.35817 15.2 8.8V12.5333H11.4667C11.0248 12.5333 10.6667 12.8915 10.6667 13.3333C10.6667 13.7752 11.0248 14.1333 11.4667 14.1333L15.2 14.1333V17.8667C15.2 18.3085 15.5582 18.6667 16 18.6667C16.4418 18.6667 16.8 18.3085 16.8 17.8667V14.1333L20.5333 14.1333C20.9752 14.1333 21.3333 13.7752 21.3333 13.3333C21.3333 12.8915 20.9752 12.5333 20.5333 12.5333H16.8V8.8Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+/**
+ * Bottom navigation for post-auth Care Portal pages: Journey / Treatments /
+ * Support / <user avatar>. Mirrors the pre-auth MobileBottomNav layout but
+ * with different items.
+ */
+function JourneyBottomNav({ pathname }: { pathname: string }) {
+  const isJourney = pathname === '/journey'
+  const isTreatments = pathname.startsWith('/treatments')
+  const isSupport = pathname === '/support'
+  const isProfile = pathname === '/profile'
+
+  // Placeholder initials — will come from the authenticated session later.
+  const initials = 'JD'
+
+  return (
+    <nav
+      aria-label="Care portal navigation"
+      className="flex md:hidden fixed bottom-2 left-2 right-2 z-50 h-16 rounded-br-[36px] rounded-tl-[36px] border border-[#d1d1d1] overflow-hidden"
+      style={{
+        backgroundImage:
+          'linear-gradient(180deg, rgba(255,255,255,0.56) 0%, rgba(255,255,255,0.72) 30%, rgba(255,255,255,0.8) 70%, rgba(255,255,255,0.8) 100%)',
+        backdropFilter: 'blur(2px)',
+      }}
+    >
+      <div className="flex flex-1 items-stretch">
+        <Link
+          href="/journey"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+          aria-current={isJourney ? 'page' : undefined}
+        >
+          <WelcomeIcon active={isJourney} />
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isJourney ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
+            Journey
+          </span>
+        </Link>
+
+        <Link
+          href="/treatments"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+          aria-current={isTreatments ? 'page' : undefined}
+        >
+          <TreatmentsIcon active={isTreatments} />
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isTreatments ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
+            Treatments
+          </span>
+        </Link>
+
+        <Link
+          href="/support"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+          aria-current={isSupport ? 'page' : undefined}
+        >
+          <ChatSupportIcon active={isSupport} />
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isSupport ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
+            Support
+          </span>
+        </Link>
+
+        <Link
+          href="/profile"
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+          aria-current={isProfile ? 'page' : undefined}
+        >
+          <span
+            className={`size-8 flex items-center justify-center ${isProfile ? 'text-[#0778ba]' : 'text-[#71717a]'}`}
+            aria-hidden="true"
+          >
+            <span className="size-6 rounded-full bg-[#71717a] text-white text-xs font-normal leading-4 flex items-center justify-center">
+              {initials}
+            </span>
+          </span>
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isProfile ? 'text-[#0778ba]' : 'text-[#71717a]'}`}>
+            Jane
           </span>
         </Link>
       </div>

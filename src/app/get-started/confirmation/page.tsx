@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { getStepValues, getSubmission, markSubmitted } from '@/lib/intake-session-store'
 import { usePrefersReducedMotion } from '@/lib/useEveTyping'
+import { inferChannel, normalizePhone } from '@/lib/portal-auth'
+import { setPortalAuthFlow } from '@/lib/portal-auth-flow'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -201,6 +204,7 @@ function usePageAnimation(firstName: string) {
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function ConfirmationPage() {
+  const router = useRouter()
   const [firstName, setFirstName] = useState('')
   // Read-or-create: preserves the ID across page refreshes and revisits. The
   // existing submission record is consulted first so a user coming back to
@@ -223,11 +227,10 @@ export default function ConfirmationPage() {
   const [credentialError, setCredentialError] = useState('')
   const [isSigningIn, setIsSigningIn] = useState(false)
 
-  // Detect flow synchronously
-  const [isConsultation] = useState(() => {
-    const s12 = getStepValues(12)
-    return typeof s12.format === 'string' && !!s12.format
-  })
+  // Detect flow on the client only — sessionStorage is empty during SSR, so
+  // initializing here would always render the async-flow copy on the server
+  // and trigger a hydration mismatch when the client flips it to consultation.
+  const [isConsultation, setIsConsultation] = useState(false)
   const [consultationDetails, setConsultationDetails] = useState<{
     format: 'Video' | 'Phone'
     dateLabel: string
@@ -239,8 +242,10 @@ export default function ConfirmationPage() {
     if (typeof step0.firstName === 'string') setFirstName(step0.firstName)
 
     const step12 = getStepValues(12)
+    const consultFlow = typeof step12.format === 'string' && !!step12.format
+    setIsConsultation(consultFlow)
 
-    if (isConsultation) {
+    if (consultFlow) {
       const fmt = (typeof step12.format === 'string' ? step12.format : 'Video') as 'Video' | 'Phone'
       const dateLabel = typeof step12.date === 'string' ? formatConsultDate(step12.date) : ''
       const time = typeof step12.time === 'string' ? step12.time : ''
@@ -276,25 +281,28 @@ export default function ConfirmationPage() {
       })
       setMedicationItems(items)
     }
-  }, [isConsultation])
+  }, [])
 
   const { animateBubble, typingStarted, visibleWords, done, words } = usePageAnimation(firstName)
 
-  function validateCredential(val: string): string {
-    const v = val.trim()
-    if (!v) return 'Please enter your email or mobile number.'
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return ''
-    if (v.replace(/\D/g, '').length >= 7) return ''
-    return 'Please enter a valid email or mobile number.'
-  }
-
   function handleSignIn() {
     if (isSigningIn) return
-    const error = validateCredential(credential)
-    if (error) { setCredentialError(error); return }
+    const trimmed = credential.trim()
+    if (!trimmed) {
+      setCredentialError('Please enter your email or mobile number.')
+      return
+    }
+    const channel = inferChannel(trimmed)
+    if (!channel) {
+      setCredentialError('Please enter a valid email or 10-digit mobile number.')
+      return
+    }
     setCredentialError('')
     setIsSigningIn(true)
-    setTimeout(() => setIsSigningIn(false), 2000)
+    // Skip /sign-in step 1 — they've already entered their identifier here.
+    const stored = channel === 'email' ? trimmed.toLowerCase() : normalizePhone(trimmed)
+    setPortalAuthFlow({ identifier: stored, channel })
+    router.push('/sign-in/verify')
   }
 
   function handleCredentialChange(val: string) {
@@ -439,33 +447,31 @@ export default function ConfirmationPage() {
 
               {/* ── Care portal sign-in card ── */}
               <div
-                className="border border-[#e3e3e3] rounded-tl-[36px] rounded-br-[36px] p-4 flex flex-col gap-6 bg-white"
+                className="overflow-hidden border border-[#e3e3e3] rounded-bl-[36px] rounded-tr-[36px] flex flex-col bg-white"
                 style={{ boxShadow: '0px 4px 16px 0px rgba(0,0,0,0.15)', animation: 'fadeIn 0.4s ease 100ms both' }}
               >
-                <div className="flex gap-4 items-center">
-                  <div className="relative shrink-0 size-[84px]">
-                    <div
-                      className="absolute bottom-0 right-0 size-[72px] rounded-full"
-                      style={{ background: 'linear-gradient(135deg, rgba(0,180,200,0.18), rgba(7,120,186,0.28))' }}
-                      aria-hidden="true"
-                    />
+                {/* Heading bar — edge-to-edge: gradient thumbnail + dark navy text panel */}
+                <div className="flex items-stretch bg-[#00b4c8]">
+                  <div className="shrink-0 size-[84px] flex items-center justify-center bg-gradient-to-r from-[#0778ba] to-[#00b4c8]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/assets/cta-medications.png"
                       alt=""
-                      className="absolute inset-0 size-[84px] object-contain object-center"
+                      className="size-16 object-contain"
                       aria-hidden="true"
                     />
                   </div>
-                  <p className="flex-1 min-w-0 text-base font-medium leading-6 text-[rgba(0,0,0,0.87)]">
-                    {isConsultation
-                    ? 'Manage your appointment and get ongoing support, all in your Care Portal'
-                    : 'Stay on top of your treatments and get ongoing support, all in your Care Portal'
-                  }
-                  </p>
+                  <div className="flex-1 flex items-center bg-[rgba(29,45,68,0.95)] px-4">
+                    <p className="text-base font-medium leading-6 text-white">
+                      {isConsultation
+                        ? 'Manage your appointment through your Care Portal'
+                        : 'Stay on top of your treatments through your Care Portal'}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-3">
+                {/* Form area */}
+                <div className="flex flex-col gap-4 px-6 py-5">
                   <div className="flex flex-col gap-2">
                     <label htmlFor="credential" className="text-[12px] font-medium tracking-[1.5px] uppercase text-[#71717a]">
                       Email or mobile number
@@ -508,18 +514,18 @@ export default function ConfirmationPage() {
                     {isSigningIn ? 'Signing in…' : 'Sign in'}
                     <ChevronRightIcon />
                   </button>
-                </div>
 
-                <div className="flex flex-col items-center gap-0.5">
-                  <p className="text-sm text-center text-[rgba(0,0,0,0.6)] leading-[1.43] tracking-[0.17px]">
-                    Having trouble signing in?
-                  </p>
-                  <Link
-                    href="/contact"
-                    className="text-[13px] font-medium text-[#1976d2] underline uppercase tracking-[0.46px] leading-[22px]"
-                  >
-                    Contact us
-                  </Link>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <p className="text-sm text-center text-[rgba(0,0,0,0.6)] leading-[1.43] tracking-[0.17px]">
+                      Having trouble signing in?
+                    </p>
+                    <Link
+                      href="/contact"
+                      className="text-[13px] font-medium text-[#1976d2] underline uppercase tracking-[0.46px] leading-[22px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] rounded-sm"
+                    >
+                      Contact us
+                    </Link>
+                  </div>
                 </div>
               </div>
             </>
