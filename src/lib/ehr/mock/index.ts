@@ -17,6 +17,7 @@ import {
   AppointmentResult,
   AppointmentSlot,
   AvailableSlotQuery,
+  EhrProvider,
   EHRSyncError,
   BookingConflictError,
 } from '../types'
@@ -31,6 +32,7 @@ export class MockAdapter implements EHRAdapter {
     patientCanonicalId: string
     clinicalSummaryText: string
     rawIntakePayload?: unknown
+    dietitianExternalId?: string
     address?: {
       line1: string
       line2?: string
@@ -115,6 +117,37 @@ export class MockAdapter implements EHRAdapter {
       }
     }
     return slots
+  }
+
+  async listProviders(): Promise<EhrProvider[]> {
+    // Two synthetic providers for tests. State coverage chosen so any US
+    // state has at least one match (mock 1: continental + AK/HI; mock 2:
+    // a narrower set so we can exercise the licensure-mismatch path).
+    return [
+      {
+        externalId:    'mock_provider_001',
+        firstName:     'Mock',
+        lastName:      'Provider One',
+        email:         'mock1@example.test',
+        phone:         '+15555550001',
+        npi:           '1234567890',
+        licenseStates: ['NY','CA','TX','FL','IL','PA','OH','GA','NC','MI'],
+        languages:     ['English','Spanish'],
+        isActive:      true,
+        isOrgAdmin:    false,
+      },
+      {
+        externalId:    'mock_provider_002',
+        firstName:     'Mock',
+        lastName:      'Provider Two',
+        email:         'mock2@example.test',
+        phone:         '+15555550002',
+        licenseStates: ['NY','NJ','CT'],   // tri-state only, for testing routing
+        languages:     ['English'],
+        isActive:      true,
+        isOrgAdmin:    false,
+      },
+    ]
   }
 
   async ping(): Promise<{ ok: boolean; detail?: string }> {

@@ -114,6 +114,25 @@ async function runWorker(req: NextRequest) {
       // Hydrate canonical inputs from Supabase rows.
       const ctx = await loadContext(supabase, job.patient_id, job.submission_id)
 
+      // ── Provider routing: pick a licensed provider for the patient's state ────
+      // Language-based routing is deferred until we have a concrete
+      // need (Spanish-speaking patient → Spanish-speaking provider).
+      // Today we route purely by state licensure.
+      const routed = await pickLicensedProvider(
+        supabase,
+        ctx.patient.state,
+        adapter.providerName,
+      )
+      if (!routed) {
+        throw new EHRSyncError({
+          message:
+            `No licensed provider available for state=${ctx.patient.state}. ` +
+            `Onboard a provider in Healthie covering this state, then run ` +
+            `/api/admin/sync-providers.`,
+          retryable: false,
+        })
+      }
+
       const summary = formatClinicalSummary(ctx.intakeData, ctx.patient, ctx.intake)
 
       // Run the adapter.
@@ -125,6 +144,7 @@ async function runWorker(req: NextRequest) {
         clinicalSummaryText: summary,
         rawIntakePayload:    ctx.rawResponses,
         address:             (job.payload as any)?.address ?? undefined,
+        dietitianExternalId: routed.healthieUserId,
       })
 
       // Persist external IDs. Upsert handles retry-after-partial-success.
@@ -148,6 +168,75 @@ async function runWorker(req: NextRequest) {
         .from('ehr_external_ids')
         .upsert(idRows, { onConflict: 'patient_id,provider,resource_type,external_id' })
       if (idsErr) throw idsErr
+
+      // ── Determine visit type ─────────────────────────────────────
+      const visitType: 'sync' | 'async' =
+        (ctx.rawResponses as any)?.format ? 'sync' : 'async'
+
+      // ── Always insert provider_assignment row ────────────────────
+      // The assignment is the canonical "this patient is this provider's
+      // responsibility" record. Created for every intake, sync or async.
+      // Reassignments later create new rows linked via transferred_to_*.
+      const { data: assignment, error: assignErr } = await supabase
+        .from('provider_assignments')
+        .insert({
+          patient_id:  job.patient_id,
+          provider_id: routed.localProviderId,
+          intake_id:   job.submission_id,
+          visit_type:  visitType,
+          status:      'active',
+          ehr_provider:    adapter.providerName,
+          ehr_external_id: null,                // Healthie has no assignment entity
+        })
+        .select('id')
+        .single()
+      if (assignErr || !assignment) {
+        // Patient was created in Healthie successfully but we couldn't
+        // record the assignment locally. Mark retryable so the worker
+        // tries again — adapter idempotency prevents double-creation.
+        throw new EHRSyncError({
+          message: `Failed to insert provider_assignment: ${assignErr?.message ?? 'no row returned'}`,
+          retryable: true,
+        })
+      }
+
+      // ── For sync visits: also insert an appointments row ─────────
+      // The slot picker at /book-consultation today is mock data, so the
+      // patient's chosen date+time is a stated *preference*, not yet a
+      // confirmed Healthie booking. We still parse it into scheduled_at
+      // (typed timestamp >> free-text note) and mark status='requested'
+      // so downstream UIs can render the target time without claiming
+      // it's confirmed. Commit 3 will replace this with Healthie's
+      // authoritative response and flip status to 'scheduled'.
+      //
+      // Timezone: deliberately not handled here. The chosen string is
+      // parsed in the server's local time. Commit 3 owns the canonical
+      // tz-aware booking from Healthie — no point engineering it twice.
+      if (visitType === 'sync') {
+        const requestedAt    = parseSlotPreference(ctx.rawResponses)
+        const slotPreferenceNote = buildSlotPreferenceNote(ctx.rawResponses)
+        const { error: apptErr } = await supabase
+          .from('appointments')
+          .insert({
+            patient_id:    job.patient_id,
+            provider_id:   routed.localProviderId,
+            assignment_id: assignment.id,
+            type:          'sync',
+            status:        'requested',          // patient-stated, not Healthie-confirmed
+            scheduled_at:  requestedAt,          // ISO from responses.date+time, or NULL if unparseable
+            duration_min:  20,
+            intake_id:     job.submission_id,
+            provider_notes: slotPreferenceNote,
+            ehr_provider:   null,
+            ehr_external_id: null,
+          })
+        if (apptErr) {
+          // Non-fatal: assignment + Healthie patient already exist.
+          // Ops can manually create the appointments row from the
+          // assignment if needed. Log for visibility.
+          console.error(`[sync] appointments row insert failed for assignment ${assignment.id}:`, apptErr)
+        }
+      }
 
       // Mark job complete.
       await supabase
@@ -255,4 +344,92 @@ async function loadContext(
     intakeData,
     rawResponses,
   }
+}
+
+// ─── Provider routing ───────────────────────────────────────────────────
+
+/**
+ * Find a provider licensed in the given state. Random-pick from the
+ * eligible pool. Returns null if no eligible provider exists (caller
+ * should fail the job non-retryably so ops can onboard a covering
+ * provider).
+ *
+ * Pool criteria:
+ *   - is_active = true
+ *   - accepts_new = true
+ *   - archived_at IS NULL
+ *   - patient state ∈ provider.license_states
+ *   - has a provider_external_ids row for the active vendor
+ *
+ * Language-based filtering is deferred — async flow doesn't capture a
+ * language preference, so adding language to this query would
+ * over-restrict. Revisit when we have multi-language routing as a
+ * concrete requirement.
+ */
+async function pickLicensedProvider(
+  supabase: ReturnType<typeof createAdminClient>,
+  patientState: string,
+  vendor: string,
+): Promise<{ localProviderId: string; healthieUserId: string } | null> {
+  const { data, error } = await supabase
+    .from('providers')
+    .select('id, provider_external_ids!inner(external_id, vendor)')
+    .is('archived_at', null)
+    .eq('is_active', true)
+    .eq('accepts_new', true)
+    .contains('license_states', [patientState])
+    .eq('provider_external_ids.vendor', vendor)
+
+  if (error) {
+    console.error('[sync] provider routing query failed', error)
+    return null
+  }
+  if (!data || data.length === 0) return null
+
+  // Random pick. With 2 providers in sandbox this gives ~50/50; with N
+  // providers, ~uniform. Replace with least-loaded if/when we want to
+  // balance by current caseload.
+  const chosen = data[Math.floor(Math.random() * data.length)] as any
+  const externalIds = chosen.provider_external_ids as Array<{ external_id: string; vendor: string }>
+  const mapping = externalIds.find((m) => m.vendor === vendor)
+  if (!mapping) return null
+
+  return {
+    localProviderId: chosen.id,
+    healthieUserId:  mapping.external_id,
+  }
+}
+
+/**
+ * Build a short note explaining the patient's stated slot preference,
+ * to populate appointments.provider_notes for sync visits. Ops uses this
+ * to manually book the calendar slot in Healthie until /book-consultation
+ * pulls real availability and we can auto-book.
+ */
+function buildSlotPreferenceNote(responses: any): string {
+  const format   = responses?.format ?? '(no format chosen)'
+  const date     = responses?.date   ?? '(no date chosen)'
+  const time     = responses?.time   ?? '(no time chosen)'
+  const language = responses?.language ?? 'English'
+  return `Patient requested ${format} consult on ${date} at ${time} (${language}). ` +
+         `Auto-booking deferred to next release; please book this slot in Healthie's calendar.`
+}
+
+/**
+ * Naively combine the patient's chosen date + time strings into an ISO
+ * timestamp. Server-local timezone interpretation by design — commit 3
+ * replaces this with Healthie's authoritative confirmed time, so any
+ * tz drift here is corrected before the patient sees calendar UI.
+ *
+ * Returns null if either piece is missing or the combined string can't
+ * be parsed; the appointments row falls back to scheduled_at = NULL,
+ * which is fine because status='requested' already signals "tentative."
+ */
+function parseSlotPreference(responses: any): string | null {
+  const date = responses?.date
+  const time = responses?.time
+  if (!date || !time) return null
+  const dt = new Date(`${date} ${time}`)
+  if (Number.isNaN(dt.getTime())) return null
+  return dt.toISOString()
 }

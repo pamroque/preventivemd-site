@@ -22,7 +22,11 @@ export function getEHRAdapter(): EHRAdapter {
       cached = new HealthieAdapter({
         apiUrl:               requireEnv('HEALTHIE_API_URL'),
         apiKey:               requireEnv('HEALTHIE_API_KEY'),
-        defaultDietitianId:   requireEnv('HEALTHIE_DEFAULT_DIETITIAN_ID'),
+        // Optional in production — the worker queries Supabase to pick a
+        // licensed provider per intake. Kept as a fallback for the smoke
+        // test path which doesn't have DB access. Either way the env var
+        // can be removed once the worker is fully on data-driven routing.
+        defaultDietitianId:   process.env.HEALTHIE_DEFAULT_DIETITIAN_ID,
         appointmentTypeId:    process.env.HEALTHIE_APPOINTMENT_TYPE_ID,
         appointmentTypeName:  process.env.HEALTHIE_APPOINTMENT_TYPE_NAME,
       })
