@@ -6,6 +6,7 @@ import IntakeHeader from '@/components/ui/IntakeHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
+import { SYNC_REQUIRED_STATES_SET } from '@/lib/intake-flow'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -14,7 +15,9 @@ const QUESTION_TEXT = 'How and when would you like to have your live consultatio
 const PROGRESS = 90
 const NEXT_ROUTE = '/get-started/questionnaire/desired-treatments'
 
-const SYNC_REQUIRED_STATES = new Set(['KY', 'LA', 'MS', 'NM', 'RI', 'WV'])
+// SYNC_REQUIRED_STATES_SET is the single source of truth, imported from
+// @/lib/intake-flow. Don't redeclare here — Mississippi was missing locally
+// before consolidation, which silently routed MS patients through async.
 
 // ─── Time slots ───────────────────────────────────────────────────────────────
 
@@ -153,14 +156,14 @@ export default function BookConsultationPage() {
 
   const [requiresSync] = useState(() => {
     const s0 = getStepValues(0)
-    return typeof s0.state === 'string' && SYNC_REQUIRED_STATES.has(s0.state)
+    return typeof s0.state === 'string' && SYNC_REQUIRED_STATES_SET.has(s0.state)
   })
 
   // Form state
   const [language, setLanguage] = useState('English')
   const [format, setFormat] = useState(() => {
     const s0 = getStepValues(0)
-    if (typeof s0.state === 'string' && SYNC_REQUIRED_STATES.has(s0.state)) return 'Video'
+    if (typeof s0.state === 'string' && SYNC_REQUIRED_STATES_SET.has(s0.state)) return 'Video'
     const saved = getStepValues(12)
     return typeof saved.format === 'string' ? saved.format : ''
   })

@@ -8,6 +8,10 @@
     {
       "path": "/api/admin/sync-providers",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/admin/cleanup-holds",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

@@ -31,7 +31,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { calculateBMI, SYNC_REQUIRED_STATES } from '@/lib/intake-flow'
+import { calculateBMI, SYNC_REQUIRED_STATES_SET } from '@/lib/intake-flow'
 import type { IntakeData } from '@/lib/intake-flow'
 import type { CheckoutPayload } from '@/lib/supabase/submit-intake'
 
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     // ── Compute extracted fields ──────────────────────────
     const bmi = calculateBMI(intakeData.heightFeet, intakeData.heightInches, intakeData.weight)
-    const visitType = SYNC_REQUIRED_STATES.includes(intakeData.state) ? 'sync' : 'async'
+    const visitType = SYNC_REQUIRED_STATES_SET.has(intakeData.state) ? 'sync' : 'async'
 
     // ── Upgrade existing draft, or insert a fresh submission ──
     // The /api/intake/draft handler stores progress as status='draft' keyed

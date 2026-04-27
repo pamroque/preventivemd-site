@@ -197,10 +197,22 @@ export function calculateBMI(feet: string, inches: string, weight: string): numb
   return (lbs / (totalInches * totalInches)) * 703
 }
 
-/** States that require a sync (video) visit per telehealth regulations */
+/**
+ * States that require a synchronous (video) visit per telehealth
+ * regulations. Patients in these states are routed to the live-consultation
+ * booking flow regardless of personal preference, and the booking page
+ * locks the format to Video.
+ *
+ * Single source of truth — both `/api/intake` (server-side visitType
+ * classification) and the questionnaire UI pages import from here.
+ */
 export const SYNC_REQUIRED_STATES = [
-  'KY', 'LA', 'NM', 'RI', 'WV',
-]
+  'KY', 'LA', 'MS', 'NM', 'RI', 'WV',
+] as const
+
+/** Membership check that's a touch faster than `.includes()` for callers
+ *  on a hot path. Both forms return the same answer. */
+export const SYNC_REQUIRED_STATES_SET = new Set<string>(SYNC_REQUIRED_STATES)
 
 /** US states for the dropdown */
 export const US_STATES = [
@@ -524,7 +536,7 @@ export const INTAKE_STEPS: Record<string, StepConfig> = {
     ],
     next: (data) => {
       // CONDITIONAL: State determines visit type
-      const requiresSync = SYNC_REQUIRED_STATES.includes(data.state)
+      const requiresSync = SYNC_REQUIRED_STATES_SET.has(data.state)
       return requiresSync ? 'visit-type-sync' : 'visit-type-async'
     },
   },

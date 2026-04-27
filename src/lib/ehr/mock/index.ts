@@ -153,4 +153,10 @@ export class MockAdapter implements EHRAdapter {
   async ping(): Promise<{ ok: boolean; detail?: string }> {
     return { ok: true, detail: 'mock adapter always healthy' }
   }
+
+  async getDefaultAppointmentTypeId(): Promise<string> {
+    // Deterministic fake — anything the test suite can recognize as "the
+    // mock's appointment type" without colliding with realistic Healthie ids.
+    return 'mock_appt_type_initial_consultation_20min'
+  }
 }

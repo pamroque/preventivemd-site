@@ -466,6 +466,14 @@ export class HealthieAdapter implements EHRAdapter {
     }
   }
 
+  // ── getDefaultAppointmentTypeId ──────────────────────────────────────
+  // Public form of resolveAppointmentTypeId — exposed so /api/availability
+  // and the admin sync-providers endpoint can surface the resolved id
+  // without duplicating the discover-by-name logic.
+  async getDefaultAppointmentTypeId(): Promise<string> {
+    return this.resolveAppointmentTypeId()
+  }
+
   // ── getAvailableSlots ────────────────────────────────────────────────
   async getAvailableSlots(query: AvailableSlotQuery): Promise<AppointmentSlot[]> {
     const apptTypeId = query.appointmentTypeId ?? (await this.resolveAppointmentTypeId())
