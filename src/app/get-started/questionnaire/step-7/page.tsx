@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import IntakeHeader from '@/components/ui/IntakeHeader'
+import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 
@@ -142,7 +142,7 @@ export default function QuestionnaireStep7() {
 
   return (
     <>
-      <IntakeHeader backHref="/get-started/questionnaire/step-6" progress={PROGRESS} />
+      <BackHeader backHref="/get-started/questionnaire/step-6" progress={PROGRESS} />
 
       <main
         id="main-content"

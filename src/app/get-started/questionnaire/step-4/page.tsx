@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
-import IntakeHeader from '@/components/ui/IntakeHeader'
+import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/components/ui/ChatHistory'
 import { getLastAnsweredStep, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { getStep4BackHref } from '@/lib/goal-routing'
@@ -189,7 +189,7 @@ export default function QuestionnaireStep4() {
 
   return (
     <>
-      <IntakeHeader backHref={backHref} progress={PROGRESS} />
+      <BackHeader backHref={backHref} progress={PROGRESS} />
 
       <main
         id="main-content"

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import IntakeHeader from '@/components/ui/IntakeHeader'
+import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
@@ -479,7 +479,7 @@ export default function BookConsultationPage() {
 
   return (
     <>
-      <IntakeHeader backHref="/get-started/questionnaire/visit-type" progress={PROGRESS} />
+      <BackHeader backHref="/get-started/questionnaire/visit-type" progress={PROGRESS} />
 
       <main
         id="main-content"
@@ -780,7 +780,16 @@ export default function BookConsultationPage() {
               ) : slots.length === 0 ? (
                 <p className="text-sm text-[rgba(0,0,0,0.6)] py-4">
                   No available slots in the next {LOOKAHEAD_DAYS} days.
-                  Please check back later or contact support.
+                  Please check back later or{' '}
+                  <a
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0778ba] underline underline-offset-2"
+                  >
+                    contact support
+                  </a>
+                  .
                 </p>
               ) : (
                 ([
@@ -829,7 +838,7 @@ export default function BookConsultationPage() {
               <button
                 type="button"
                 onClick={handleNextDay}
-                className="flex items-center gap-3 px-4 py-2 text-base font-medium text-[#0778ba] hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] rounded-lg self-start"
+                className="flex items-center gap-3 px-4 py-2 text-base font-medium text-[#0778ba] hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] rounded-lg self-end"
               >
                 Next: {formatNextDayLabel(selectedDate)}
                 <ChevronRightIcon />

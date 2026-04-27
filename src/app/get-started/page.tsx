@@ -154,7 +154,7 @@ export default async function GetStartedPage({
               rel="noopener noreferrer"
               className="text-[#0778ba] underline underline-offset-2"
             >
-              Terms &amp; Conditions
+              Terms of Use
             </a>{' '}
             and acknowledge our{' '}
             <a

@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
-import IntakeHeader from '@/components/ui/IntakeHeader'
+import BackHeader from '@/components/ui/BackHeader'
 import { US_STATES } from '@/lib/us-states'
 import { saveStep, getStepValues } from '@/lib/intake-session-store'
 import { usePrefersReducedMotion } from '@/lib/useEveTyping'
@@ -280,7 +280,7 @@ export default function QuestionnaireStep1() {
 
   return (
     <>
-      <IntakeHeader backHref="/get-started" progress={PROGRESS} />
+      <BackHeader backHref="/get-started" progress={PROGRESS} />
 
       <main id="main-content" tabIndex={-1} className="min-h-screen bg-white pt-12 pb-28 md:pt-14 focus:outline-none">
         <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
@@ -303,7 +303,7 @@ export default function QuestionnaireStep1() {
             >
               <div className="bg-[#f0f0f0] px-3 py-1 rounded-[100px]">
                 <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5 text-right">
-                  Agree to Terms &amp; Conditions and acknowledge Privacy Policy
+                  I consent to the collection and processing of my consumer health data as described in the Consumer Health Data Privacy Policy.
                 </p>
               </div>
             </div>
@@ -391,12 +391,14 @@ export default function QuestionnaireStep1() {
                 </div>
               </div>
 
-              {/* Sex assigned at birth — gap-3 (12px) between label and buttons per Figma */}
+              {/* Sex assigned at birth — 0.5rem (8px) gap between label and buttons.
+                  <legend> sits outside the fieldset's flex flow, so use mb-2
+                  on the legend instead of gap on the fieldset. */}
               <fieldset
-                className="flex flex-col gap-3 border-0 p-0 m-0"
+                className="border-0 p-0 m-0"
                 aria-describedby={errors.sex ? 'sex-error' : undefined}
               >
-                <legend id="sex-label" className="text-sm font-medium text-[#09090b] leading-5">
+                <legend id="sex-label" className="mb-2 text-sm font-medium text-[#09090b] leading-5">
                   Sex assigned at birth <span className="text-red-600" aria-hidden="true">*</span>
                   <span className="sr-only">(required)</span>
                 </legend>

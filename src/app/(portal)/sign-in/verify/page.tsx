@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import PortalBackHeader from '@/components/portal/PortalBackHeader'
+import BackHeader from '@/components/ui/BackHeader'
 import OtpInput from '@/components/portal/OtpInput'
 import {
   formatIdentifierForHeading,
@@ -117,7 +117,7 @@ export default function VerifyPage() {
 
   return (
     <>
-      <PortalBackHeader backHref="/sign-in" />
+      <BackHeader backHref="/sign-in" />
 
       <main
         id="main-content"
