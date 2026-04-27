@@ -203,11 +203,15 @@ export default function BookConsultationPage() {
 
   // Form state
   const [language, setLanguage] = useState('English')
+  // Default to Video (most common modality + sync-required states must be
+  // video). The Format dropdown remains visible/editable for non-sync
+  // states so a phone-preferring patient can still switch.
   const [format, setFormat] = useState(() => {
     const s0 = getStepValues(0)
     if (typeof s0.state === 'string' && SYNC_REQUIRED_STATES_SET.has(s0.state)) return 'Video'
     const saved = getStepValues(12)
-    return typeof saved.format === 'string' ? saved.format : ''
+    if (typeof saved.format === 'string' && saved.format) return saved.format
+    return 'Video'
   })
   const [formatError, setFormatError] = useState('')
 
