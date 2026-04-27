@@ -301,6 +301,19 @@ export interface EHRAdapter {
   getAvailableSlots(query: AvailableSlotQuery): Promise<AppointmentSlot[]>;
 
   /**
+   * Resolve the vendor's identifier for the appointment type used by the
+   * booking flow ("Initial Consultation - 20 Minutes" by default). Adapters
+   * discover this from the vendor by name on first call and cache it for
+   * the lifetime of the adapter instance.
+   *
+   * Used by:
+   *   - getAvailableSlots (pass appt_type_id to the slot query)
+   *   - scheduleAppointment (set appointment_type_id on createAppointment)
+   *   - /api/admin/sync-providers (sanity-check display in response)
+   */
+  getDefaultAppointmentTypeId(): Promise<string>;
+
+  /**
    * Health check. Called by /api/sync/run before each batch.
    * Should be cheap (single auth-validating query).
    */

@@ -7,6 +7,7 @@ import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
 import { US_STATES } from '@/lib/us-states'
+import { SYNC_REQUIRED_STATES_SET } from '@/lib/intake-flow'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -25,9 +26,9 @@ function ChevronRightIcon() {
   )
 }
 
-// ─── Restricted states (require video consultation first) ─────────────────────
-
-const SYNC_REQUIRED_STATES = new Set(['KY', 'LA', 'MS', 'NM', 'RI', 'WV'])
+// SYNC_REQUIRED_STATES_SET is imported from @/lib/intake-flow as the single
+// source of truth. Mississippi was missing from the array previously — that
+// fix lives there too.
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
@@ -149,7 +150,7 @@ export default function VisitTypePage() {
 
   const [requiresSync] = useState(() => {
     const s0 = getStepValues(0)
-    return typeof s0.state === 'string' && SYNC_REQUIRED_STATES.has(s0.state)
+    return typeof s0.state === 'string' && SYNC_REQUIRED_STATES_SET.has(s0.state)
   })
 
   const [userStateName] = useState(() => {
