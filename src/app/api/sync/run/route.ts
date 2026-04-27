@@ -19,7 +19,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getEHRAdapter, EHRSyncError } from '@/lib/ehr'
+import { getEHRAdapter, EHRSyncError, BookingConflictError } from '@/lib/ehr'
 import { intakeToCanonical, formatClinicalSummary } from '@/lib/ehr/transform'
 import { mapToIntakeData } from '@/lib/intake-mapping'
 import type { IntakeData } from '@/lib/intake-flow'
@@ -236,16 +236,58 @@ async function runWorker(req: NextRequest) {
       // ── Sync visits: insert appointments row + clean up the hold ─
       // Two paths:
       //   (A) bookedSlot present — patient went through /book-consultation
-      //       picker. We promote the held slot into a real appointments row
-      //       and DELETE the provisional_appointments hold so it doesn't
-      //       block re-bookings if the patient cancels/changes.
+      //       picker. We attempt Healthie's createAppointment first, then
+      //       INSERT the appointments row with the authoritative result
+      //       (status='scheduled' + Healthie appointment id). If Healthie
+      //       rejects the booking, we still INSERT with status='requested'
+      //       + a clear ops note so the appointment surfaces in dashboards.
+      //       Either way the provisional hold is deleted.
       //   (B) Legacy sync without picker (in-flight pre-commit-3) — fall
       //       back to parseSlotPreference and the verbose ops note.
-      //
-      // Both stop at status='requested'. Healthie's createAppointment
-      // call (a follow-up) is what flips to 'scheduled' and populates
-      // ehr_external_id. Until that lands, ops books the slot manually.
       if (bookedSlot) {
+        // Attempt to book the held slot in Healthie's calendar. The
+        // adapter sets enforce_availability=true, so a slot taken in
+        // Healthie between hold and book throws BookingConflictError.
+        let appointmentExtId:   string | null = null
+        let scheduledDatetime:  string        = bookedSlot.slotDatetime
+        let videoRoomUrl:       string | null = null
+        let appointmentStatus:  'scheduled' | 'requested' = 'requested'
+        let bookingNote =
+          `Patient picked ${bookedSlot.contactType} consult with ${bookedSlot.providerName} ` +
+          `at ${bookedSlot.slotDatetime} via /book-consultation slot picker.`
+
+        try {
+          const apptResult = await adapter.scheduleAppointment({
+            patientExternalId: out.externalPatientId,
+            slot: {
+              providerExternalId: bookedSlot.healthieUserId,
+              datetime:           bookedSlot.slotDatetime,
+              durationMinutes:    20,
+              contactType:        bookedSlot.contactType,
+            },
+          })
+          appointmentExtId  = apptResult.externalAppointmentId
+          scheduledDatetime = apptResult.bookedDatetime || bookedSlot.slotDatetime
+          videoRoomUrl      = apptResult.joinUrl ?? null
+          appointmentStatus = 'scheduled'
+          bookingNote += ` Auto-booked in Healthie (appt ${apptResult.externalAppointmentId}).`
+        } catch (err: any) {
+          if (err instanceof BookingConflictError) {
+            bookingNote +=
+              ` SLOT CONFLICT at booking time: ${err.message}. ` +
+              `Ops to find an alternate slot and confirm with patient.`
+            console.error(`[sync] booking conflict for assignment ${assignment.id}:`, err)
+          } else {
+            bookingNote +=
+              ` Healthie createAppointment failed: ${err?.message ?? 'unknown'}. ` +
+              `Ops to retry booking manually in Healthie.`
+            console.error(`[sync] scheduleAppointment failed for assignment ${assignment.id}:`, err)
+          }
+          // Non-fatal — the patient + assignment are already real, ops
+          // can manually finish the booking. The appointments row still
+          // gets inserted (with status='requested') so dashboards see it.
+        }
+
         const { error: apptErr } = await supabase
           .from('appointments')
           .insert({
@@ -253,23 +295,22 @@ async function runWorker(req: NextRequest) {
             provider_id:   bookedSlot.providerId,
             assignment_id: assignment.id,
             type:          'sync',
-            status:        'requested',
-            scheduled_at:  bookedSlot.slotDatetime,
+            status:        appointmentStatus,
+            scheduled_at:  scheduledDatetime,
             duration_min:  20,
             intake_id:     job.submission_id,
-            provider_notes:
-              `Patient picked ${bookedSlot.contactType} consult with ${bookedSlot.providerName} ` +
-              `at ${bookedSlot.slotDatetime} via /book-consultation slot picker. ` +
-              `Healthie createAppointment integration pending — please confirm in calendar.`,
+            provider_notes: bookingNote,
             ehr_provider:    adapter.providerName,
-            ehr_external_id: null,
+            ehr_external_id: appointmentExtId,
+            video_room_url:  videoRoomUrl,
           })
         if (apptErr) {
           console.error(`[sync] appointments insert (slot-driven) failed for assignment ${assignment.id}:`, apptErr)
         }
 
-        // Clean up the soft-hold. Best-effort: even if this fails, the
-        // periodic cleanup-holds cron will sweep it within 10 min.
+        // Clean up the soft-hold regardless of Healthie booking outcome.
+        // Best-effort: even if this fails, the periodic cleanup-holds
+        // cron will sweep it within 10 min.
         const { error: holdErr } = await supabase
           .from('provisional_appointments')
           .delete()
