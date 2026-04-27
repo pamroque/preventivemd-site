@@ -33,7 +33,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { calculateBMI, SYNC_REQUIRED_STATES_SET } from '@/lib/intake-flow'
 import type { IntakeData } from '@/lib/intake-flow'
-import type { CheckoutPayload } from '@/lib/supabase/submit-intake'
+import type { CheckoutPayload, BookedSlot } from '@/lib/supabase/submit-intake'
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     const intakeData:   IntakeData       = body.data
     const checkout:     CheckoutPayload | undefined = body.checkout
     const sessionToken: string | undefined          = body.sessionToken
+    const bookedSlot:   BookedSlot       | undefined = body.bookedSlot
 
     // ── Basic validation ──────────────────────────────────
     if (!intakeData?.firstName || !intakeData?.lastName || !intakeData?.phone) {
@@ -135,7 +136,9 @@ export async function POST(request: NextRequest) {
           .update({
             status:         'submitted',
             patient_id:     patientId,
-            responses:      { ...intakeData, checkout },     // append checkout payload
+            // bookedSlot lives on responses so the worker can pick it up
+            // alongside the rest of the intake answers — no schema change.
+            responses:      { ...intakeData, checkout, bookedSlot },
             bmi:            bmi ? Math.round(bmi * 100) / 100 : null,
             visit_type:     visitType,
             patient_state:  intakeData.state,
@@ -156,10 +159,10 @@ export async function POST(request: NextRequest) {
       } else {
         // No draft existed — this is unusual but possible if sessionStorage
         // was cleared mid-flow. Insert a fresh submitted row.
-        submissionId = await insertNewSubmission(supabase, patientId, intakeData, checkout, bmi, visitType)
+        submissionId = await insertNewSubmission(supabase, patientId, intakeData, checkout, bmi, visitType, bookedSlot)
       }
     } else {
-      submissionId = await insertNewSubmission(supabase, patientId, intakeData, checkout, bmi, visitType)
+      submissionId = await insertNewSubmission(supabase, patientId, intakeData, checkout, bmi, visitType, bookedSlot)
     }
 
     // ── Persist treatment selections ──────────────────────
@@ -270,6 +273,7 @@ async function insertNewSubmission(
   checkout:   CheckoutPayload | undefined,
   bmi:        number | null,
   visitType:  'sync' | 'async',
+  bookedSlot?: BookedSlot,
 ): Promise<string> {
   const { data, error } = await supabase
     .from('intake_submissions')
@@ -277,7 +281,7 @@ async function insertNewSubmission(
       patient_id:    patientId,
       form_version:  '1.0',
       status:        'submitted',
-      responses:     { ...intakeData, checkout },
+      responses:     { ...intakeData, checkout, bookedSlot },
       bmi:           bmi ? Math.round(bmi * 100) / 100 : null,
       visit_type:    visitType,
       patient_state: intakeData.state,
