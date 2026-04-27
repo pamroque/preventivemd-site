@@ -15,7 +15,8 @@ import {
   buildIntakeData,
 } from '@/lib/intake-session-store'
 import { defaultIntakeData, type IntakeData } from '@/lib/intake-flow'
-import { submitIntake } from '@/lib/supabase/submit-intake'
+import { submitIntake, type BookedSlot } from '@/lib/supabase/submit-intake'
+import { getSessionToken } from '@/lib/supabase/intake-session'
 import { useEveTyping } from '@/lib/useEveTyping'
 
 const QUESTION_TEXT = 'Finally, some last few details to process your request.'
@@ -152,6 +153,37 @@ function PhoneCallIcon() {
 
 const PLAN_PRICES: Record<string, number> = { '1mo': 149, '3mo': 417, '6mo': 774, '12mo': 1188 }
 
+// ─── Slot-hold helpers ───────────────────────────────────────────────────────
+
+const BOOK_CONSULTATION_ROUTE = '/get-started/questionnaire/book-consultation'
+
+/** Reconstruct the BookedSlot payload that /book-consultation stashed
+ *  in step 12. Returns null if any required field is missing. */
+function readBookedSlot(): BookedSlot | null {
+  const s12 = getStepValues(12)
+  const required = ['holdId','providerId','healthieUserId','slotDatetime','contactType','providerName','expiresAt'] as const
+  for (const k of required) {
+    if (typeof s12[k] !== 'string' || !s12[k]) return null
+  }
+  const ct = String(s12.contactType)
+  if (ct !== 'video' && ct !== 'phone') return null
+  return {
+    holdId:         String(s12.holdId),
+    providerId:     String(s12.providerId),
+    healthieUserId: String(s12.healthieUserId),
+    slotDatetime:   String(s12.slotDatetime),
+    contactType:    ct,
+    providerName:   String(s12.providerName),
+    expiresAt:      String(s12.expiresAt),
+  }
+}
+
+function formatCountdown(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 // ─── Progress ────────────────────────────────────────────────────────────────
 
 const PROGRESS = 90
@@ -181,6 +213,14 @@ export default function CheckoutPage() {
     time: string
   } | null>(null)
 
+  // Slot hold countdown — only populated when /book-consultation reserved
+  // a real slot (commit 3 onwards). Legacy intakes that came through the
+  // mock picker will have isConsultation=true but no holdId; the banner
+  // simply doesn't render in that case.
+  const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null)
+  const [holdSecondsRemaining, setHoldSecondsRemaining] = useState<number>(0)
+  const [holdExpired, setHoldExpired] = useState(false)
+
   // Read step 0 synchronously so values are available for useForm defaultValues
   const step0Snapshot = getStepValues(0)
   const stateFromStep0 = typeof step0Snapshot.state === 'string' ? step0Snapshot.state : ''
@@ -198,6 +238,72 @@ export default function CheckoutPage() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  // ── Hold validation + countdown ─────────────────────────────────────
+  // On mount, ask the server about the hold we created at /book-consultation.
+  // Three outcomes:
+  //   - Hold valid → set expiresAt, countdown ticks every second.
+  //   - Hold expired (410) → flash the expired banner, redirect to /book-consultation.
+  //   - Hold not found / no holdId saved → quietly skip; legacy paths are
+  //     still allowed to submit without a hold.
+  useEffect(() => {
+    if (!isConsultation) return
+    const slot = readBookedSlot()
+    if (!slot) return
+    let cancelled = false
+
+    fetch(`/api/availability/reserve/${slot.holdId}`, {
+      headers: { 'x-session-token': getSessionToken() },
+      cache:   'no-store',
+    })
+      .then(async (r) => ({ status: r.status, body: await r.json().catch(() => ({})) }))
+      .then(({ status, body }) => {
+        if (cancelled) return
+        if (status === 410 || body?.expired) {
+          setHoldExpired(true)
+          // Best-effort release; cleanup-holds cron will sweep regardless.
+          fetch(`/api/availability/reserve/${slot.holdId}`, {
+            method: 'DELETE',
+            headers: { 'x-session-token': getSessionToken() },
+          }).catch(() => {})
+          setTimeout(() => router.push(BOOK_CONSULTATION_ROUTE), 2000)
+          return
+        }
+        if (!body?.ok || !body?.expiresAt) {
+          // Hold isn't ours or doesn't exist — punt back to the picker.
+          router.push(BOOK_CONSULTATION_ROUTE)
+          return
+        }
+        setHoldExpiresAt(body.expiresAt)
+      })
+      .catch(() => { /* network blip; rely on countdown to catch true expiry */ })
+
+    return () => { cancelled = true }
+  }, [isConsultation, router])
+
+  // 1-second tick. When countdown hits 0, release the hold and bounce.
+  useEffect(() => {
+    if (!holdExpiresAt || holdExpired) return
+    const tick = () => {
+      const ms = new Date(holdExpiresAt).getTime() - Date.now()
+      const sec = Math.max(0, Math.floor(ms / 1000))
+      setHoldSecondsRemaining(sec)
+      if (sec === 0) {
+        setHoldExpired(true)
+        const slot = readBookedSlot()
+        if (slot) {
+          fetch(`/api/availability/reserve/${slot.holdId}`, {
+            method: 'DELETE',
+            headers: { 'x-session-token': getSessionToken() },
+          }).catch(() => {})
+        }
+        setTimeout(() => router.push(BOOK_CONSULTATION_ROUTE), 2000)
+      }
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [holdExpiresAt, holdExpired, router])
 
   useEffect(() => {
     setIsAndroid(/android/i.test(navigator.userAgent))
@@ -325,15 +431,13 @@ export default function CheckoutPage() {
       ...(mapped as Partial<IntakeData>),
     }
 
-    // Read the draft session token (if /api/intake/draft set one).
-    let sessionToken: string | undefined
-    try {
-      sessionToken = document.cookie
-        .split(';')
-        .map((c) => c.trim())
-        .find((c) => c.startsWith('intake_session='))
-        ?.split('=')[1]
-    } catch { /* no cookie access */ }
+    // Use the canonical helper — fixes a long-standing cookie-name mismatch
+    // (this page was reading 'intake_session=' but the cookie is actually
+    // 'pmd_intake_session'). getSessionToken returns the same value the
+    // /book-consultation page used to reserve the hold, so the worker sees
+    // a consistent thread.
+    const sessionToken = getSessionToken()
+    const bookedSlot = readBookedSlot() ?? undefined
 
     const result = await submitIntake(
       intakeData,
@@ -346,6 +450,7 @@ export default function CheckoutPage() {
         paymentMethod: data.paymentMethod,
       },
       sessionToken,
+      bookedSlot,
     )
 
     if (!result.success) {
@@ -388,6 +493,36 @@ export default function CheckoutPage() {
             currentStep={currentStep}
             animateCurrentStep={animateBubbles}
           />
+
+          {/* ── Slot hold countdown ── */}
+          {/* Only renders when /book-consultation reserved a real slot.
+              Shows time remaining until auto-release (10 min from reserve).
+              When the timer hits 0, the effect above redirects back to
+              /book-consultation. */}
+          {isConsultation && holdExpiresAt && !holdExpired && (
+            <div
+              className="rounded-lg border border-[#0778ba]/40 bg-[#e6f3fb] px-4 py-3"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="text-sm text-[#0a4f7a] leading-5">
+                Your appointment slot is held until checkout completes.
+                <span className="font-semibold ml-1">
+                  {formatCountdown(holdSecondsRemaining)} remaining
+                </span>
+              </p>
+            </div>
+          )}
+          {isConsultation && holdExpired && (
+            <div
+              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3"
+              role="alert"
+            >
+              <p className="text-sm text-red-700 leading-5">
+                Your appointment hold expired. Redirecting you back to pick a new time…
+              </p>
+            </div>
+          )}
 
           {/* ── Eve's message ── */}
           <div className="flex items-start gap-3 w-full">

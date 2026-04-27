@@ -23,6 +23,25 @@ export interface CheckoutPayload {
   paymentMethod:  'card' | 'pay'
 }
 
+/**
+ * Booked slot — captured at /book-consultation when a sync-visit patient
+ * picks a real Healthie slot and the system soft-holds it. Carried through
+ * to /api/intake so the worker can promote the hold into a permanent
+ * appointments row instead of writing one with the old free-text date+time.
+ *
+ * All fields are strings so this can round-trip through sessionStorage
+ * (which only stores string|boolean values).
+ */
+export interface BookedSlot {
+  holdId:         string  // provisional_appointments.id
+  providerId:     string  // Supabase providers.id
+  healthieUserId: string  // vendor external id
+  slotDatetime:   string  // ISO-8601
+  contactType:    'video' | 'phone'
+  providerName:   string
+  expiresAt:      string  // ISO-8601 — used by /checkout countdown
+}
+
 export interface IntakeSubmissionResult {
   success:       boolean
   submissionId?: string
@@ -35,12 +54,13 @@ export async function submitIntake(
   data:         IntakeData,
   checkout:     CheckoutPayload | undefined,
   sessionToken: string | undefined,
+  bookedSlot?:  BookedSlot,
 ): Promise<IntakeSubmissionResult> {
   try {
     const response = await fetch('/api/intake', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ data, checkout, sessionToken }),
+      body:    JSON.stringify({ data, checkout, sessionToken, bookedSlot }),
     })
 
     const result = await response.json()

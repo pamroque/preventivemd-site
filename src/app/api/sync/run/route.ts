@@ -114,23 +114,52 @@ async function runWorker(req: NextRequest) {
       // Hydrate canonical inputs from Supabase rows.
       const ctx = await loadContext(supabase, job.patient_id, job.submission_id)
 
-      // ── Provider routing: pick a licensed provider for the patient's state ────
-      // Language-based routing is deferred until we have a concrete
-      // need (Spanish-speaking patient → Spanish-speaking provider).
-      // Today we route purely by state licensure.
-      const routed = await pickLicensedProvider(
-        supabase,
-        ctx.patient.state,
-        adapter.providerName,
-      )
-      if (!routed) {
-        throw new EHRSyncError({
-          message:
-            `No licensed provider available for state=${ctx.patient.state}. ` +
-            `Onboard a provider in Healthie covering this state, then run ` +
-            `/api/admin/sync-providers.`,
-          retryable: false,
-        })
+      // ── Slot-driven path vs random-routing path ──────────────────
+      // If the patient picked a real slot at /book-consultation, we
+      // already have a chosen provider (the one whose slot they grabbed).
+      // Skip random routing entirely and trust the hold.
+      //
+      // Otherwise, fall back to the original "pick any licensed provider"
+      // logic. That path covers async submissions and any in-flight
+      // sync intakes that came through before commit 3 deployed.
+      const bookedSlot = (ctx.rawResponses as any)?.bookedSlot as
+        | {
+            holdId:         string
+            providerId:     string
+            healthieUserId: string
+            slotDatetime:   string
+            contactType:    'video' | 'phone'
+            providerName:   string
+            expiresAt:      string
+          }
+        | undefined
+
+      let chosenProviderId: string
+      let chosenHealthieId: string
+
+      if (bookedSlot) {
+        chosenProviderId = bookedSlot.providerId
+        chosenHealthieId = bookedSlot.healthieUserId
+      } else {
+        // Language-based routing is deferred until we have a concrete
+        // need (Spanish-speaking patient → Spanish-speaking provider).
+        // Today we route purely by state licensure.
+        const routed = await pickLicensedProvider(
+          supabase,
+          ctx.patient.state,
+          adapter.providerName,
+        )
+        if (!routed) {
+          throw new EHRSyncError({
+            message:
+              `No licensed provider available for state=${ctx.patient.state}. ` +
+              `Onboard a provider in Healthie covering this state, then run ` +
+              `/api/admin/sync-providers.`,
+            retryable: false,
+          })
+        }
+        chosenProviderId = routed.localProviderId
+        chosenHealthieId = routed.healthieUserId
       }
 
       const summary = formatClinicalSummary(ctx.intakeData, ctx.patient, ctx.intake)
@@ -144,7 +173,7 @@ async function runWorker(req: NextRequest) {
         clinicalSummaryText: summary,
         rawIntakePayload:    ctx.rawResponses,
         address:             (job.payload as any)?.address ?? undefined,
-        dietitianExternalId: routed.healthieUserId,
+        dietitianExternalId: chosenHealthieId,
       })
 
       // Persist external IDs. Upsert handles retry-after-partial-success.
@@ -170,8 +199,12 @@ async function runWorker(req: NextRequest) {
       if (idsErr) throw idsErr
 
       // ── Determine visit type ─────────────────────────────────────
-      const visitType: 'sync' | 'async' =
-        (ctx.rawResponses as any)?.format ? 'sync' : 'async'
+      // bookedSlot implies sync (only sync flow goes through /book-consultation).
+      // Otherwise look at the legacy `format` field that the old picker set,
+      // which covers in-flight intakes from before commit 3.
+      const visitType: 'sync' | 'async' = bookedSlot
+        ? 'sync'
+        : (ctx.rawResponses as any)?.format ? 'sync' : 'async'
 
       // ── Always insert provider_assignment row ────────────────────
       // The assignment is the canonical "this patient is this provider's
@@ -181,7 +214,7 @@ async function runWorker(req: NextRequest) {
         .from('provider_assignments')
         .insert({
           patient_id:  job.patient_id,
-          provider_id: routed.localProviderId,
+          provider_id: chosenProviderId,
           intake_id:   job.submission_id,
           visit_type:  visitType,
           status:      'active',
@@ -200,30 +233,63 @@ async function runWorker(req: NextRequest) {
         })
       }
 
-      // ── For sync visits: also insert an appointments row ─────────
-      // The slot picker at /book-consultation today is mock data, so the
-      // patient's chosen date+time is a stated *preference*, not yet a
-      // confirmed Healthie booking. We still parse it into scheduled_at
-      // (typed timestamp >> free-text note) and mark status='requested'
-      // so downstream UIs can render the target time without claiming
-      // it's confirmed. Commit 3 will replace this with Healthie's
-      // authoritative response and flip status to 'scheduled'.
+      // ── Sync visits: insert appointments row + clean up the hold ─
+      // Two paths:
+      //   (A) bookedSlot present — patient went through /book-consultation
+      //       picker. We promote the held slot into a real appointments row
+      //       and DELETE the provisional_appointments hold so it doesn't
+      //       block re-bookings if the patient cancels/changes.
+      //   (B) Legacy sync without picker (in-flight pre-commit-3) — fall
+      //       back to parseSlotPreference and the verbose ops note.
       //
-      // Timezone: deliberately not handled here. The chosen string is
-      // parsed in the server's local time. Commit 3 owns the canonical
-      // tz-aware booking from Healthie — no point engineering it twice.
-      if (visitType === 'sync') {
+      // Both stop at status='requested'. Healthie's createAppointment
+      // call (a follow-up) is what flips to 'scheduled' and populates
+      // ehr_external_id. Until that lands, ops books the slot manually.
+      if (bookedSlot) {
+        const { error: apptErr } = await supabase
+          .from('appointments')
+          .insert({
+            patient_id:    job.patient_id,
+            provider_id:   bookedSlot.providerId,
+            assignment_id: assignment.id,
+            type:          'sync',
+            status:        'requested',
+            scheduled_at:  bookedSlot.slotDatetime,
+            duration_min:  20,
+            intake_id:     job.submission_id,
+            provider_notes:
+              `Patient picked ${bookedSlot.contactType} consult with ${bookedSlot.providerName} ` +
+              `at ${bookedSlot.slotDatetime} via /book-consultation slot picker. ` +
+              `Healthie createAppointment integration pending — please confirm in calendar.`,
+            ehr_provider:    adapter.providerName,
+            ehr_external_id: null,
+          })
+        if (apptErr) {
+          console.error(`[sync] appointments insert (slot-driven) failed for assignment ${assignment.id}:`, apptErr)
+        }
+
+        // Clean up the soft-hold. Best-effort: even if this fails, the
+        // periodic cleanup-holds cron will sweep it within 10 min.
+        const { error: holdErr } = await supabase
+          .from('provisional_appointments')
+          .delete()
+          .eq('id', bookedSlot.holdId)
+        if (holdErr) {
+          console.error(`[sync] hold cleanup failed for ${bookedSlot.holdId}:`, holdErr)
+        }
+      } else if (visitType === 'sync') {
+        // Legacy path: free-text date+time from the old mock picker.
         const requestedAt    = parseSlotPreference(ctx.rawResponses)
         const slotPreferenceNote = buildSlotPreferenceNote(ctx.rawResponses)
         const { error: apptErr } = await supabase
           .from('appointments')
           .insert({
             patient_id:    job.patient_id,
-            provider_id:   routed.localProviderId,
+            provider_id:   chosenProviderId,
             assignment_id: assignment.id,
             type:          'sync',
-            status:        'requested',          // patient-stated, not Healthie-confirmed
-            scheduled_at:  requestedAt,          // ISO from responses.date+time, or NULL if unparseable
+            status:        'requested',
+            scheduled_at:  requestedAt,
             duration_min:  20,
             intake_id:     job.submission_id,
             provider_notes: slotPreferenceNote,
@@ -231,10 +297,7 @@ async function runWorker(req: NextRequest) {
             ehr_external_id: null,
           })
         if (apptErr) {
-          // Non-fatal: assignment + Healthie patient already exist.
-          // Ops can manually create the appointments row from the
-          // assignment if needed. Log for visibility.
-          console.error(`[sync] appointments row insert failed for assignment ${assignment.id}:`, apptErr)
+          console.error(`[sync] appointments insert (legacy path) failed for assignment ${assignment.id}:`, apptErr)
         }
       }
 

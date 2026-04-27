@@ -7,6 +7,7 @@ import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
 import { SYNC_REQUIRED_STATES_SET } from '@/lib/intake-flow'
+import { getSessionToken } from '@/lib/supabase/intake-session'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -19,15 +20,20 @@ const NEXT_ROUTE = '/get-started/questionnaire/desired-treatments'
 // @/lib/intake-flow. Don't redeclare here — Mississippi was missing locally
 // before consolidation, which silently routed MS patients through async.
 
-// ─── Time slots ───────────────────────────────────────────────────────────────
+// 14-day booking window. Matches the default in /api/availability so the
+// patient can't pick beyond what the calendar actually contains.
+const LOOKAHEAD_DAYS = 14
 
-const TIME_CATEGORIES: { label: string; slots: string[] }[] = [
-  { label: 'Morning',   slots: ['9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM'] },
-  { label: 'Afternoon', slots: ['1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM'] },
-  { label: 'Evening',   slots: ['5:00 PM', '5:30 PM', '6:00 PM'] },
-]
+// ─── Slot types ───────────────────────────────────────────────────────────────
 
-const DEFAULT_TIME = '9:00 AM'
+interface Slot {
+  slotDatetime:    string  // ISO-8601 UTC
+  durationMinutes: number
+  contactType:     'video' | 'phone'
+  providerId:      string
+  providerName:    string
+  healthieUserId:  string
+}
 
 // ─── Calendar helpers ─────────────────────────────────────────────────────────
 
@@ -88,6 +94,36 @@ function formatDateLabel(d: Date): string {
 function formatNextDayLabel(d: Date): string {
   const next = addDays(d, 1)
   return `${MONTH_NAMES[next.getMonth()].slice(0, 3)} ${next.getDate()}`
+}
+
+/** Local-time YYYY-MM-DD key for grouping slots by date. */
+function dateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** Render a slot's datetime as "9:00 AM" in the patient's local TZ. */
+function formatSlotTime(iso: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  }).format(new Date(iso))
+}
+
+/** Categorize slots by morning (<12), afternoon (12–17), evening (≥17). */
+function categorizeSlots(daySlots: Slot[]): {
+  morning:   Slot[]
+  afternoon: Slot[]
+  evening:   Slot[]
+} {
+  const morning:   Slot[] = []
+  const afternoon: Slot[] = []
+  const evening:   Slot[] = []
+  for (const s of daySlots) {
+    const h = new Date(s.slotDatetime).getHours()
+    if (h < 12)      morning.push(s)
+    else if (h < 17) afternoon.push(s)
+    else             evening.push(s)
+  }
+  return { morning, afternoon, evening }
 }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -159,6 +195,12 @@ export default function BookConsultationPage() {
     return typeof s0.state === 'string' && SYNC_REQUIRED_STATES_SET.has(s0.state)
   })
 
+  // Patient state lookup (drives /api/availability filtering).
+  const patientState = useMemo(() => {
+    const s = getStepValues(0).state
+    return typeof s === 'string' && /^[A-Z]{2}$/.test(s) ? s : ''
+  }, [])
+
   // Form state
   const [language, setLanguage] = useState('English')
   const [format, setFormat] = useState(() => {
@@ -175,14 +217,23 @@ export default function BookConsultationPage() {
     year: today.getFullYear(),
     month: today.getMonth(),
   })
-  const [selectedDate, setSelectedDate] = useState(addDays(today, 1))
-  const [selectedTime, setSelectedTime] = useState(DEFAULT_TIME)
+  const [selectedDate, setSelectedDate] = useState<Date>(today)
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null)
 
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear, setPickerYear] = useState(today.getFullYear())
   const [timezone, setTimezone] = useState('Eastern Time (ET)')
 
   const [isNavigating, setIsNavigating] = useState(false)
+
+  // Real availability — fetched from /api/availability, filtered by state +
+  // contactType + active holds. Refetches whenever format changes.
+  const [slots, setSlots] = useState<Slot[]>([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [holdError, setHoldError] = useState<string | null>(null)
+  // Bumping this number triggers a refetch (used after a 409 conflict).
+  const [refetchCounter, setRefetchCounter] = useState(0)
 
   useEffect(() => {
     setTimezone(getTimezoneDisplay())
@@ -194,24 +245,91 @@ export default function BookConsultationPage() {
     if (last) {
       setCurrentStep({ ...last, editHref: '/get-started/questionnaire/visit-type' })
     }
-
-    // Restore saved values on back navigation
     const saved = getStepValues(12)
     if (typeof saved.language === 'string' && saved.language) setLanguage(saved.language)
     if (!requiresSync && typeof saved.format === 'string' && saved.format) setFormat(saved.format)
-    if (typeof saved.time === 'string' && saved.time) setSelectedTime(saved.time)
-    if (typeof saved.date === 'string' && saved.date) {
-      const d = startOfDay(new Date(saved.date))
-      if (!isNaN(d.getTime()) && d > today) {
-        setSelectedDate(d)
-        setViewMonth({ year: d.getFullYear(), month: d.getMonth() })
-      }
-    }
-  }, [today, requiresSync])
+  }, [requiresSync])
+
+  // ── Fetch availability ──────────────────────────────────────────────────
+  // Skip until we know format (the contactType param) and have a state.
+  useEffect(() => {
+    if (!format || !patientState) return
+    let cancelled = false
+    const ac = new AbortController()
+
+    setSlotsLoading(true)
+    setLoadError(null)
+
+    const contactType = format.toLowerCase()       // 'video' | 'phone'
+    const fromStr = today.toISOString().slice(0, 10)
+    const toStr   = addDays(today, LOOKAHEAD_DAYS).toISOString().slice(0, 10)
+    const qs = new URLSearchParams({
+      state:       patientState,
+      contactType,
+      from:        fromStr,
+      to:          toStr,
+    })
+    if (requiresSync) qs.set('videoOnly', '1')
+
+    fetch(`/api/availability?${qs.toString()}`, { signal: ac.signal })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return
+        if (!data?.ok) {
+          setLoadError(data?.error ?? 'Could not load availability')
+          setSlots([])
+          return
+        }
+        setSlots((data.slots ?? []) as Slot[])
+      })
+      .catch((err) => {
+        if (cancelled || err?.name === 'AbortError') return
+        setLoadError(err?.message ?? 'Network error')
+      })
+      .finally(() => {
+        if (!cancelled) setSlotsLoading(false)
+      })
+
+    return () => { cancelled = true; ac.abort() }
+  }, [format, patientState, requiresSync, today, refetchCounter])
 
   const priorBubbleCount = currentStep?.bubbles.length ?? 0
   const { animateBubbles, visibleWords, typingStarted, done, words } =
     useEveTyping(QUESTION_TEXT, priorBubbleCount)
+
+  // ── Derived: slots grouped by local date ─────────────────────────────
+  const slotsByDate = useMemo(() => {
+    const map = new Map<string, Slot[]>()
+    for (const s of slots) {
+      const k = dateKey(new Date(s.slotDatetime))
+      const arr = map.get(k) ?? []
+      arr.push(s)
+      map.set(k, arr)
+    }
+    for (const arr of map.values()) {
+      arr.sort((a, b) => a.slotDatetime.localeCompare(b.slotDatetime))
+    }
+    return map
+  }, [slots])
+
+  const availableDateKeys = useMemo(
+    () => new Set(slotsByDate.keys()),
+    [slotsByDate],
+  )
+
+  // ── Auto-select earliest slot once data loads ────────────────────────
+  // Only fires when there's no selection yet — preserves manual picks
+  // across re-renders.
+  useEffect(() => {
+    if (slots.length === 0 || selectedSlot) return
+    const earliest = [...slots].sort((a, b) =>
+      a.slotDatetime.localeCompare(b.slotDatetime),
+    )[0]
+    setSelectedSlot(earliest)
+    const d = startOfDay(new Date(earliest.slotDatetime))
+    setSelectedDate(d)
+    setViewMonth({ year: d.getFullYear(), month: d.getMonth() })
+  }, [slots, selectedSlot])
 
   // Calendar
   const weeks = useMemo(
@@ -237,41 +355,120 @@ export default function BookConsultationPage() {
 
   function handleDayClick(day: number) {
     const d = startOfDay(new Date(viewMonth.year, viewMonth.month, day))
-    if (d <= today) return
+    const k = dateKey(d)
+    if (!availableDateKeys.has(k)) return
     setSelectedDate(d)
-    setSelectedTime(DEFAULT_TIME)
+    // Auto-select earliest slot on the newly chosen day
+    const daySlots = slotsByDate.get(k)
+    setSelectedSlot(daySlots?.[0] ?? null)
   }
 
   function handleNextDay() {
-    const next = addDays(selectedDate, 1)
-    setSelectedDate(next)
-    setSelectedTime(DEFAULT_TIME)
-    setViewMonth({ year: next.getFullYear(), month: next.getMonth() })
+    // Walk forward to the next day with available slots (skip empty days).
+    let cursor = addDays(selectedDate, 1)
+    for (let i = 0; i < LOOKAHEAD_DAYS; i++) {
+      if (availableDateKeys.has(dateKey(cursor))) break
+      cursor = addDays(cursor, 1)
+    }
+    if (!availableDateKeys.has(dateKey(cursor))) return  // no future days available
+    setSelectedDate(cursor)
+    setViewMonth({ year: cursor.getFullYear(), month: cursor.getMonth() })
+    const daySlots = slotsByDate.get(dateKey(cursor))
+    setSelectedSlot(daySlots?.[0] ?? null)
   }
 
-  function getDayVariant(day: number): 'past' | 'today' | 'selected' | 'future' {
+  function getDayVariant(day: number): 'past' | 'today' | 'selected' | 'future' | 'disabled' {
     const d = startOfDay(new Date(viewMonth.year, viewMonth.month, day))
     if (d < today) return 'past'
+    const k = dateKey(d)
+    const isAvailable = availableDateKeys.has(k)
+    if (isSameDay(d, selectedDate) && isAvailable) return 'selected'
+    if (!isAvailable) return 'disabled'
     if (isSameDay(d, today)) return 'today'
-    if (isSameDay(d, selectedDate)) return 'selected'
     return 'future'
   }
 
-  function handleSave() {
+  // Slots for the currently-selected day, partitioned by category.
+  const selectedDayBuckets = useMemo(() => {
+    const k = dateKey(selectedDate)
+    const daySlots = slotsByDate.get(k) ?? []
+    return categorizeSlots(daySlots)
+  }, [selectedDate, slotsByDate])
+
+  async function handleSave() {
     if (isNavigating) return
     if (!format) {
       setFormatError('Please select a format.')
       return
     }
+    if (!selectedSlot) {
+      setHoldError('Please pick an available time slot.')
+      return
+    }
     setFormatError('')
+    setHoldError(null)
     setIsNavigating(true)
+
+    // Reserve the slot. Hold lives 10 minutes — enough for /checkout
+    // submission. /checkout reads the hold, displays a countdown, and
+    // surrenders it on expiry or back-navigation.
+    let reserveResp: Response
+    try {
+      reserveResp = await fetch('/api/availability/reserve', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          providerId:   selectedSlot.providerId,
+          slotDatetime: selectedSlot.slotDatetime,
+          contactType:  selectedSlot.contactType,
+          sessionToken: getSessionToken(),
+        }),
+      })
+    } catch (err: any) {
+      setHoldError(err?.message ?? 'Network error reserving the slot.')
+      setIsNavigating(false)
+      return
+    }
+
+    const reserved = await reserveResp.json().catch(() => ({}))
+
+    if (reserveResp.status === 409) {
+      // Lost the race — refetch availability and let them pick another.
+      setHoldError('That slot was just taken. Please pick another time.')
+      setSelectedSlot(null)
+      setRefetchCounter((c) => c + 1)
+      setIsNavigating(false)
+      return
+    }
+    if (!reserveResp.ok || !reserved?.holdId) {
+      setHoldError(reserved?.detail ?? reserved?.error ?? 'Could not reserve your slot. Please try again.')
+      setIsNavigating(false)
+      return
+    }
+
+    const slotTimeLabel = formatSlotTime(selectedSlot.slotDatetime)
     saveStep(
       12,
       {
         question: QUESTION_TEXT,
-        bubbles: [`${language} · ${format} · ${formatDateLabel(selectedDate)} · ${selectedTime}`],
+        bubbles: [`${language} · ${format} · ${formatDateLabel(selectedDate)} · ${slotTimeLabel}`],
       },
-      { language, format, date: selectedDate.toISOString(), time: selectedTime },
+      {
+        // Existing fields kept for back-nav restore + chat-history bubbles.
+        language,
+        format,
+        date: selectedDate.toISOString(),
+        time: slotTimeLabel,
+        // New fields the worker uses to promote the hold into an
+        // appointments row at sync time.
+        holdId:         reserved.holdId,
+        providerId:     selectedSlot.providerId,
+        healthieUserId: selectedSlot.healthieUserId,
+        slotDatetime:   selectedSlot.slotDatetime,
+        contactType:    selectedSlot.contactType,
+        providerName:   selectedSlot.providerName,
+        expiresAt:      reserved.expiresAt,
+      },
     )
     router.push(NEXT_ROUTE)
   }
@@ -528,15 +725,15 @@ export default function BookConsultationPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleDayClick(day)}
-                                  disabled={variant === 'past'}
+                                  disabled={variant === 'past' || variant === 'disabled'}
                                   aria-current={variant === 'selected' ? 'date' : undefined}
-                                  aria-label={`${MONTH_NAMES[viewMonth.month]} ${day}${variant === 'today' ? ', today' : ''}${variant === 'selected' ? ', selected' : ''}`}
+                                  aria-label={`${MONTH_NAMES[viewMonth.month]} ${day}${variant === 'today' ? ', today' : ''}${variant === 'selected' ? ', selected' : ''}${variant === 'disabled' ? ', no slots available' : ''}`}
                                   className={`flex items-center justify-center size-9 rounded-full text-[14px] leading-[1.43] tracking-[0.17px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
                                     variant === 'selected'
                                       ? 'bg-[#1d2d44] text-white'
                                       : variant === 'today'
-                                      ? 'border border-[rgba(0,0,0,0.54)] text-[rgba(0,0,0,0.87)] hover:bg-gray-100 cursor-default'
-                                      : variant === 'past'
+                                      ? 'border border-[rgba(0,0,0,0.54)] text-[rgba(0,0,0,0.87)] hover:bg-gray-100'
+                                      : variant === 'past' || variant === 'disabled'
                                       ? 'text-[rgba(0,0,0,0.38)] cursor-default'
                                       : 'text-[rgba(0,0,0,0.87)] hover:bg-gray-100'
                                   }`}
@@ -564,38 +761,65 @@ export default function BookConsultationPage() {
                 </p>
               </div>
 
-              {/* ── Time slot categories ── */}
-              {TIME_CATEGORIES.map(({ label, slots }) => (
-                <div key={label} className="flex flex-col gap-2">
-                  <p className="text-[12px] leading-[2.66] tracking-[1px] uppercase text-[rgba(0,0,0,0.87)]">
-                    {label}
+              {/* ── Hold/availability errors ── */}
+              {(holdError || loadError) && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                  <p className="text-sm text-red-700 leading-5" role="alert">
+                    {holdError ?? loadError}
                   </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {slots.map(time => {
-                      const isSelected = time === selectedTime
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          onClick={() => setSelectedTime(time)}
-                          aria-pressed={isSelected}
-                          className={`relative h-[42px] flex items-center justify-center px-2 rounded-lg text-base font-medium leading-6 whitespace-nowrap overflow-hidden transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
-                            isSelected
-                              ? 'border border-[#1d2d44] text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)]'
-                              : 'bg-white border border-[#e4e4e7] text-[#09090b] shadow-sm hover:border-[#0778ba]/40'
-                          }`}
-                          style={isSelected
-                            ? { background: 'linear-gradient(to right, #1d2d44, #233d5a)' }
-                            : undefined
-                          }
-                        >
-                          {time}
-                        </button>
-                      )
-                    })}
-                  </div>
                 </div>
-              ))}
+              )}
+
+              {/* ── Time slot categories ── */}
+              {slotsLoading ? (
+                <p className="text-sm text-[rgba(0,0,0,0.6)] py-4">Loading availability…</p>
+              ) : slots.length === 0 ? (
+                <p className="text-sm text-[rgba(0,0,0,0.6)] py-4">
+                  No available slots in the next {LOOKAHEAD_DAYS} days.
+                  Please check back later or contact support.
+                </p>
+              ) : (
+                ([
+                  { label: 'Morning',   bucket: selectedDayBuckets.morning },
+                  { label: 'Afternoon', bucket: selectedDayBuckets.afternoon },
+                  { label: 'Evening',   bucket: selectedDayBuckets.evening },
+                ] as const).map(({ label, bucket }) => {
+                  if (bucket.length === 0) return null
+                  return (
+                    <div key={label} className="flex flex-col gap-2">
+                      <p className="text-[12px] leading-[2.66] tracking-[1px] uppercase text-[rgba(0,0,0,0.87)]">
+                        {label}
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {bucket.map((slot) => {
+                          const timeLabel = formatSlotTime(slot.slotDatetime)
+                          const isSelected =
+                            !!selectedSlot && selectedSlot.slotDatetime === slot.slotDatetime
+                          return (
+                            <button
+                              key={slot.slotDatetime + slot.providerId}
+                              type="button"
+                              onClick={() => setSelectedSlot(slot)}
+                              aria-pressed={isSelected}
+                              className={`relative h-[42px] flex items-center justify-center px-2 rounded-lg text-base font-medium leading-6 whitespace-nowrap overflow-hidden transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
+                                isSelected
+                                  ? 'border border-[#1d2d44] text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)]'
+                                  : 'bg-white border border-[#e4e4e7] text-[#09090b] shadow-sm hover:border-[#0778ba]/40'
+                              }`}
+                              style={isSelected
+                                ? { background: 'linear-gradient(to right, #1d2d44, #233d5a)' }
+                                : undefined
+                              }
+                            >
+                              {timeLabel}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
 
               {/* ── Next day link ── */}
               <button
