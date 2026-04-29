@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
-import IntakeHeader from '@/components/ui/IntakeHeader'
+import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { US_STATES } from '@/lib/us-states'
 import {
@@ -71,6 +71,9 @@ const checkoutSchema = z.object({
   billingCity: z.string().optional(),
   billingState: z.string().optional(),
   billingZip: z.string().optional(),
+  telehealthConsent: z.boolean().refine((val) => val === true, {
+    message: 'You must consent to receive telehealth services to continue',
+  }),
 }).superRefine((data, ctx) => {
   if (data.paymentMethod === 'card') {
     const digits = (data.cardNumber ?? '').replace(/\s/g, '')
@@ -374,6 +377,7 @@ export default function CheckoutPage() {
       paymentMethod: 'card',
       sameAsDelivery: true,
       deliveryState: stateFromStep0,
+      telehealthConsent: false,
     },
   })
 
@@ -466,7 +470,7 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <IntakeHeader
+      <BackHeader
         backHref={isConsultation
           ? '/get-started/questionnaire/desired-treatments'
           : '/get-started/questionnaire/choose-medications'}
@@ -962,7 +966,7 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Authorization text + trust badges — keep 24px between them */}
+              {/* Authorization text + telehealth consent + trust badges — 24px between groups */}
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
                   {isConsultation ? (
@@ -984,6 +988,42 @@ export default function CheckoutPage() {
                       </p>
                     </>
                   )}
+                </div>
+
+                {/* Telehealth informed consent — required */}
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-3 items-start">
+                    <div className="flex items-center justify-center h-5 w-4 shrink-0">
+                      <input
+                        id="telehealthConsent"
+                        type="checkbox"
+                        {...register('telehealthConsent')}
+                        className="size-4 rounded border-[#e4e4e7] accent-[#0778ba] focus-visible:ring-2 focus-visible:ring-[#0778ba] cursor-pointer"
+                        aria-invalid={!!errors.telehealthConsent}
+                        aria-describedby={errors.telehealthConsent ? 'telehealthConsent-error' : undefined}
+                        aria-required="true"
+                      />
+                    </div>
+                    <label
+                      htmlFor="telehealthConsent"
+                      className="flex-1 text-sm font-medium leading-5 text-[#71717a] cursor-pointer"
+                    >
+                      I have read the{' '}
+                      <a
+                        href="#"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#0778ba] underline underline-offset-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Telehealth Informed Consent
+                      </a>{' '}
+                      and consent to receive telehealth services.{' '}
+                      <span className="text-red-600" aria-hidden="true">*</span>
+                      <span className="sr-only">(required)</span>
+                    </label>
+                  </div>
+                  <FieldError id="telehealthConsent-error" message={errors.telehealthConsent?.message} />
                 </div>
 
                 {/* Trust badges — same 1x display dimensions as /get-started */}

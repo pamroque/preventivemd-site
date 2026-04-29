@@ -59,37 +59,45 @@ function AccessibilityMenuButton() {
   )
 }
 
-interface IntakeHeaderProps {
+interface BackHeaderProps {
   /** Route to go back to */
   backHref: string
-  /** Progress 0–100 */
-  progress: number
+  /** Progress 0–100. When provided, renders a progress bar; otherwise renders a bottom border. */
+  progress?: number
 }
 
 /**
- * Shared header for all intake steps.
- * - Mobile: Back button (left) + Language & Accessibility (right) + progress bar
- * - Desktop: Logo glyph + Back button (left) + Language & Accessibility (right) + progress bar
+ * Shared header for screens that need a "← BACK" affordance plus the
+ * Language & Accessibility button. Used by intake/questionnaire steps
+ * (with progress) and minimal portal screens like sign-in verify
+ * (without progress).
+ *
+ * Layout: logo glyph + Back (left) + Language & Accessibility (right).
  */
-export default function IntakeHeader({ backHref, progress }: IntakeHeaderProps) {
+export default function BackHeader({ backHref, progress }: BackHeaderProps) {
+  const hasProgress = typeof progress === 'number'
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex flex-col backdrop-blur-sm bg-white/90">
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 flex flex-col backdrop-blur-sm bg-white/90 ${
+        hasProgress ? '' : 'border-b border-[#e3e3e3]'
+      }`}
+    >
       {/* Top bar */}
       <div className="flex h-12 md:h-14 items-center justify-between px-4 py-2">
-        {/* Left: logo glyph (desktop only) + Back */}
-        <div className="flex items-center gap-6">
-          {/* Logo glyph — desktop only */}
-          <Link href="/" aria-label="PreventiveMD home" className="hidden md:block">
+        {/* Left: logo glyph + Back */}
+        <div className="flex items-center gap-3 md:gap-6">
+          <Link href="/" aria-label="PreventiveMD home" className="block shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/logo.svg"
               alt="PreventiveMD"
               width={59}
               height={28}
+              className="h-6 w-[51px] md:h-7 md:w-[59px]"
             />
           </Link>
 
-          {/* Back button */}
           <Link
             href={backHref}
             className="flex items-center gap-2 px-2 py-1 rounded-md text-[#1d2d44] hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
@@ -106,16 +114,23 @@ export default function IntakeHeader({ backHref, progress }: IntakeHeaderProps) 
         <AccessibilityMenuButton />
       </div>
 
-      {/* Progress bar */}
-      <div className="relative h-1 w-full" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label="Intake form progress">
-        {/* Track */}
-        <div className="absolute inset-0 bg-[#0778ba]/20" />
-        {/* Fill */}
+      {/* Progress bar (only when progress provided) */}
+      {hasProgress && (
         <div
-          className="absolute left-0 top-0 h-full bg-[#0778ba] transition-all duration-500"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+          className="relative h-1 w-full"
+          role="progressbar"
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Intake form progress"
+        >
+          <div className="absolute inset-0 bg-[#0778ba]/20" />
+          <div
+            className="absolute left-0 top-0 h-full bg-[#0778ba] transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
     </header>
   )
 }

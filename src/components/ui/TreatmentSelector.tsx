@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import IntakeHeader from '@/components/ui/IntakeHeader'
+import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
@@ -279,9 +279,16 @@ export default function TreatmentSelector({
     useEveTyping(questionText, priorBubbleCount)
 
   const sortedTreatments = useMemo(() => {
+    // Order within "eligible":
+    //   1. Pre-checked treatment (from /treatments/[slug] entry point)
+    //   2. Treatments tagged GOAL MATCH — alphabetical among themselves
+    //   3. Everything else — alphabetical
     const alpha = [...TREATMENTS].sort((a, b) => a.name.localeCompare(b.name))
-    const eligible = alpha.filter(t => !ineligibleIds.has(t.id))
     const ineligible = alpha.filter(t => ineligibleIds.has(t.id))
+    const eligibleAlpha = alpha.filter(t => !ineligibleIds.has(t.id))
+    const goalMatched = eligibleAlpha.filter(t => goalMatchedIds.has(t.id))
+    const others = eligibleAlpha.filter(t => !goalMatchedIds.has(t.id))
+    const eligible = [...goalMatched, ...others]
     if (preCheckedId) {
       const idx = eligible.findIndex(t => t.id === preCheckedId)
       if (idx > 0) {
@@ -290,7 +297,7 @@ export default function TreatmentSelector({
       }
     }
     return { eligible, ineligible }
-  }, [preCheckedId, ineligibleIds])
+  }, [preCheckedId, goalMatchedIds, ineligibleIds])
 
   function toggle(id: string) {
     setShowEmptyError(false)
@@ -335,7 +342,7 @@ export default function TreatmentSelector({
 
   return (
     <>
-      <IntakeHeader backHref={backHref} progress={progress} />
+      <BackHeader backHref={backHref} progress={progress} />
 
       <main
         id="main-content"

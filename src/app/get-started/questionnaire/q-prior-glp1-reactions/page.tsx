@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import IntakeHeader from '@/components/ui/IntakeHeader'
+import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
@@ -106,7 +106,7 @@ export default function QPriorGlp1ReactionsPage() {
 
   return (
     <>
-      <IntakeHeader backHref={backHref} progress={PROGRESS} />
+      <BackHeader backHref={backHref} progress={PROGRESS} />
 
       <main
         id="main-content"

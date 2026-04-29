@@ -21,18 +21,29 @@
  * This is "declarative" UI — less bug-prone, easier to reason about.
  */
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { protocols, filterCategories, type ProtocolCard } from '@/lib/protocols'
+import { visibleProtocols, filterCategories, type ProtocolCard } from '@/lib/protocols'
 
 export function ProtocolsSection() {
   const [activeFilter, setActiveFilter] = useState('all')
 
-  // Filter cards — in React, we just filter the data array
-  // and let React re-render only what changed
+  // Only show filter pills whose category is represented by at least one
+  // visible protocol. The "all" pill always shows and gets a live count.
+  const activeCategories = useMemo(() => {
+    const present = new Set(visibleProtocols.flatMap((p) => p.categories))
+    return filterCategories
+      .filter((c) => c.key === 'all' || present.has(c.key))
+      .map((c) =>
+        c.key === 'all'
+          ? { ...c, label: `All (${visibleProtocols.length})` }
+          : c,
+      )
+  }, [])
+
   const visibleCards = activeFilter === 'all'
-    ? protocols
-    : protocols.filter((p) => p.categories.includes(activeFilter))
+    ? visibleProtocols
+    : visibleProtocols.filter((p) => p.categories.includes(activeFilter))
 
   return (
     <section id="protocols" className="py-20 px-6 md:px-12">
@@ -54,7 +65,7 @@ export function ProtocolsSection() {
 
       {/* Filter buttons */}
       <div className="flex flex-wrap justify-center gap-2 mb-10">
-        {filterCategories.map((cat) => (
+        {activeCategories.map((cat) => (
           <button
             key={cat.key}
             onClick={() => setActiveFilter(cat.key)}

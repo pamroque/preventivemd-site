@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import IntakeHeader from '@/components/ui/IntakeHeader'
+import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
@@ -349,7 +349,7 @@ export default function ChooseMedicationsPage() {
 
   return (
     <>
-      <IntakeHeader backHref="/get-started/questionnaire/choose-treatments" progress={PROGRESS} />
+      <BackHeader backHref="/get-started/questionnaire/choose-treatments" progress={PROGRESS} />
 
       <main
         id="main-content"
