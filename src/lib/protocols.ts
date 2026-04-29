@@ -17,11 +17,16 @@ export type ProtocolCard = {
   hasDetailPage: boolean
   ctaLabel: string      // "Get Started" or "Join Waitlist"
   ctaHref: string
+  // Controls whether the card appears on the homepage grid and the
+  // /treatments index. Detail pages remain reachable directly so they
+  // can be re-enabled by flipping this flag back to true.
+  visible: boolean
 }
 
-// Filter categories
+// Filter categories. The "all" label has no count baked in — consumers
+// compute the count from the visible protocols so it stays in sync.
 export const filterCategories = [
-  { key: 'all', label: 'All (16)' },
+  { key: 'all', label: 'All' },
   { key: 'weight', label: 'Metabolic Health' },
   { key: 'energy', label: 'Fatigue & Energy' },
   { key: 'sleep', label: 'Sleep' },
@@ -75,6 +80,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: true,
     ctaLabel: 'Get Started',
     ctaHref: '/get-started',
+    visible: true,
   },
   {
     name: 'Tirzepatide',
@@ -87,6 +93,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: true,
     ctaLabel: 'Get Started',
     ctaHref: '/get-started',
+    visible: true,
   },
   {
     name: 'Sermorelin',
@@ -99,6 +106,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: true,
     ctaLabel: 'Get Started',
     ctaHref: '/get-started',
+    visible: true,
   },
   {
     name: 'Glutathione',
@@ -111,6 +119,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: true,
     ctaLabel: 'Get Started',
     ctaHref: '/get-started',
+    visible: true,
   },
   {
     name: 'NAD+',
@@ -123,6 +132,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: true,
     ctaLabel: 'Get Started',
     ctaHref: '/get-started',
+    visible: true,
   },
   {
     name: 'GHK-Cu',
@@ -135,6 +145,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: false,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: true,
   },
   {
     name: 'Tesamorelin',
@@ -147,6 +158,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: true,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
   {
     name: 'BPC-157',
@@ -159,6 +171,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: false,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
   {
     name: 'CJC-1295 + Ipamorelin',
@@ -171,6 +184,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: true,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
   {
     name: 'PT-141',
@@ -183,6 +197,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: false,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
   {
     name: 'Thymosin Alpha-1',
@@ -195,6 +210,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: false,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
   {
     name: 'TB-500',
@@ -207,6 +223,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: false,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
   {
     name: 'Epitalon',
@@ -219,6 +236,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: false,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
   {
     name: 'Pinealon',
@@ -231,6 +249,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: false,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
   {
     name: 'Selank / Semax',
@@ -243,6 +262,7 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: false,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
   {
     name: 'AOD-9604',
@@ -255,5 +275,11 @@ export const protocols: ProtocolCard[] = [
     hasDetailPage: false,
     ctaLabel: 'Join Waitlist',
     ctaHref: '/waitlist',
+    visible: false,
   },
 ]
+
+// Cards that should appear on the homepage grid and the /treatments index.
+// Detail pages remain reachable directly via /treatments/[slug] regardless
+// of this flag — flip `visible` back to true to re-list a treatment.
+export const visibleProtocols = protocols.filter((p) => p.visible)

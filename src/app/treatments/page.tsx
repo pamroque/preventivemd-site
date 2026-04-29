@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { protocols, filterCategories } from '@/lib/protocols'
+import { visibleProtocols } from '@/lib/protocols'
 
 /*
  * TREATMENTS INDEX — src/app/treatments/page.tsx
@@ -32,7 +32,7 @@ export default function TreatmentsPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {protocols.map((card) => (
+          {visibleProtocols.map((card) => (
             <Link
               key={card.slug}
               href={card.hasDetailPage ? `/treatments/${card.slug}` : '/waitlist'}
