@@ -117,6 +117,11 @@ const inputErrorCls = 'border-red-600 focus:border-red-600 focus-within:border-r
 // iframed Stripe inputs blend with the surrounding native inputs.
 // Stripe doesn't accept Tailwind class names; we have to provide raw CSS
 // values to its `style` option.
+//
+// NOTE: `showIcon` is only valid on CardNumberElement, not Expiry/Cvc.
+// CardNumberElement shows the card brand icon by default, so we don't
+// need to pass it explicitly. We share a single options object across
+// all three Stripe Elements to avoid drift.
 const STRIPE_ELEMENT_OPTIONS: StripeCardNumberElementOptions = {
   style: {
     base: {
@@ -132,7 +137,6 @@ const STRIPE_ELEMENT_OPTIONS: StripeCardNumberElementOptions = {
       iconColor:'#dc2626',
     },
   },
-  showIcon: true,
 }
 
 function FieldError({ id, message }: { id?: string; message?: string }) {
@@ -494,13 +498,21 @@ function CheckoutPageInner() {
     }
 
     // ── Sync flow: charge the $35 visit fee inline via Stripe Elements ──
-    // Async path is unchanged for now (payment for async lands in Step 2
-    // once async pricing is finalized). For sync, we:
+    // Gate on `isConsultation` (i.e. the patient booked a live video slot)
+    // rather than result.visitType, because /api/intake derives visit_type
+    // from STATE not from the patient's actual choice — patients in
+    // non-sync-required states who opt into a consult still get
+    // visit_type='async' from the API. isConsultation comes from the
+    // bookedSlot data and is the correct signal.
+    //
+    // Async-path payment lands in Step 2 once async pricing is finalized.
+    //
+    // For sync, we:
     //   1. Create a PaymentIntent on the server (returns clientSecret)
     //   2. Confirm it client-side with the card data Stripe Elements collected
     //   3. Stripe handles 3DS / SCA challenges automatically
     //   4. On success, navigate to /confirmation
-    if (result.visitType === 'sync' && result.submissionId && result.patientId) {
+    if (isConsultation && result.submissionId && result.patientId) {
       if (!stripe || !elements) {
         // Stripe.js hasn't finished loading. Rare — usually means
         // NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY isn't set.
