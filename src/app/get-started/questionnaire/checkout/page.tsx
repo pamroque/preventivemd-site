@@ -463,6 +463,41 @@ export default function CheckoutPage() {
       // screen. The intake exists in sessionStorage and ops can recover.
       // We log so this is visible in Sentry / browser logs later.
       console.error('Intake submission failed:', result.error)
+      router.push('/get-started/confirmation')
+      return
+    }
+
+    // ── Sync flow: hand off to Stripe Checkout for the $35 visit fee ──
+    // Async path is unchanged for now (payment for async lands in Step 2
+    // once async pricing is finalized). Sync visits route to Stripe and
+    // come back to /get-started/confirmation via the success_url.
+    if (result.visitType === 'sync' && result.submissionId && result.patientId) {
+      try {
+        const checkoutRes = await fetch('/api/checkout/session', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            submissionId: result.submissionId,
+            patientId:    result.patientId,
+            mode:         'sync_visit',
+          }),
+        })
+        const checkoutBody = await checkoutRes.json()
+
+        if (checkoutRes.ok && checkoutBody.url) {
+          // Hand the browser off to Stripe-hosted checkout. On success
+          // Stripe redirects back to /get-started/confirmation?session_id=…
+          window.location.href = checkoutBody.url
+          return
+        }
+
+        // Stripe call failed — fall through to the confirmation page so
+        // the patient isn't stranded. Ops can recover from the pending
+        // intake_submissions row.
+        console.error('Stripe checkout session create failed:', checkoutBody?.error)
+      } catch (err) {
+        console.error('Stripe checkout session network error:', err)
+      }
     }
 
     router.push('/get-started/confirmation')
