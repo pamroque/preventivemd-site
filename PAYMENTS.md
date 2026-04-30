@@ -12,10 +12,14 @@ How payments work in this codebase, how to develop against them, and how to oper
 
 | Flow | What the patient pays for | Stripe primitive | Card saved? |
 |---|---|---|---|
-| **Sync (live consult)** | $35 video consultation fee, one-time | Checkout Session, `mode: payment` | Yes — via `setup_future_usage: 'off_session'` |
-| **Async (menu)** | Per-treatment subscription with a chosen term | Checkout Session, `mode: subscription` | Yes (subscription default) |
+| **Sync (live consult)** | $35 video consultation fee, one-time | PaymentIntent + Stripe Elements (inline) | Yes — via `setup_future_usage: 'off_session'` |
+| **Async (menu)** | Per-treatment subscription with a chosen term | PaymentIntent or Subscription (TBD when async pricing locks) | Yes (subscription default) |
 
 The same patient can flow through either. We always reuse a single Stripe Customer per patient (stored in `patients.gateway_customer_ids.stripe`) so saved cards persist across sessions.
+
+### Inline checkout, not redirect
+
+Patients stay on `/get-started/questionnaire/checkout` from start to finish — no redirect to a Stripe-hosted page. Card data is collected by Stripe Elements (`CardNumberElement` / `CardExpiryElement` / `CardCvcElement`) which iframes the inputs into our page. The card data never touches our servers, keeping our PCI scope at **SAQ-A** (the lowest tier). Payment confirmation happens client-side via `stripe.confirmCardPayment()` with a `clientSecret` minted by our API.
 
 ### Why we save cards even on the $35 visit
 
@@ -32,11 +36,12 @@ The Supabase schema (migrations 001 + 007) keeps payment data gateway-agnostic. 
 ```
 src/lib/stripe/
 ├── client.ts              # Server-only Stripe SDK initializer
+├── client-side.ts         # Browser-side Stripe.js loader (used by <Elements> provider)
 ├── customer.ts            # getOrCreateStripeCustomer — one Customer per patient
 └── webhook-handlers.ts    # Pure, idempotent handlers per event type
 
 src/app/api/checkout/session/
-└── route.ts               # POST — create a Stripe Checkout Session
+└── route.ts               # POST — create a PaymentIntent, return clientSecret
 
 src/app/api/stripe/webhook/
 └── route.ts               # POST — receive Stripe webhook events
@@ -45,7 +50,7 @@ supabase/migrations/
 └── 007_payment_integration.sql   # patients/treatments/subscriptions extensions + stripe_events
 ```
 
-The frontend wiring lives in `src/app/get-started/questionnaire/checkout/page.tsx` — the existing checkout page. On submit, sync flows redirect to Stripe-hosted checkout; async flows currently fall through to the confirmation page (Step 2 work).
+The frontend wiring lives in `src/app/get-started/questionnaire/checkout/page.tsx`. The page is wrapped in Stripe's `<Elements>` provider; the 3 card inputs are `CardNumberElement` / `CardExpiryElement` / `CardCvcElement`. On submit for the sync flow, the page POSTs to `/api/checkout/session` to mint a PaymentIntent, then calls `stripe.confirmCardPayment(clientSecret, { payment_method: { card: cardElement, billing_details: ... }})`. Async flows currently fall through to the confirmation page without a charge (Step 2 work).
 
 ---
 
@@ -238,10 +243,10 @@ Each handler is pure: takes `(supabase, event payload)`, writes to `payments`, t
 ### Event coverage (Step 1)
 | Event | Action |
 |---|---|
-| `checkout.session.completed` | Promote `payments` row from `pending` → `succeeded`. Pivot `gateway_payment_id` from Session ID to PaymentIntent ID (so future events can find the row). |
-| `payment_intent.succeeded` | Defensive backfill. No-op if row already succeeded. |
+| `payment_intent.succeeded` | **Primary path.** Promote `payments` row from `pending` → `succeeded`, set `paid_at`. |
 | `payment_intent.payment_failed` | Mark `failed`, capture decline reason. |
 | `charge.refunded` | Mark `refunded` or `partially_refunded` based on cumulative `amount_refunded`. |
+| `checkout.session.completed` | **Legacy** — handler exists for safety but is no longer triggered now that we use inline Elements + PaymentIntents. Will not fire in normal Step 1 flow. Safe to remove in a follow-up cleanup PR. |
 
 ### Coverage gaps (Step 2 / Step 3 work)
 - `customer.subscription.created` / `updated` / `deleted` — Step 2
@@ -285,3 +290,4 @@ Decisions worth knowing for context:
 - **Card-save on $35 visit via `setup_future_usage`** — required so Step 3 can charge the saved card off-session without re-asking.
 - **Gateway-agnostic schema** — preserves optionality if Stripe relationship sours.
 - **Service-role-only `stripe_events` table** — same RLS posture as `ehr_sync_jobs`; payment metadata is sensitive.
+- **Stripe Elements (inline) over Stripe Checkout (hosted redirect)** — patient stays on preventivemd.com from start to finish, which matters for trust + brand cohesion in healthcare. Costs us a bit more code (Elements provider, split CardElements, manual confirmCardPayment call) but is the right call for the F&F UX. PCI scope still SAQ-A because card data lives in Stripe-managed iframes.

@@ -5,6 +5,15 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
+import {
+  Elements,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js'
+import type { StripeCardNumberElementOptions } from '@stripe/stripe-js'
 import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { US_STATES } from '@/lib/us-states'
@@ -18,6 +27,10 @@ import { defaultIntakeData, type IntakeData } from '@/lib/intake-flow'
 import { submitIntake, type BookedSlot } from '@/lib/supabase/submit-intake'
 import { getSessionToken } from '@/lib/supabase/intake-session'
 import { useEveTyping } from '@/lib/useEveTyping'
+import { getStripeBrowser } from '@/lib/stripe/client-side'
+
+// Module-level stripe promise so we don't reload Stripe.js on every render.
+const stripePromise = getStripeBrowser()
 
 const QUESTION_TEXT = 'Finally, some last few details to process your request.'
 
@@ -52,6 +65,10 @@ function ChevronUpDownIcon() {
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
+// Card data is collected by Stripe Elements (CardNumberElement/Expiry/Cvc)
+// in iframes, validated by Stripe client-side, and never enters our form
+// state — so the schema only validates non-card fields. Cardholder name
+// is metadata (passed as billing_details.name to Stripe), not card data.
 const checkoutSchema = z.object({
   phone: z.string().regex(/^\d{10}$/, 'Enter a valid 10-digit US phone number'),
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
@@ -61,9 +78,6 @@ const checkoutSchema = z.object({
   deliveryState: z.string().min(1, 'State is required'),
   zip: z.string().regex(/^\d{5}$/, 'Enter a valid 5-digit ZIP code'),
   paymentMethod: z.enum(['card', 'pay']),
-  cardNumber: z.string().optional(),
-  expiration: z.string().optional(),
-  security: z.string().optional(),
   cardName: z.string().optional(),
   sameAsDelivery: z.boolean(),
   billingStreet: z.string().optional(),
@@ -76,16 +90,6 @@ const checkoutSchema = z.object({
   }),
 }).superRefine((data, ctx) => {
   if (data.paymentMethod === 'card') {
-    const digits = (data.cardNumber ?? '').replace(/\s/g, '')
-    if (!digits || !/^\d{16}$/.test(digits)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid 16-digit card number', path: ['cardNumber'] })
-    }
-    if (!data.expiration || !/^\d{2}\/\d{2}$/.test(data.expiration)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter MM/YY', path: ['expiration'] })
-    }
-    if (!data.security || !/^\d{3,4}$/.test(data.security)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter 3–4 digits', path: ['security'] })
-    }
     if (!data.cardName?.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Cardholder name is required', path: ['cardName'] })
     }
@@ -108,6 +112,28 @@ const inputBase =
   'focus:outline-none focus:border-[#0778ba] focus-within:border-[#0778ba] transition-colors'
 
 const inputErrorCls = 'border-red-600 focus:border-red-600 focus-within:border-red-600'
+
+// Stripe Elements styling — tuned to visually match `inputBase` so the
+// iframed Stripe inputs blend with the surrounding native inputs.
+// Stripe doesn't accept Tailwind class names; we have to provide raw CSS
+// values to its `style` option.
+const STRIPE_ELEMENT_OPTIONS: StripeCardNumberElementOptions = {
+  style: {
+    base: {
+      fontSize:    '16px',
+      color:       'rgba(0, 0, 0, 0.87)',
+      fontFamily:  'system-ui, -apple-system, sans-serif',
+      '::placeholder': {
+        color: '#71717a',
+      },
+    },
+    invalid: {
+      color:    '#dc2626',  // tailwind red-600
+      iconColor:'#dc2626',
+    },
+  },
+  showIcon: true,
+}
 
 function FieldError({ id, message }: { id?: string; message?: string }) {
   if (!message) return null
@@ -193,7 +219,9 @@ const PROGRESS = 90
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-export default function CheckoutPage() {
+// The page is wrapped in <Elements> at the bottom; this inner component
+// is where the actual UI lives so it can use useStripe / useElements hooks.
+function CheckoutPageInner() {
   const router = useRouter()
   const [dueToday, setDueToday] = useState(0)
   const [cartItems, setCartItems] = useState<string[]>([])
@@ -396,18 +424,16 @@ export default function CheckoutPage() {
     setValue('phone', digits, { shouldValidate: false, shouldDirty: true })
   }
 
-  function handleCardInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const digits = e.target.value.replace(/\D/g, '').slice(0, 16)
-    setValue('cardNumber', digits, { shouldValidate: false })
-    e.target.value = digits.replace(/(.{4})/g, '$1 ').trim()
-  }
-
-  function handleExpInput(e: React.ChangeEvent<HTMLInputElement>) {
-    let v = e.target.value.replace(/\D/g, '').slice(0, 4)
-    if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2)
-    setValue('expiration', v, { shouldValidate: false })
-    e.target.value = v
-  }
+  // Stripe Elements state — controlled outside RHF since card data
+  // lives in cross-origin iframes managed by Stripe.
+  const stripe = useStripe()
+  const elements = useElements()
+  const [stripeError, setStripeError] = useState<string | null>(null)
+  const [cardComplete, setCardComplete] = useState({
+    number: false,
+    expiry: false,
+    cvc: false,
+  })
 
   async function onSubmit(data: FormValues) {
     // Existing local persistence — keeps the chat-history bubbles and
@@ -467,13 +493,31 @@ export default function CheckoutPage() {
       return
     }
 
-    // ── Sync flow: hand off to Stripe Checkout for the $35 visit fee ──
+    // ── Sync flow: charge the $35 visit fee inline via Stripe Elements ──
     // Async path is unchanged for now (payment for async lands in Step 2
-    // once async pricing is finalized). Sync visits route to Stripe and
-    // come back to /get-started/confirmation via the success_url.
+    // once async pricing is finalized). For sync, we:
+    //   1. Create a PaymentIntent on the server (returns clientSecret)
+    //   2. Confirm it client-side with the card data Stripe Elements collected
+    //   3. Stripe handles 3DS / SCA challenges automatically
+    //   4. On success, navigate to /confirmation
     if (result.visitType === 'sync' && result.submissionId && result.patientId) {
+      if (!stripe || !elements) {
+        // Stripe.js hasn't finished loading. Rare — usually means
+        // NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY isn't set.
+        setStripeError('Payment system is still loading. Please try again in a moment.')
+        return
+      }
+
+      const cardNumber = elements.getElement(CardNumberElement)
+      if (!cardNumber) {
+        setStripeError('Card form did not initialize. Please refresh and try again.')
+        return
+      }
+
+      // 1) Create PaymentIntent on the server
+      let clientSecret: string | null = null
       try {
-        const checkoutRes = await fetch('/api/checkout/session', {
+        const intentRes = await fetch('/api/checkout/session', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -482,22 +526,66 @@ export default function CheckoutPage() {
             mode:         'sync_visit',
           }),
         })
-        const checkoutBody = await checkoutRes.json()
-
-        if (checkoutRes.ok && checkoutBody.url) {
-          // Hand the browser off to Stripe-hosted checkout. On success
-          // Stripe redirects back to /get-started/confirmation?session_id=…
-          window.location.href = checkoutBody.url
+        const intentBody = await intentRes.json()
+        if (!intentRes.ok || !intentBody.clientSecret) {
+          console.error('Stripe payment intent create failed:', intentBody?.error)
+          setStripeError(intentBody?.error || 'Could not start payment. Please try again.')
           return
         }
-
-        // Stripe call failed — fall through to the confirmation page so
-        // the patient isn't stranded. Ops can recover from the pending
-        // intake_submissions row.
-        console.error('Stripe checkout session create failed:', checkoutBody?.error)
+        clientSecret = intentBody.clientSecret
       } catch (err) {
-        console.error('Stripe checkout session network error:', err)
+        console.error('Stripe payment intent network error:', err)
+        setStripeError('Network error. Please check your connection and try again.')
+        return
       }
+
+      // 2) Confirm the PaymentIntent with card data from Stripe Elements
+      const billingAddress = data.sameAsDelivery
+        ? {
+            line1:       data.street,
+            line2:       data.apt || undefined,
+            city:        data.city,
+            state:       data.deliveryState,
+            postal_code: data.zip,
+            country:     'US',
+          }
+        : {
+            line1:       data.billingStreet || data.street,
+            line2:       data.billingApt    || undefined,
+            city:        data.billingCity   || data.city,
+            state:       data.billingState  || data.deliveryState,
+            postal_code: data.billingZip    || data.zip,
+            country:     'US',
+          }
+
+      const { error: confirmErr, paymentIntent } = await stripe.confirmCardPayment(
+        clientSecret!,
+        {
+          payment_method: {
+            card: cardNumber,
+            billing_details: {
+              name:    data.cardName || `${intakeData.firstName} ${intakeData.lastName}`.trim(),
+              email:   data.email,
+              phone:   data.phone,
+              address: billingAddress,
+            },
+          },
+        },
+      )
+
+      if (confirmErr) {
+        // Card declined, 3DS failed, network error — show inline.
+        setStripeError(confirmErr.message ?? 'Payment failed. Please try a different card.')
+        return
+      }
+
+      if (paymentIntent?.status !== 'succeeded') {
+        setStripeError('Payment did not complete. Please try again or contact support.')
+        return
+      }
+
+      // Success — webhook will reconcile the payments row to 'succeeded'.
+      // We navigate immediately rather than waiting on the webhook.
     }
 
     router.push('/get-started/confirmation')
@@ -800,24 +888,28 @@ export default function CheckoutPage() {
                     </div>
 
                     <div className="flex flex-col gap-4">
+                      {/* Stripe Elements — card data is iframed by Stripe so it never
+                          touches our servers (PCI scope stays SAQ-A). The styling is
+                          tuned to match the existing native input look (height 42px,
+                          border radius 8px, etc.) via the StripeElement options below. */}
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="cardNumber" className="text-sm font-medium text-[#09090b] leading-5">
                           Card number <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                         </label>
-                        <input
+                        <div
                           id="cardNumber"
-                          type="text"
-                          inputMode="numeric"
-                          autoComplete="cc-number"
-                          placeholder="0000 0000 0000 0000"
-                          {...register('cardNumber')}
-                          onChange={handleCardInput}
-                          className={`${inputBase} ${errors.cardNumber ? inputErrorCls : ''}`}
-                          aria-invalid={!!errors.cardNumber}
-                    aria-describedby={errors.cardNumber ? "cardNumber-error" : undefined}
-                    aria-required="true"
-                        />
-                        <FieldError id="cardNumber-error" message={errors.cardNumber?.message} />
+                          className={`${inputBase} flex items-center ${stripeError ? inputErrorCls : ''}`}
+                        >
+                          <CardNumberElement
+                            options={STRIPE_ELEMENT_OPTIONS}
+                            onChange={(e) => {
+                              setCardComplete((prev) => ({ ...prev, number: e.complete }))
+                              if (e.error) setStripeError(e.error.message)
+                              else setStripeError(null)
+                            }}
+                            className="w-full"
+                          />
+                        </div>
                       </div>
 
                       <div className="flex gap-3 items-start">
@@ -825,39 +917,25 @@ export default function CheckoutPage() {
                           <label htmlFor="expiration" className="text-sm font-medium text-[#09090b] leading-5">
                             Expiration <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                           </label>
-                          <input
-                            id="expiration"
-                            type="text"
-                            inputMode="numeric"
-                            autoComplete="cc-exp"
-                            placeholder="MM/YY"
-                            {...register('expiration')}
-                            onChange={handleExpInput}
-                            className={`${inputBase} ${errors.expiration ? inputErrorCls : ''}`}
-                            aria-invalid={!!errors.expiration}
-                    aria-describedby={errors.expiration ? "expiration-error" : undefined}
-                    aria-required="true"
-                          />
-                          <FieldError id="expiration-error" message={errors.expiration?.message} />
+                          <div id="expiration" className={`${inputBase} flex items-center`}>
+                            <CardExpiryElement
+                              options={STRIPE_ELEMENT_OPTIONS}
+                              onChange={(e) => setCardComplete((prev) => ({ ...prev, expiry: e.complete }))}
+                              className="w-full"
+                            />
+                          </div>
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                           <label htmlFor="security" className="text-sm font-medium text-[#09090b] leading-5">
                             Security code <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                           </label>
-                          <input
-                            id="security"
-                            type="text"
-                            inputMode="numeric"
-                            autoComplete="cc-csc"
-                            placeholder="CVV"
-                            maxLength={4}
-                            {...register('security')}
-                            className={`${inputBase} ${errors.security ? inputErrorCls : ''}`}
-                            aria-invalid={!!errors.security}
-                    aria-describedby={errors.security ? "security-error" : undefined}
-                    aria-required="true"
-                          />
-                          <FieldError id="security-error" message={errors.security?.message} />
+                          <div id="security" className={`${inputBase} flex items-center`}>
+                            <CardCvcElement
+                              options={STRIPE_ELEMENT_OPTIONS}
+                              onChange={(e) => setCardComplete((prev) => ({ ...prev, cvc: e.complete }))}
+                              className="w-full"
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -877,6 +955,15 @@ export default function CheckoutPage() {
                         />
                         <FieldError id="cardName-error" message={errors.cardName?.message} />
                       </div>
+
+                      {/* Stripe error surface — displays card decline or 3DS failures
+                          inline so the patient gets actionable feedback without
+                          leaving the page. */}
+                      {stripeError && (
+                        <p className="text-xs text-red-600 leading-4 mt-1" role="alert">
+                          {stripeError}
+                        </p>
+                      )}
                     </div>
                   </>
                 )}
@@ -1175,5 +1262,17 @@ export default function CheckoutPage() {
         </div>
       </div>
     </>
+  )
+}
+
+// Public default export — wraps the inner component in Stripe's <Elements>
+// provider so CardNumberElement / CardExpiryElement / CardCvcElement can
+// be used inside. The wrapper is purely structural; all logic lives in
+// CheckoutPageInner above.
+export default function CheckoutPage() {
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutPageInner />
+    </Elements>
   )
 }

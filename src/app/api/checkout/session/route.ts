@@ -1,8 +1,12 @@
 /**
- * POST /api/checkout/session — Create a Stripe Checkout Session
+ * POST /api/checkout/session — Create a Stripe Payment Intent
  *
- * Step 1 (sync $35 visit fee) ONLY in this version. Async subscription
- * mode lands in a follow-up once async pricing is finalized (Task #19).
+ * (Path is kept as /checkout/session for URL stability; the underlying
+ * primitive is now a PaymentIntent for inline Stripe Elements, not a
+ * Checkout Session. We may rename to /api/payment-intent in a follow-up.)
+ *
+ * Step 1 (sync $35 visit fee) ONLY in this version. Async menu mode
+ * lands when async pricing is finalized (Task #19/20).
  *
  * Request body:
  *   {
@@ -12,26 +16,29 @@
  *   }
  *
  * Response (success):
- *   { url: string, sessionId: string }
+ *   { clientSecret: string, paymentIntentId: string }
  *
- * Response (error):
- *   { error: string }
+ * The frontend uses clientSecret with stripe.confirmCardPayment(),
+ * Stripe Elements collects the card data in iframes, and the
+ * PaymentIntent is confirmed without card data ever touching our
+ * servers (SAQ-A PCI scope).
  *
  * Flow:
  *   1. Validate body
- *   2. Look up the patient (need email + Stripe customer link)
- *   3. Resolve Stripe Customer (create if needed; persisted to patients.gateway_customer_ids)
- *   4. Create the Stripe Checkout Session
- *      - mode: 'payment'                          (one-time)
- *      - line_items: [{ price: visit_fee, qty: 1 }]
- *      - payment_intent_data.setup_future_usage: 'off_session'  (saves the card)
+ *   2. Look up the patient
+ *   3. Resolve / create Stripe Customer (persists to patients.gateway_customer_ids)
+ *   4. Create the PaymentIntent
+ *      - amount: $35.00 (3500 cents)
+ *      - currency: usd
  *      - customer: <Stripe Customer>
- *      - metadata: { patient_id, submission_id }  (so the webhook can join back)
- *   5. Insert a 'pending' payments row
- *   6. Return the Checkout URL — the frontend redirects to it
+ *      - setup_future_usage: 'off_session'   (saves the card for Step 3)
+ *      - automatic_payment_methods: { enabled: true }
+ *      - metadata: { patient_id, submission_id, kind: 'sync_visit_fee' }
+ *   5. Insert pending payments row (gateway_payment_id = pi_id)
+ *   6. Return clientSecret to the frontend
  *
- * Idempotency: the Stripe SDK uses an idempotency key keyed on
- * submissionId so a double-click doesn't create two Sessions/charges.
+ * Idempotency: Stripe SDK uses an idempotency key keyed on submissionId
+ * so re-submits return the same PaymentIntent rather than charging twice.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -47,18 +54,6 @@ interface CheckoutSessionBody {
   submissionId: string
   patientId:    string
   mode:         CheckoutMode
-}
-
-function getOrigin(request: NextRequest): string {
-  // Prefer the explicit env, fall back to the request's origin.
-  // Vercel sets VERCEL_URL (without protocol) on deployments.
-  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
-  if (fromEnv) return fromEnv
-
-  const vercel = process.env.VERCEL_URL
-  if (vercel) return `https://${vercel}`
-
-  return request.nextUrl.origin
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -83,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const priceId = process.env.STRIPE_PRICE_SYNC_VISIT_FEE
     if (!priceId) {
-      console.error('[checkout/session] STRIPE_PRICE_SYNC_VISIT_FEE is not set')
+      console.error('[payment-intent] STRIPE_PRICE_SYNC_VISIT_FEE is not set')
       return NextResponse.json(
         { error: 'Server misconfigured: visit fee price not set' },
         { status: 500 },
@@ -100,15 +95,10 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (patientErr || !patientRow) {
-      console.error('[checkout/session] Patient lookup failed', { patient_id: body.patientId, error: patientErr })
+      console.error('[payment-intent] Patient lookup failed', { patient_id: body.patientId, error: patientErr })
       return NextResponse.json({ error: 'Patient not found' }, { status: 404 })
     }
 
-    // We need a real, deliverable email to receive the Stripe receipt.
-    // The intake API uses a placeholder "<phone>@intake.preventivemd.com"
-    // until checkout — so by the time we hit this route, the real email
-    // should already be persisted. If not, refuse rather than send the
-    // receipt into the void.
     if (!patientRow.email || patientRow.email.endsWith('@intake.preventivemd.com')) {
       return NextResponse.json(
         { error: 'Patient email is not finalized. Re-submit intake to attach a real email before checkout.' },
@@ -128,94 +118,100 @@ export async function POST(request: NextRequest) {
     // ── Resolve / create Stripe Customer ──────────────────
     const customerId = await getOrCreateStripeCustomer(supabase, patient)
 
-    // ── Create the Checkout Session ───────────────────────
+    // ── Create the PaymentIntent ──────────────────────────
     const stripe = getStripe()
-    const origin = getOrigin(request)
 
-    const session = await stripe.checkout.sessions.create(
+    // Pull the visit-fee amount from the Stripe Price object — keeps the
+    // Stripe Dashboard as the single source of truth. If the Price is
+    // changed in Stripe, this picks it up without a code deploy.
+    const priceObj = await stripe.prices.retrieve(priceId)
+    if (!priceObj.unit_amount || !priceObj.currency) {
+      console.error('[payment-intent] Visit fee Price missing unit_amount/currency', { price_id: priceId })
+      return NextResponse.json({ error: 'Visit fee price is misconfigured in Stripe' }, { status: 500 })
+    }
+
+    const pi = await stripe.paymentIntents.create(
       {
-        mode: 'payment',
+        amount:   priceObj.unit_amount,
+        currency: priceObj.currency,
         customer: customerId,
-        line_items: [
-          { price: priceId, quantity: 1 },
-        ],
-        payment_intent_data: {
-          // Save the card on the Customer so the post-visit Treatment Plan
-          // flow (Step 3) can charge it off-session without re-asking.
-          setup_future_usage: 'off_session',
-          // Tag the underlying PaymentIntent so the webhook can reconcile
-          // even if we missed checkout.session.completed.
-          metadata: {
-            patient_id:     patient.id,
-            submission_id:  body.submissionId,
-            kind:           'sync_visit_fee',
-          },
-          description: 'PreventiveMD video consultation',
-        },
-        // Top-level metadata mirrors the PaymentIntent's; both surfaces
-        // are useful in different webhook handlers.
+        // Save the card on the Customer so Step 3 (Treatment Plan flow)
+        // can charge it off-session without re-asking.
+        setup_future_usage: 'off_session',
+        // Tell Stripe to figure out which payment methods to offer based
+        // on the dashboard configuration. Cards on by default; Apple Pay
+        // / Google Pay automatically when patient is on a supported device.
+        automatic_payment_methods: { enabled: true },
+        description: 'PreventiveMD video consultation',
+        // Metadata flows through to webhooks and the Stripe Dashboard.
         metadata: {
-          patient_id:     patient.id,
-          submission_id:  body.submissionId,
-          kind:           'sync_visit_fee',
+          patient_id:    patient.id,
+          submission_id: body.submissionId,
+          kind:          'sync_visit_fee',
         },
-        // Pre-fill so the patient doesn't re-type their email
-        customer_update: { address: 'auto' },
-        // Where Stripe sends the patient after success / cancel
-        success_url: `${origin}/get-started/confirmation?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url:  `${origin}/get-started/questionnaire/checkout?canceled=1`,
-        // Stripe receipt to the patient's email automatically
-        // (controlled in Dashboard → Settings → Email; on by default in test mode)
+        // Send the receipt to the patient's real email after success.
+        receipt_email: patient.email,
       },
       {
-        // One Session per submission. A double-click in the browser
-        // returns the same Session URL instead of charging twice.
-        idempotencyKey: `checkout_${body.submissionId}`,
+        // One PaymentIntent per submission. A double-click in the browser
+        // returns the same PI rather than creating two.
+        idempotencyKey: `pi_${body.submissionId}`,
       },
     )
 
-    if (!session.url) {
-      console.error('[checkout/session] Stripe returned a Session without a URL', { session_id: session.id })
-      return NextResponse.json({ error: 'Stripe did not return a checkout URL' }, { status: 502 })
+    if (!pi.client_secret) {
+      console.error('[payment-intent] Stripe returned a PI without a client_secret', { pi_id: pi.id })
+      return NextResponse.json({ error: 'Stripe did not return a client secret' }, { status: 502 })
     }
 
-    // ── Insert pending payment row ────────────────────────
+    // ── Insert pending payment row (idempotent) ───────────
     // We write the row up-front so the webhook handler has something to
-    // UPDATE when checkout.session.completed arrives. If the patient
-    // abandons, the row stays 'pending' and a daily cleanup can mark it
-    // 'failed'/'expired' (out of scope for v1).
-    const { error: payErr } = await supabase
+    // UPDATE when payment_intent.succeeded arrives. SELECT-then-INSERT
+    // because payments has no unique constraint on (gateway, gateway_payment_id)
+    // — adding one is a follow-up migration. Race window is tiny in practice
+    // (single browser submitting once); webhook is idempotent regardless.
+    const { data: existingPayment } = await supabase
       .from('payments')
-      .insert({
-        patient_id:           patient.id,
-        gateway:              'stripe',
-        gateway_payment_id:   session.id,            // we use the Session ID as the lookup key here
-        gateway_customer_id:  customerId,
-        gateway_metadata: {
-          checkout_session_id: session.id,
-          submission_id:       body.submissionId,
-          mode:                'sync_visit',
-        },
-        amount_cents: session.amount_total ?? 3500,  // $35 — Stripe also returns this for confirmation
-        currency:     session.currency ?? 'usd',
-        type:         'consult_fee',
-        status:       'pending',
-        description:  'Sync video consultation fee',
-      })
+      .select('id')
+      .eq('gateway', 'stripe')
+      .eq('gateway_payment_id', pi.id)
+      .maybeSingle()
 
-    if (payErr) {
-      // Non-fatal: the patient can still complete checkout. The webhook
-      // handler will fall back to insert-on-receipt if the row is missing.
-      console.error('[checkout/session] Failed to insert pending payment row', { error: payErr, session_id: session.id })
+    if (!existingPayment) {
+      const { error: payErr } = await supabase
+        .from('payments')
+        .insert({
+          patient_id:           patient.id,
+          gateway:              'stripe',
+          gateway_payment_id:   pi.id,
+          gateway_customer_id:  customerId,
+          gateway_metadata: {
+            payment_intent_id: pi.id,
+            submission_id:     body.submissionId,
+            mode:              'sync_visit',
+            price_id:          priceId,
+          },
+          amount_cents: priceObj.unit_amount,
+          currency:     priceObj.currency,
+          type:         'consult_fee',
+          status:       'pending',
+          description:  'Sync video consultation fee',
+        })
+
+      if (payErr) {
+        // Non-fatal: the patient can still complete payment. Webhook
+        // handler will fall back to insert-on-receipt if the row is missing.
+        console.error('[payment-intent] Failed to insert pending payment row', { error: payErr, pi_id: pi.id })
+      }
     }
 
     return NextResponse.json({
-      url:       session.url,
-      sessionId: session.id,
+      clientSecret:    pi.client_secret,
+      paymentIntentId: pi.id,
     })
 
   } catch (error) {
-    console.error('[checkout/session] Unhandled error', error)
+    console.error('[payment-intent] Unhandled error', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 },
