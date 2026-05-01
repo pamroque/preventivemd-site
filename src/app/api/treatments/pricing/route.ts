@@ -44,8 +44,12 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-// ISR: regenerate the page at most every 5 minutes.
-export const revalidate = 300
+// Force dynamic rendering — never prerender at build time. ISR-style
+// `revalidate` would attempt a build-time render of this route, which
+// fails in CI without DB env vars. We get caching via HTTP headers
+// (s-maxage + stale-while-revalidate) instead — Vercel + browsers
+// cache the response identically to ISR with way fewer surprises.
+export const dynamic = 'force-dynamic'
 
 
 // ─── Response shape ──────────────────────────────────────────────────────────
@@ -186,5 +190,12 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json(response)
+  return NextResponse.json(response, {
+    headers: {
+      // CDN cache for 5 minutes; serve stale while revalidating in the
+      // background for an extra 10 minutes. Equivalent caching benefit
+      // to ISR `revalidate=300` without forcing build-time prerender.
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+    },
+  })
 }
