@@ -1,5 +1,29 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useEffect, useRef, useState } from 'react'
+
+/**
+ * Subtle staggered fade-up applied to each step in the dark container.
+ * Renders identical SSR markup; on hydration we observe the section and
+ * flip `visible` once any of it enters the viewport.
+ */
+const STEP_DURATION_MS = 900
+const STEP_STAGGER_MS = 450
+
+function stepAnimClass(visible: boolean) {
+  return `transition-[opacity,transform] ease-out motion-reduce:transition-none ${
+    visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+  }`
+}
+
+function stepAnimStyle(index: number): React.CSSProperties {
+  return {
+    transitionDuration: `${STEP_DURATION_MS}ms`,
+    transitionDelay: `${index * STEP_STAGGER_MS}ms`,
+  }
+}
 
 /** Decorative looping mark used at bottom-left of Step 1. */
 function InfinityMark({ className }: { className?: string }) {
@@ -124,8 +148,33 @@ function StepText({
 }
 
 export default function ProcessSection() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setVisible(true)
+      return
+    }
+    const el = sectionRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.2 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <section
+      ref={sectionRef}
       id="process"
       aria-labelledby="process-heading"
       className="flex scroll-mt-16 flex-col items-center gap-9 md:scroll-mt-20 md:gap-12"
@@ -150,7 +199,10 @@ export default function ProcessSection() {
           where there's enough room to give Step 2 the width it needs. */}
       <div className="flex w-full flex-col gap-12 overflow-hidden rounded-br-[48px] rounded-tl-[48px] bg-gradient-to-t from-[#1d2d44] to-[#071024] px-6 pt-9 pb-6 md:rounded-br-[72px] md:rounded-tl-[72px] md:px-12 md:pt-9 md:pb-12 lg:flex-row">
         {/* Step 1 — left column. CTA sits directly below the step copy. */}
-        <div className="flex flex-col gap-6 lg:w-[300px]">
+        <div
+          className={`flex flex-col gap-6 lg:w-[300px] ${stepAnimClass(visible)}`}
+          style={stepAnimStyle(0)}
+        >
           <StepText
             step="Step 1"
             title="A few questions to get to know you"
@@ -165,7 +217,10 @@ export default function ProcessSection() {
         </div>
 
         {/* Step 2 / Middle */}
-        <div className="flex min-w-0 flex-1 flex-col gap-6">
+        <div
+          className={`flex min-w-0 flex-1 flex-col gap-6 ${stepAnimClass(visible)}`}
+          style={stepAnimStyle(1)}
+        >
           <StepText
             step="Step 2"
             title="Two ways in, one standard of care"
@@ -195,19 +250,27 @@ export default function ProcessSection() {
           </div>
         </div>
 
-        {/* Step 3 + Step 4 — right column. InfinityMark anchors the bottom. */}
+        {/* Step 3 + Step 4 — right column. Each gets its own stagger; the
+            InfinityMark rides along with Step 4 so it doesn't pop in early. */}
         <div className="flex flex-col gap-12 lg:w-[300px]">
-          <StepText
-            step="Step 3"
-            title="Self-pay checkout"
-            description="Pay one upfront price for your medication and provider consultation — no insurance billing, no surprise fees."
-          />
-          <StepText
-            step="Step 4"
-            title="Provider-approved, then delivered"
-            description="A licensed provider prescribes if it's the right fit. Afterwards, message your care team anytime — included with your prescription plan."
-          />
-          <InfinityMark className="self-end" />
+          <div className={stepAnimClass(visible)} style={stepAnimStyle(2)}>
+            <StepText
+              step="Step 3"
+              title="Self-pay checkout"
+              description="Pay one upfront price for your medication and provider consultation — no insurance billing, no surprise fees."
+            />
+          </div>
+          <div
+            className={`flex flex-col gap-12 ${stepAnimClass(visible)}`}
+            style={stepAnimStyle(3)}
+          >
+            <StepText
+              step="Step 4"
+              title="Provider-approved, then delivered"
+              description="A licensed provider prescribes if it's the right fit. Afterwards, message your care team anytime — included with your prescription plan."
+            />
+            <InfinityMark className="self-end" />
+          </div>
         </div>
       </div>
     </section>
