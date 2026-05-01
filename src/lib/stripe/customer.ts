@@ -2,19 +2,25 @@
  * stripe/customer.ts — Resolve or create a Stripe Customer for a patient
  *
  * One Stripe Customer per patient, reused across all checkouts. The
- * customer ID is stored in patients.gateway_customer_ids (JSONB):
- *   { "stripe": "cus_xxx" }
+ * (patient ↔ external customer) link lives in the
+ * payment_gateway_customers table:
  *
- * Why this matters: cards saved during one checkout (via setup_future_usage)
- * are attached to the Stripe Customer. If we created a new Customer per
- * checkout, the saved card would be unreachable next time and the
- * post-visit Treatment Plan flow (Step 3) would have nothing to charge.
+ *   payment_gateway_customers (patient_id, gateway, external_id)
  *
- * Server-only. Uses the Supabase admin client (service role).
+ * Why this matters: cards saved during one checkout (via
+ * setup_future_usage) are attached to the Stripe Customer. If we
+ * created a new Customer per checkout, the saved card would be
+ * unreachable next time and the post-visit Treatment Plan flow
+ * (Step 3) would have nothing to charge.
+ *
+ * Server-only. Uses the Supabase admin client (service role) since
+ * payment_gateway_customers is service-role-only by RLS.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getStripe } from './client'
+
+const GATEWAY = 'stripe'
 
 export interface PatientForStripe {
   id:         string
@@ -22,40 +28,40 @@ export interface PatientForStripe {
   first_name: string
   last_name:  string
   phone:      string | null
-  gateway_customer_ids: Record<string, string> | null
 }
 
 /**
- * Returns a Stripe Customer ID for the given patient, creating one if
- * none exists. Persists the new ID back to patients.gateway_customer_ids
- * so subsequent calls are a fast lookup.
+ * Returns a Stripe Customer ID for the given patient, creating one
+ * if no link exists in payment_gateway_customers. Persists the new
+ * link so subsequent calls are a fast SELECT.
  *
- * Idempotency: safe to call from concurrent requests. The Stripe Customer
- * create call uses an idempotency key keyed on patient.id, so two
- * simultaneous calls produce a single Stripe Customer.
+ * Idempotency: safe to call from concurrent requests. The Stripe
+ * Customer create call uses an idempotency key keyed on patient.id;
+ * the (patient_id, gateway) UNIQUE constraint on the link table
+ * catches any race that survives Stripe's idempotency window.
  */
 export async function getOrCreateStripeCustomer(
   supabase: SupabaseClient,
   patient:  PatientForStripe,
 ): Promise<string> {
-  // Fast path: we already have one
-  const existing = patient.gateway_customer_ids?.stripe
-  if (existing) return existing
+  // Fast path: link already exists.
+  const { data: existing } = await supabase
+    .from('payment_gateway_customers')
+    .select('external_id')
+    .eq('patient_id', patient.id)
+    .eq('gateway', GATEWAY)
+    .maybeSingle()
+
+  if (existing?.external_id) return existing.external_id
 
   const stripe = getStripe()
 
-  // Create the Stripe Customer. Idempotency key prevents duplicates if
-  // two requests for the same patient race here. The key is bounded by
-  // a window — Stripe stores idempotency results for 24h. Within that
-  // window the second request returns the original customer.
   const customer = await stripe.customers.create(
     {
       email: patient.email,
       name:  `${patient.first_name} ${patient.last_name}`.trim(),
       phone: patient.phone ?? undefined,
       metadata: {
-        // Both directions of the link, so we can find a patient from
-        // the Stripe Dashboard and vice versa.
         patient_id: patient.id,
       },
     },
@@ -64,26 +70,36 @@ export async function getOrCreateStripeCustomer(
     },
   )
 
-  // Merge into the existing JSONB map so we don't clobber other gateways
-  // (square, helcim, etc.) that may be added in the future.
-  const merged = {
-    ...(patient.gateway_customer_ids ?? {}),
-    stripe: customer.id,
-  }
+  // Insert the link. If a concurrent request beat us to it (unique
+  // constraint violation on patient_id+gateway), re-query and return
+  // the value the other request inserted. Net result: at most one
+  // Stripe Customer is referenced per patient even under contention.
+  const { error: insertErr } = await supabase
+    .from('payment_gateway_customers')
+    .insert({
+      patient_id:  patient.id,
+      gateway:     GATEWAY,
+      external_id: customer.id,
+    })
 
-  const { error } = await supabase
-    .from('patients')
-    .update({ gateway_customer_ids: merged })
-    .eq('id', patient.id)
-
-  if (error) {
-    // The Stripe Customer exists but we couldn't persist the link. This
-    // is recoverable — the next call will create a new (orphan) Customer
-    // and persist that one. Worth alerting on but not fatal.
+  if (insertErr) {
+    // 23505 = unique_violation
+    if ((insertErr as { code?: string }).code === '23505') {
+      const { data: raceWinner } = await supabase
+        .from('payment_gateway_customers')
+        .select('external_id')
+        .eq('patient_id', patient.id)
+        .eq('gateway', GATEWAY)
+        .single()
+      if (raceWinner?.external_id) return raceWinner.external_id
+    }
     console.error(
-      '[stripe/customer] Failed to persist Stripe customer ID',
-      { patient_id: patient.id, stripe_customer: customer.id, error },
+      '[stripe/customer] Failed to persist Stripe customer link',
+      { patient_id: patient.id, stripe_customer: customer.id, error: insertErr },
     )
+    // Stripe Customer was created — return its ID so the caller can
+    // proceed. The link isn't persisted, so a later call will create
+    // an orphan. Worth alerting on but not fatal in the current request.
   }
 
   return customer.id

@@ -248,9 +248,9 @@ Each handler is pure: takes `(supabase, event payload)`, writes to `payments`, t
 | `charge.refunded` | Mark `refunded` or `partially_refunded` based on cumulative `amount_refunded`. |
 | `checkout.session.completed` | **Legacy** — handler exists for safety but is no longer triggered now that we use inline Elements + PaymentIntents. Will not fire in normal Step 1 flow. Safe to remove in a follow-up cleanup PR. |
 
-### Coverage gaps (Step 2 / Step 3 work)
-- `customer.subscription.created` / `updated` / `deleted` — Step 2
-- `invoice.payment_succeeded` / `payment_failed` — Step 2
+### Coverage gaps (next iteration)
+- `customer.subscription.updated` / `deleted` — flips subscription rows from 'trialing'/'active' on Stripe-side state changes (admin cancel, dunning, pauses)
+- `invoice.payment_succeeded` / `invoice.payment_failed` — captures recurring renewals as fresh `payments` rows; today the first invoice succeeds via the shared `payment_intent.succeeded` path because the Subscription's first invoice exposes a confirmable PaymentIntent
 - `charge.dispute.created` — operational, defer
 
 Any unhandled event type is acknowledged (200 returned, marked processed) so Stripe stops retrying. Add a case in the dispatch when you need it.

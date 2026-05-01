@@ -6,6 +6,17 @@ import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
+import { usePricingCatalog, lookupPriceCents } from '@/lib/pricing/usePricingCatalog'
+
+// Maps the questionnaire-level treatment ID to the canonical slug used in
+// the pricing catalog (and Stripe). 'glp-1' splits into semaglutide vs.
+// tirzepatide based on the patient's choice; other IDs map 1:1.
+function resolveCatalogSlug(treatmentId: string, choiceType: string | null): string {
+  if (treatmentId === 'glp-1') {
+    return choiceType === 'tirzepatide' ? 'tirzepatide' : 'semaglutide'
+  }
+  return treatmentId
+}
 
 const QUESTION_TEXT = 'Choose your desired medication and subscription.'
 
@@ -60,14 +71,16 @@ const FORM_OPTIONS = [
   { id: 'oral', label: 'Pills', sub: 'Once-daily' },
 ] as const
 
-const PLAN_OPTIONS = [
-  { id: '1mo',  label: '1-month supply',   price: 149,  perMonth: null,       tag: null,           badge: null },
-  { id: '3mo',  label: '3-month supply',   price: 417,  perMonth: '$139/mo',  tag: 'Most Popular', badge: 'SAVE $30' },
-  { id: '6mo',  label: '6-month supply*',  price: 774,  perMonth: '$129/mo',  tag: null,           badge: 'SAVE $60' },
-  { id: '12mo', label: '12-month supply*', price: 1188, perMonth: '$99/mo',   tag: 'Best Value',   badge: 'SAVE $600' },
+// Plan definitions are now structural only — no prices. Prices come from
+// /api/treatments/pricing (which reads from payment_gateway_prices).
+// `monthsCovered` is used to compute per-month effective price and savings
+// vs. the 1mo baseline at render time.
+const PLAN_DEFS = [
+  { id: '1mo',  label: '1-month supply',   monthsCovered: 1,  tag: null               },
+  { id: '3mo',  label: '3-month supply',   monthsCovered: 3,  tag: 'Most Popular'     },
+  { id: '6mo',  label: '6-month supply*',  monthsCovered: 6,  tag: null               },
+  { id: '12mo', label: '12-month supply*', monthsCovered: 12, tag: 'Best Value'       },
 ] as const
-
-const PLAN_PRICES: Record<string, number> = { '1mo': 149, '3mo': 417, '6mo': 774, '12mo': 1188 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -133,15 +146,27 @@ function MedOptionCard({
   )
 }
 
-function PlanRow({
-  opt,
-  isSelected,
-  onClick,
-}: {
-  opt: typeof PLAN_OPTIONS[number]
-  isSelected: boolean
-  onClick: () => void
-}) {
+interface PlanRowProps {
+  def:               typeof PLAN_DEFS[number]
+  isSelected:        boolean
+  onClick:           () => void
+  priceCents:        number | null   // null while catalog loads
+  oneMonthCents:     number | null   // for computing per-month effective + savings
+}
+
+function PlanRow({ def, isSelected, onClick, priceCents, oneMonthCents }: PlanRowProps) {
+  // Derive display values from cents amounts. Per-month effective only
+  // shown for multi-month terms; savings badge only when there's actual
+  // savings vs. paying month-by-month.
+  const totalDollars      = priceCents != null ? priceCents / 100 : null
+  const perMonthDollars   = (priceCents != null && def.monthsCovered > 1)
+                              ? Math.round((priceCents / def.monthsCovered) / 100)
+                              : null
+  const savingsCents      = (priceCents != null && oneMonthCents != null && def.monthsCovered > 1)
+                              ? (oneMonthCents * def.monthsCovered) - priceCents
+                              : 0
+  const savingsDollars    = savingsCents > 0 ? Math.round(savingsCents / 100) : 0
+
   return (
     <div
       style={isSelected ? {
@@ -163,11 +188,11 @@ function PlanRow({
         {/* Supply label + optional inline tag */}
         <div className="flex items-center gap-2">
           <span className={`text-base font-normal leading-6 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
-            {opt.label}
+            {def.label}
           </span>
-          {opt.tag && (
+          {def.tag && (
             <span className="text-[12px] font-semibold tracking-[1.5px] uppercase text-[#07808d]">
-              {opt.tag}
+              {def.tag}
             </span>
           )}
         </div>
@@ -176,17 +201,17 @@ function PlanRow({
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className={`text-[24px] font-normal leading-8 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
-              ${opt.price.toLocaleString()}
+              {totalDollars != null ? `$${totalDollars.toLocaleString()}` : '—'}
             </span>
-            {opt.perMonth && (
+            {perMonthDollars != null && (
               <span className="text-sm text-[rgba(0,0,0,0.6)]">
-                ({opt.perMonth})
+                (${perMonthDollars}/mo)
               </span>
             )}
           </div>
-          {opt.badge && (
+          {savingsDollars > 0 && (
             <span className="text-xs font-normal text-[#047857] bg-[#d1fae5] px-1.5 py-1 rounded-xl">
-              {opt.badge}
+              SAVE ${savingsDollars.toLocaleString()}
             </span>
           )}
         </div>
@@ -214,6 +239,10 @@ export default function ChooseMedicationsPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, { type?: boolean; form?: boolean; plan?: boolean }>>({})
   const [loaded, setLoaded] = useState(false)
   const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  // Live price catalog from /api/treatments/pricing — replaces any
+  // hardcoded PLAN_PRICES. Falls back to '—' in the UI while loading.
+  const { catalog: pricingCatalog } = usePricingCatalog()
 
   useEffect(() => {
     if (loaded && treatments.length === 0) {
@@ -293,10 +322,17 @@ export default function ChooseMedicationsPage() {
       return !!c.form && !!c.plan
     })
 
-  const dueToday = treatments.reduce((sum, id) => {
-    const plan = choices[id]?.plan
-    return sum + (plan ? (PLAN_PRICES[plan] ?? 0) : 0)
+  // Sum the cart in cents from the live catalog. If the catalog hasn't
+  // loaded yet (or some combo is missing), the entry contributes 0.
+  // Display side renders cents → dollars where shown.
+  const dueTodayCents = treatments.reduce((sum, id) => {
+    const c = choices[id]
+    if (!c?.form || !c?.plan) return sum
+    const slug = resolveCatalogSlug(id, c.type)
+    const cents = lookupPriceCents(pricingCatalog, slug, c.form, c.plan)
+    return sum + (cents ?? 0)
   }, 0)
+  const dueToday = Math.round(dueTodayCents / 100)
 
   function handleContinue() {
     if (isNavigating) return
@@ -498,14 +534,28 @@ export default function ChooseMedicationsPage() {
                           aria-describedby={fieldErrors[tid]?.plan ? `${tid}-plan-error` : undefined}
                           className="flex flex-col gap-3"
                         >
-                          {PLAN_OPTIONS.map(opt => (
-                            <PlanRow
-                              key={opt.id}
-                              opt={opt}
-                              isSelected={choice.plan === opt.id}
-                              onClick={() => setChoice(tid, 'plan', opt.id as MedPlan)}
-                            />
-                          ))}
+                          {(() => {
+                            // Resolve the catalog slug + formulation for this row's
+                            // (treatment, current form selection). Form may not be
+                            // selected yet; fall back to 'injection' for display
+                            // (templated v1 prices are equal across formulations).
+                            const slug = resolveCatalogSlug(tid, choice.type)
+                            const formForLookup = (choice.form ?? 'injection')
+                            const oneMonthCents = lookupPriceCents(pricingCatalog, slug, formForLookup, '1mo')
+                            return PLAN_DEFS.map(def => {
+                              const priceCents = lookupPriceCents(pricingCatalog, slug, formForLookup, def.id)
+                              return (
+                                <PlanRow
+                                  key={def.id}
+                                  def={def}
+                                  isSelected={choice.plan === def.id}
+                                  onClick={() => setChoice(tid, 'plan', def.id as MedPlan)}
+                                  priceCents={priceCents}
+                                  oneMonthCents={oneMonthCents}
+                                />
+                              )
+                            })
+                          })()}
                         </div>
                         {fieldErrors[tid]?.plan && (
                           <p id={`${tid}-plan-error`} role="alert" className="text-xs text-red-600 leading-4">Please select a plan.</p>

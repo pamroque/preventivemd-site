@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "healthie:smoke": "tsx scripts/healthie-smoke.ts"
+    "healthie:smoke": "tsx scripts/healthie-smoke.ts",
+    "seed:prices": "tsx scripts/seed-stripe-prices.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

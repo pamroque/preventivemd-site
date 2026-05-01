@@ -28,6 +28,17 @@ import { submitIntake, type BookedSlot } from '@/lib/supabase/submit-intake'
 import { getSessionToken } from '@/lib/supabase/intake-session'
 import { useEveTyping } from '@/lib/useEveTyping'
 import { getStripeBrowser } from '@/lib/stripe/client-side'
+import { usePricingCatalog, lookupPriceCents } from '@/lib/pricing/usePricingCatalog'
+
+// Maps the questionnaire-level treatment ID to the canonical catalog slug.
+// 'glp-1' splits into semaglutide / tirzepatide based on the patient's
+// type choice; other IDs map 1:1.
+function resolveCatalogSlug(treatmentId: string, choiceType: unknown): string {
+  if (treatmentId === 'glp-1') {
+    return choiceType === 'tirzepatide' ? 'tirzepatide' : 'semaglutide'
+  }
+  return treatmentId
+}
 
 // Module-level stripe promise so we don't reload Stripe.js on every render.
 const stripePromise = getStripeBrowser()
@@ -182,9 +193,8 @@ function PhoneCallIcon() {
   )
 }
 
-// ─── Plan prices ─────────────────────────────────────────────────────────────
-
-const PLAN_PRICES: Record<string, number> = { '1mo': 149, '3mo': 417, '6mo': 774, '12mo': 1188 }
+// Plan prices come from /api/treatments/pricing via usePricingCatalog().
+// No hardcoded amounts here — see resolveCatalogSlug + lookupPriceCents below.
 
 // ─── Slot-hold helpers ───────────────────────────────────────────────────────
 
@@ -231,6 +241,11 @@ function CheckoutPageInner() {
   const [cartItems, setCartItems] = useState<string[]>([])
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
   const [isAndroid, setIsAndroid] = useState(false)
+
+  // Live price catalog from /api/treatments/pricing — replaces any
+  // hardcoded PLAN_PRICES. While loading, async cart total renders as
+  // $0 momentarily, then reconciles when the catalog arrives.
+  const { catalog: pricingCatalog } = usePricingCatalog()
 
   // The sticky CTA + cart grows with the number of treatments. Measure it so
   // the main scroll region always has enough bottom padding to clear it.
@@ -357,7 +372,11 @@ function CheckoutPageInner() {
     const step12 = getStepValues(12)
 
     if (isConsultation) {
-      setDueToday(35)
+      // Sync visit fee comes from the catalog (services.sync_visit). While
+      // the catalog is loading, dueToday stays 0; the useEffect re-runs
+      // when pricingCatalog populates and reconciles to the real value.
+      const syncCents = pricingCatalog?.services?.sync_visit?.amount_cents ?? 0
+      setDueToday(Math.round(syncCents / 100))
       const fmt = (typeof step12.format === 'string' ? step12.format : 'Video') as 'Video' | 'Phone'
       const dateLabel = typeof step12.date === 'string' ? formatConsultDate(step12.date) : ''
       const time = typeof step12.time === 'string' ? step12.time : ''
@@ -378,12 +397,16 @@ function CheckoutPageInner() {
         'nad-plus': 'NAD+', 'sermorelin': 'Sermorelin',
       }
 
-      let total = 0
+      let totalCents = 0
       const items: string[] = []
       treatments.forEach(id => {
         const c = choices[id]
         const plan = c?.plan
-        if (plan) total += PLAN_PRICES[plan] ?? 0
+        if (plan && c?.form) {
+          const slug = resolveCatalogSlug(id, c.type)
+          const cents = lookupPriceCents(pricingCatalog, slug, c.form, plan)
+          if (cents != null) totalCents += cents
+        }
         const name = id === 'glp-1' && c?.type
           ? (c.type === 'semaglutide' ? 'Semaglutide' : 'Tirzepatide')
           : (TREATMENT_NAMES[id] ?? id)
@@ -391,10 +414,12 @@ function CheckoutPageInner() {
         const planLabel = plan ? plan.replace('mo', ' mo') : null
         if (form && planLabel) items.push(`${name} ${form} (${planLabel})`)
       })
-      setDueToday(total)
+      setDueToday(Math.round(totalCents / 100))
       setCartItems(items)
     }
-  }, [])
+    // Re-run when the pricing catalog loads so the async total reflects
+    // real prices instead of $0.
+  }, [pricingCatalog])
 
   const {
     register,
@@ -497,61 +522,64 @@ function CheckoutPageInner() {
       return
     }
 
-    // ── Sync flow: charge the $35 visit fee inline via Stripe Elements ──
-    // Gate on `isConsultation` (i.e. the patient booked a live video slot)
-    // rather than result.visitType, because /api/intake derives visit_type
-    // from STATE not from the patient's actual choice — patients in
-    // non-sync-required states who opt into a consult still get
-    // visit_type='async' from the API. isConsultation comes from the
-    // bookedSlot data and is the correct signal.
+    // ── Determine which Stripe flow to run ──
+    // - isConsultation (booked sync visit) → sync_visit mode ($35 visit fee)
+    // - cart has items                     → async_subscription mode
+    // - neither                            → no payment, just go to confirmation
     //
-    // Async-path payment lands in Step 2 once async pricing is finalized.
-    //
-    // For sync, we:
-    //   1. Create a PaymentIntent on the server (returns clientSecret)
-    //   2. Confirm it client-side with the card data Stripe Elements collected
-    //   3. Stripe handles 3DS / SCA challenges automatically
-    //   4. On success, navigate to /confirmation
-    if (isConsultation && result.submissionId && result.patientId) {
+    // We gate on isConsultation rather than result.visitType because
+    // /api/intake derives visit_type from STATE not from the patient's
+    // actual choice; isConsultation comes from the bookedSlot data and
+    // is the correct signal.
+    if ((isConsultation || cartItems.length > 0) && result.submissionId && result.patientId) {
       if (!stripe || !elements) {
-        // Stripe.js hasn't finished loading. Rare — usually means
-        // NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY isn't set.
         setStripeError('Payment system is still loading. Please try again in a moment.')
         return
       }
-
       const cardNumber = elements.getElement(CardNumberElement)
       if (!cardNumber) {
         setStripeError('Card form did not initialize. Please refresh and try again.')
         return
       }
 
-      // 1) Create PaymentIntent on the server
+      // 1) Create the server-side intent (PaymentIntent for sync,
+      //    Subscription-with-clientSecret for async).
       let clientSecret: string | null = null
       try {
+        const requestBody = isConsultation
+          ? {
+              mode:         'sync_visit',
+              submissionId: result.submissionId,
+              patientId:    result.patientId,
+            }
+          : {
+              mode:         'async_subscription',
+              submissionId: result.submissionId,
+              patientId:    result.patientId,
+              cart:         buildAsyncCartPayload(),
+            }
+
         const intentRes = await fetch('/api/checkout/session', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            submissionId: result.submissionId,
-            patientId:    result.patientId,
-            mode:         'sync_visit',
-          }),
+          body:    JSON.stringify(requestBody),
         })
         const intentBody = await intentRes.json()
         if (!intentRes.ok || !intentBody.clientSecret) {
-          console.error('Stripe payment intent create failed:', intentBody?.error)
+          console.error('Stripe checkout session failed:', intentBody?.error)
           setStripeError(intentBody?.error || 'Could not start payment. Please try again.')
           return
         }
         clientSecret = intentBody.clientSecret
       } catch (err) {
-        console.error('Stripe payment intent network error:', err)
+        console.error('Stripe checkout session network error:', err)
         setStripeError('Network error. Please check your connection and try again.')
         return
       }
 
-      // 2) Confirm the PaymentIntent with card data from Stripe Elements
+      // 2) Confirm the PaymentIntent with card data from Stripe Elements.
+      //    Same call shape for both sync (one-time) and async (subscription's
+      //    first invoice) — Stripe handles the underlying difference.
       const billingAddress = data.sameAsDelivery
         ? {
             line1:       data.street,
@@ -586,21 +614,53 @@ function CheckoutPageInner() {
       )
 
       if (confirmErr) {
-        // Card declined, 3DS failed, network error — show inline.
         setStripeError(confirmErr.message ?? 'Payment failed. Please try a different card.')
         return
       }
-
       if (paymentIntent?.status !== 'succeeded') {
         setStripeError('Payment did not complete. Please try again or contact support.')
         return
       }
 
-      // Success — webhook will reconcile the payments row to 'succeeded'.
-      // We navigate immediately rather than waiting on the webhook.
+      // Success — webhook reconciles payments + subscriptions rows. Navigate.
     }
 
     router.push('/get-started/confirmation')
+  }
+
+  /**
+   * Reads the async cart out of sessionStorage (steps 12 + 13) and shapes
+   * it for the /api/checkout/session async_subscription payload.
+   * Server resolves catalog_slug + price_id from these fields.
+   */
+  function buildAsyncCartPayload(): Array<{
+    treatment_id: string
+    type?:        string
+    formulation:  string
+    term:         string
+  }> {
+    const step12 = getStepValues(12)
+    const step13 = getStepValues(13)
+    let treatmentIds: string[] = []
+    if (typeof step12.treatments === 'string') {
+      try { treatmentIds = JSON.parse(step12.treatments) } catch { /* ignore */ }
+    }
+    let choices: Record<string, { type?: string; form?: string; plan?: string }> = {}
+    if (typeof step13.choices === 'string') {
+      try { choices = JSON.parse(step13.choices) } catch { /* ignore */ }
+    }
+    const cart: Array<{ treatment_id: string; type?: string; formulation: string; term: string }> = []
+    for (const id of treatmentIds) {
+      const c = choices[id]
+      if (!c?.form || !c?.plan) continue
+      cart.push({
+        treatment_id: id,
+        type:         c.type,
+        formulation:  c.form,
+        term:         c.plan,
+      })
+    }
+    return cart
   }
 
   return (
@@ -1106,7 +1166,7 @@ function CheckoutPageInner() {
                   {isConsultation ? (
                     <>
                       <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
-                        By securing your appointment, you authorize $35 today to schedule your live consultation.
+                        By securing your appointment, you authorize ${dueToday.toLocaleString()} today to schedule your live consultation.
                       </p>
                       <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
                         This fee is non-refundable if you cancel within 24 hours of your scheduled appointment.
