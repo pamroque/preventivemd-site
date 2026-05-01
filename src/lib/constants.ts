@@ -207,7 +207,7 @@ export const categories = [
 // Stats strip data
 export const stats = [
   { value: '$0', label: 'Choose your medication — physician approves in 24 hrs' },
-  { value: '$35', label: 'Ask a provider — get a personalized recommendation' },
+  { value: '$99', label: 'Ask a provider — get a personalized recommendation' },
   { value: '15+', label: 'Physician-curated peptide protocols' },
   { value: '503A', label: 'Licensed U.S. compounding pharmacies' },
 ]

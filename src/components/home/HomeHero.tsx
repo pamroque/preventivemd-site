@@ -1,27 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import Logo from '@/components/ui/Logo'
-
-/** heroicons-outline/globe-alt — matches the SiteNav accessibility button */
-function GlobeIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className={className ?? 'size-6'}
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.038 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.038-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418"
-      />
-    </svg>
-  )
-}
+import AccessibilityMenu from '@/components/a11y/AccessibilityMenu'
 
 export default function HomeHero() {
   return (
@@ -38,7 +18,7 @@ export default function HomeHero() {
           src="/assets/home/hero-mobile-1.png"
           alt=""
           fill
-          sizes="100vw"
+          sizes="(min-width: 768px) 0px, calc(100vw - 16px)"
           priority
           className="object-cover object-top md:hidden"
         />
@@ -46,14 +26,14 @@ export default function HomeHero() {
           src="/assets/home/hero-mobile-2.png"
           alt=""
           fill
-          sizes="100vw"
+          sizes="(min-width: 768px) 0px, calc(100vw - 16px)"
           className="hero-crossfade object-cover object-top md:hidden"
         />
         <Image
           src="/assets/home/hero-desktop-1.png"
           alt=""
           fill
-          sizes="100vw"
+          sizes="(min-width: 768px) calc(100vw - 32px), 0px"
           priority
           className="hidden object-cover object-top md:block"
         />
@@ -61,25 +41,19 @@ export default function HomeHero() {
           src="/assets/home/hero-desktop-2.png"
           alt=""
           fill
-          sizes="100vw"
+          sizes="(min-width: 768px) calc(100vw - 32px), 0px"
           className="hero-crossfade hidden object-cover object-top md:block"
         />
       </div>
 
       {/* Top-right accessibility utility — pinned to the corner so it stays
           aligned to the rounded top-right of the hero. */}
-      <button
-        type="button"
-        aria-label="Language and Accessibility settings"
-        className="absolute right-0 top-0 z-10 flex items-center gap-1 rounded-bl-lg bg-white pb-2 pl-2 pr-2 pt-1.5 text-[#1d2d44] transition-opacity hover:opacity-90 md:gap-1 md:pl-3 md:pr-3"
-      >
-        <GlobeIcon className="size-6 shrink-0" />
-        <span className="hidden text-left text-[10px] font-medium leading-[1.4] text-[#1d2d44] md:block">
-          Language &amp;
-          <br />
-          Accessibility
-        </span>
-      </button>
+      <AccessibilityMenu
+        align="right"
+        compact
+        wrapperClassName="absolute right-0 top-0 z-10"
+        triggerClassName="flex items-center gap-1 rounded-bl-lg bg-white pb-2 pl-2 pr-2 pt-1.5 text-[#1d2d44] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:gap-1 md:pl-3 md:pr-3"
+      />
 
       {/* Content — logo top-left, headline + buttons bottom-left.
           justify-between mirrors the Figma hero layout.
@@ -108,8 +82,8 @@ export default function HomeHero() {
             id="hero-heading"
             className="font-extralight leading-[1.1] text-white"
           >
-            <span className="block text-[36px] md:text-[54px]">Personalized care</span>
-            <span className="block font-serif italic text-[42px] md:text-[64px]">
+            <span className="block text-4xl md:text-[3.375rem]">Personalized care</span>
+            <span className="block font-serif italic text-[2.625rem] md:text-[4rem]">
               precisely for you
             </span>
           </h1>
@@ -117,13 +91,13 @@ export default function HomeHero() {
           <div className="flex flex-wrap items-start gap-3">
             <Link
               href="/get-started"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-[12px] font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:leading-5"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:leading-5"
             >
               Get started
             </Link>
             <Link
               href="/sign-in"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-transparent px-2.5 py-1.5 text-[12px] font-medium uppercase tracking-[0.96px] leading-4 text-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:leading-5"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-transparent px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.96px] leading-4 text-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:leading-5"
             >
               Sign in
             </Link>

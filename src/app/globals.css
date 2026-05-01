@@ -26,6 +26,43 @@
   --bg: #f7fbfd;
 }
 
+/* ── A11Y PREFERENCES ──
+ * Driven by AccessibilityProvider via data attributes on <html>:
+ *   - data-animations="off" disables transitions/animations site-wide.
+ *   - data-readability="enhanced" swaps body text to Lexend for dyslexic-friendly reading.
+ */
+html[data-animations='off'],
+html[data-animations='off'] *,
+html[data-animations='off'] *::before,
+html[data-animations='off'] *::after {
+  transition: none !important;
+  animation: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Hover-driven transforms/positions still fire even with the transition gone,
+ * which produces an instant snap. Explicitly neutralize them. */
+html[data-animations='off'] .tile-cta-magnify:hover .tile-bg {
+  transform: none !important;
+}
+html[data-animations='off'] .tile-cta-magnify.tile-bg-shift:hover {
+  background-position: 0% 50% !important;
+}
+html[data-animations='off'] .hero-crossfade {
+  opacity: 0 !important;
+}
+html[data-animations='off'] .path-card-glint {
+  animation: none !important;
+}
+html[data-animations='off'] .path-card-orb::after {
+  display: none !important;
+}
+
+html[data-readability='enhanced'] body {
+  font-family: var(--font-lexend), -apple-system, 'SF Pro Display', 'Segoe UI',
+    system-ui, sans-serif;
+}
+
 /* ── BASE RESETS ── */
 /* `overflow-x: hidden` on both html and body — body alone leaks on iOS
  * Safari when an absolutely-positioned child (e.g. the Treatments wisp
@@ -60,56 +97,58 @@ main {
   scroll-padding-top: 5rem;
 }
 
-/* ── PROCESS / PATH CARD SHINE ─────────────────────────────────────────────
- * A single dot of light travels around the outline of the highlighted
- * "Meet with your dedicated provider" card in ProcessSection. Built with a
- * conic-gradient on a pseudo-element + a ring mask that hides the interior,
- * rotated via an @property-registered angle so the sweep interpolates.
- *
- * To revert: delete this block plus the `highlight` prop wiring on
- * PathCard in ProcessSection.tsx. */
-@property --path-card-shine-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
+/* Path card drifting orb — a soft radial-gradient highlight that slowly
+ * travels diagonally across the card and loops, fading in/out at the
+ * edges so it reads as ambient light rather than a hard sweep. Pair with
+ * `position: relative` and `overflow: hidden` on the host so the orb is
+ * clipped to the card's rounded silhouette. */
+@keyframes pathCardOrbDrift {
+  0% { transform: translate(-80%, -80%); opacity: 0; }
+  20%, 80% { opacity: 1; }
+  100% { transform: translate(180%, 180%); opacity: 0; }
 }
 
-@keyframes pathCardOutlineTravel {
-  to { --path-card-shine-angle: 360deg; }
-}
-
-.path-card-shine::before {
+.path-card-orb::after {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 2px;
+  top: 0;
+  left: 0;
+  width: 65%;
+  aspect-ratio: 1 / 1;
   pointer-events: none;
-  /* Comet: a soft trail fading into a bright head. */
-  background: conic-gradient(
-    from var(--path-card-shine-angle),
-    transparent 0deg,
-    transparent 310deg,
-    rgba(255, 255, 255, 0.15) 335deg,
-    rgba(255, 255, 255, 0.7) 352deg,
-    rgba(255, 255, 255, 1) 360deg
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.08) 35%,
+    transparent 65%
   );
-  /* Cut out the interior so only the 2px ring remains visible. */
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  animation: pathCardOutlineTravel 4s linear infinite;
+  filter: blur(8px);
+  animation: pathCardOrbDrift 11s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .path-card-shine::before {
+  .path-card-orb::after {
     animation: none;
     display: none;
+  }
+}
+
+/* Path card breathing glow — a soft outer halo that gently pulses to draw
+ * attention to the highlighted card. When animations are disabled, the
+ * static box-shadow remains so the card still reads as highlighted. */
+@keyframes pathCardGlow {
+  0%, 100% { box-shadow: 0 0 14px 0 rgba(255, 255, 255, 0.06); }
+  50% { box-shadow: 0 0 32px 6px rgba(255, 255, 255, 0.22); }
+}
+
+.path-card-glint {
+  box-shadow: 0 0 18px 2px rgba(255, 255, 255, 0.1);
+  animation: pathCardGlow 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .path-card-glint {
+    animation: none;
   }
 }
 

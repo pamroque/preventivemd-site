@@ -136,7 +136,7 @@ export const STEPS: StepDef[] = [
     id: 'payment',
     type: 'payment',
     title: 'Reserve Your Visit',
-    subtitle: '$35 secures your 20-minute consultation with a licensed physician. Your personalized protocol — and any medication — is built from there.',
+    subtitle: '$99 secures your 20-minute consultation with a licensed physician. Your personalized protocol — and any medication — is built from there.',
   },
   {
     id: 'schedule',

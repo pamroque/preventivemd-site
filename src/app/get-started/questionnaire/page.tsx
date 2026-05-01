@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import BackHeader from '@/components/ui/BackHeader'
 import { US_STATES } from '@/lib/us-states'
+import { BLOCKED_STATES_SET } from '@/lib/intake-flow'
 import { saveStep, getStepValues } from '@/lib/intake-session-store'
 import { usePrefersReducedMotion } from '@/lib/useEveTyping'
 
@@ -175,7 +176,12 @@ const schema = z.object({
     .refine((val) => calculateAge(val) >= 18, {
       message: 'You must be at least 18 years old to continue',
     }),
-  state: z.string().min(1, 'State is required'),
+  state: z
+    .string()
+    .min(1, 'State is required')
+    .refine((val) => !BLOCKED_STATES_SET.has(val), {
+      message: "PreventiveMD isn't available yet in your state. Please check back soon.",
+    }),
   phone: z
     .string()
     .min(1, 'Mobile number is required')

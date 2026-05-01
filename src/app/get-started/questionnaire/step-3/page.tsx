@@ -147,6 +147,7 @@ type GoalId =
   | 'stress'
   | 'energy'
   | 'focus'
+  | 'aging'
   | 'inflammation'
   | 'recovery'
   | 'sexual'
@@ -173,6 +174,7 @@ const GOALS: GoalOption[] = [
   { id: 'stress', label: 'Reduce stress and anxious feelings', Icon: GlobeAltIcon },
   { id: 'energy', label: 'Improve energy', Icon: BoltIcon },
   { id: 'focus', label: 'Improve focus and mental clarity', Icon: GlobeAltIcon },
+  { id: 'aging', label: 'Support healthy aging', Icon: GlobeAltIcon },
   { id: 'inflammation', label: 'Reduce inflammation and support healing', Icon: ShieldCheckIcon },
   { id: 'recovery', label: 'Improve recovery and physical performance', Icon: HeartIcon },
   { id: 'sexual', label: 'Improve sexual wellness', Icon: HeartIcon },

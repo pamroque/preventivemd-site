@@ -43,7 +43,7 @@ export default function FoundersMessageDialog() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="relative inline-flex w-fit items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-[12px] font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:leading-5"
+        className="relative inline-flex w-fit items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:leading-5"
       >
         {TRIGGER_LABEL}
       </button>
@@ -73,12 +73,12 @@ export default function FoundersMessageDialog() {
           <div className="flex flex-col text-[#09090b] pr-8 md:pr-10">
             <h2
               id="founders-message-heading"
-              className="font-serif italic text-[28px] leading-[1.2] md:text-[32px]"
+              className="font-serif italic text-[1.75rem] leading-[1.2] md:text-[2rem]"
             >
               To our patients and future patients,
             </h2>
 
-            <div className="mt-7 flex flex-col gap-6 text-[16px] leading-6">
+            <div className="mt-7 flex flex-col gap-6 text-base leading-6">
               <p>
                 Most healthcare treats illness. We believe care should help
                 people thrive, not just react to disease. That&rsquo;s what drew
@@ -109,10 +109,10 @@ export default function FoundersMessageDialog() {
               </p>
             </div>
 
-            <p className="mt-7 text-[16px] font-bold leading-6">
+            <p className="mt-7 text-base font-bold leading-6">
               Patients first, founders second,
             </p>
-            <p className="font-serif italic text-[20px] leading-7">
+            <p className="font-serif italic text-xl leading-7">
               <span>{'— '}</span>
               <span>Brian</span>
               <span>{', '}</span>

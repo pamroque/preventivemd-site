@@ -97,6 +97,11 @@ export default function QTargetWeightPage() {
       setError('Please enter a valid goal weight in lbs.')
       return
     }
+    const currentWeight = Number(heightVals.weight)
+    if (currentWeight > 0 && w >= currentWeight) {
+      setError(`Goal weight must be less than your current weight (${currentWeight} lbs).`)
+      return
+    }
     setError(null)
     setIsNavigating(true)
     saveStep(

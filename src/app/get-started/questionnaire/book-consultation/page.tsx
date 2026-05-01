@@ -288,7 +288,10 @@ export default function BookConsultationPage() {
       })
       .catch((err) => {
         if (cancelled || err?.name === 'AbortError') return
-        setLoadError(err?.message ?? 'Network error')
+        // Fall back silently to empty slots — the "No available slots"
+        // message below covers this state without surfacing raw fetch/parse
+        // errors (e.g. "Unexpected end of JSON input") to the patient.
+        setSlots([])
       })
       .finally(() => {
         if (!cancelled) setSlotsLoading(false)
@@ -540,15 +543,15 @@ export default function BookConsultationPage() {
                     Language{' '}
                     <span className="text-[#b91c1c]" aria-hidden="true">*</span>
                   </label>
-                  <div className="relative">
+                  <div className="relative opacity-50">
                     <select
                       id="language"
                       value={language}
                       onChange={e => setLanguage(e.target.value)}
-                      className="w-full h-[42px] pl-3 pr-9 border border-[#e4e4e7] rounded-lg bg-white text-base text-[#09090b] shadow-sm appearance-none cursor-pointer focus:outline-none focus:border-[#3A5190] transition-colors"
+                      disabled
+                      className="w-full h-[42px] pl-3 pr-9 border border-[#e4e4e7] rounded-lg bg-white text-base text-[#09090b] shadow-sm appearance-none cursor-not-allowed focus:outline-none focus:border-[#3A5190] transition-colors"
                     >
                       <option>English</option>
-                      <option>Español</option>
                     </select>
                     <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
                       <ChevronUpDownIcon />
@@ -778,18 +781,9 @@ export default function BookConsultationPage() {
               {slotsLoading ? (
                 <p className="text-sm text-[rgba(0,0,0,0.6)] py-4">Loading availability…</p>
               ) : slots.length === 0 ? (
-                <p className="text-sm text-[rgba(0,0,0,0.6)] py-4">
+                <p className="text-sm text-red-700 py-4">
                   No available slots in the next {LOOKAHEAD_DAYS} days.
-                  Please check back later or{' '}
-                  <a
-                    href="#"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#3A5190] underline underline-offset-2"
-                  >
-                    contact support
-                  </a>
-                  .
+                  Please check back later.
                 </p>
               ) : (
                 ([

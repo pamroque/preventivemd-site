@@ -43,16 +43,16 @@ export default function HomeFooter() {
               <Logo tone="inverse" className="h-6 w-auto" />
             </Link>
             <div className="flex flex-col gap-3">
-              <h3 className="font-serif italic text-[20px] leading-6 text-[#a1a1aa]">Contact us</h3>
+              <h3 className="font-serif italic text-xl leading-6 text-[#a1a1aa]">Contact us</h3>
               <a
                 href="tel:+19876543210"
-                className="text-[16px] leading-6 underline decoration-solid"
+                className="text-base leading-6 underline decoration-solid"
               >
                 +1 (987) 654-3210
               </a>
               <a
                 href="mailto:hello@preventivemd.com"
-                className="text-[16px] leading-6 underline decoration-solid"
+                className="text-base leading-6 underline decoration-solid"
               >
                 hello@preventivemd.com
               </a>
@@ -62,12 +62,12 @@ export default function HomeFooter() {
           {/* Link columns */}
           {COLUMNS.map((col) => (
             <div key={col.heading} className="flex flex-col gap-3">
-              <h3 className="font-serif italic text-[20px] leading-6 text-[#a1a1aa]">{col.heading}</h3>
+              <h3 className="font-serif italic text-xl leading-6 text-[#a1a1aa]">{col.heading}</h3>
               {col.links.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="text-[16px] leading-6 underline decoration-solid"
+                  className="text-base leading-6 underline decoration-solid"
                 >
                   {link.label}
                 </Link>
@@ -77,12 +77,12 @@ export default function HomeFooter() {
 
           {/* Accessibility */}
           <div className="flex flex-col gap-3 md:max-w-[240px]">
-            <h3 className="font-serif italic text-[20px] leading-6 text-[#a1a1aa]">
+            <h3 className="font-serif italic text-xl leading-6 text-[#a1a1aa]">
               Our commitment to making care accessible to everyone
             </h3>
             <Link
               href="#"
-              className="text-[16px] leading-6 underline decoration-solid"
+              className="text-base leading-6 underline decoration-solid"
             >
               Accessibility Statement
             </Link>
@@ -92,10 +92,10 @@ export default function HomeFooter() {
         <div className="h-px w-full bg-white/20" />
 
         <div className="flex flex-col gap-2.5 text-center md:flex-row md:items-center md:justify-between md:text-left">
-          <p className="text-[14px] leading-5 text-white">
+          <p className="text-sm leading-5 text-white">
             © {new Date().getFullYear()} PreventiveMD. All rights reserved.
           </p>
-          <p className="text-[14px] leading-5 text-white">
+          <p className="text-sm leading-5 text-white">
             This site is intended for U.S. residents only.
           </p>
         </div>

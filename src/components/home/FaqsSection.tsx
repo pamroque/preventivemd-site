@@ -115,7 +115,7 @@ function AccordionItem({
         className="flex w-full items-center justify-between gap-4 rounded-2xl px-6 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
       >
         <span
-          className={`flex-1 text-[16px] font-medium leading-6 transition-colors md:text-[18px] md:leading-7 ${
+          className={`flex-1 text-base font-medium leading-6 transition-colors md:text-lg md:leading-7 ${
             isOpen ? 'text-[#3A5190]' : 'text-[#09090b]'
           }`}
         >
@@ -146,7 +146,7 @@ function AccordionItem({
             }`}
           >
             <div className="mb-6 h-px w-full bg-[#e4e4e7]" />
-            <div className="flex flex-col gap-4 text-[16px] leading-6 text-[#09090b]">
+            <div className="flex flex-col gap-4 text-base leading-6 text-[#09090b]">
               {(Array.isArray(faq.a) ? faq.a : [faq.a]).map((para, i) => (
                 <p key={i}>{para}</p>
               ))}
@@ -210,15 +210,15 @@ export default function FaqsSection() {
       className="flex scroll-mt-16 flex-col items-start gap-9 md:scroll-mt-20 lg:flex-row lg:items-start lg:gap-[72px]"
     >
       <div className="flex w-full shrink-0 flex-col gap-3 lg:w-[300px]">
-        <p className="text-[14px] font-medium leading-5 text-[#71717a] md:text-[16px] md:leading-6">
+        <p className="text-sm font-medium leading-5 text-[#71717a] md:text-base md:leading-6">
           FAQs
         </p>
         <h2
           id="faqs-heading"
           className="font-extralight leading-[1.1] text-[#09090b]"
         >
-          <span className="text-[36px] md:text-[54px]">In case you were </span>
-          <span className="font-serif italic text-[42px] md:text-[64px]">
+          <span className="text-4xl md:text-[3.375rem]">In case you were </span>
+          <span className="font-serif italic text-[2.625rem] md:text-[4rem]">
             wondering
           </span>
         </h2>

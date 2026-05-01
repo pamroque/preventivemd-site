@@ -2,29 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import { currentStepAnimDuration } from '@/components/ui/ChatHistory'
+import { useAccessibilitySettings } from '@/components/a11y/AccessibilityContext'
 
 const WORD_DELAY_MS = 80
 const DONE_DELAY_MS = 200
 const START_DELAY_MS = 100
 
 /**
- * Tracks the user's `prefers-reduced-motion` preference. Starts as `false`
- * so SSR and initial client render match; the real value is set in useEffect
- * so animation-gated content doesn't cause a hydration mismatch.
+ * Returns `true` whenever Eve's animations should be skipped — either because
+ * the OS has reduce-motion set, or because the user disabled animations via
+ * the in-app Language & Accessibility menu. Both signals are folded into
+ * `AccessibilitySettings.animations`, so this is just `!animations`.
+ *
+ * Name kept for backwards compatibility with existing call sites.
  */
 export function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReduced(mql.matches)
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches)
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [])
-
-  return reduced
+  const { animations } = useAccessibilitySettings()
+  return !animations
 }
 
 /**

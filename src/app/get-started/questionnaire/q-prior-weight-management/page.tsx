@@ -62,14 +62,8 @@ const APPROACHES: Approach[] = [
 // ─── Copy / config ────────────────────────────────────────────────────────────
 
 const THIS_ROUTE = '/get-started/questionnaire/q-prior-weight-management'
-const FULL_TEXT = 'A GLP-1 medication may help you reach your goal in about 24 weeks. What approaches have you previously tried to lose weight? *'
+const FULL_TEXT = 'What approaches have you previously tried to lose weight? *'
 const QUESTION_TEXT = 'What approaches have you previously tried to lose weight?'
-// Word indices in FULL_TEXT.split(' ')
-// 0-12:  GLP-1 sentence; 7-12 ("your goal in about 24 weeks.") are blue
-// 13:    start of question ("What")
-// last:  "*" is red
-const BLUE_RANGE  = [7, 12]  // inclusive
-const BREAK_BEFORE = 13      // insert <br /> before "What"
 const SESSION_INDEX = 51
 const PROGRESS = 19
 
@@ -109,7 +103,7 @@ export default function QPriorWeightManagementPage() {
 
   const priorBubbleCount = currentStep?.bubbles.length ?? 0
   const { animateBubbles, visibleWords, typingStarted, done, words } =
-    useEveTyping(FULL_TEXT, priorBubbleCount, { pauseBeforeWord: BREAK_BEFORE })
+    useEveTyping(FULL_TEXT, priorBubbleCount)
 
   const hasSelection = selected.size > 0
 
@@ -180,13 +174,10 @@ export default function QPriorWeightManagementPage() {
                 {typingStarted && (
                   <>
                     {words.slice(0, visibleWords).map((word, i) => {
-                      const isBlue = i >= BLUE_RANGE[0] && i <= BLUE_RANGE[1]
-                      const isRed  = word === '*'
+                      const isRed = word === '*'
                       return (
                         <span key={i}>
-                          {i === BREAK_BEFORE && <><br /><br /></>}
-                          <span style={isBlue ? { color: '#1976d2' } : undefined}
-                                className={isRed ? 'text-red-600' : undefined}>
+                          <span className={isRed ? 'text-red-600' : undefined}>
                             {word}
                           </span>
                           {i < visibleWords - 1 ? ' ' : ''}

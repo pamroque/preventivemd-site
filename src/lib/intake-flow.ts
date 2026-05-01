@@ -207,12 +207,21 @@ export function calculateBMI(feet: string, inches: string, weight: string): numb
  * classification) and the questionnaire UI pages import from here.
  */
 export const SYNC_REQUIRED_STATES = [
-  'KY', 'LA', 'MS', 'NM', 'RI', 'WV',
+  'KY', 'LA', 'NM', 'RI', 'WV',
 ] as const
 
 /** Membership check that's a touch faster than `.includes()` for callers
  *  on a hot path. Both forms return the same answer. */
 export const SYNC_REQUIRED_STATES_SET = new Set<string>(SYNC_REQUIRED_STATES)
+
+/** States where PreventiveMD is not currently licensed to operate. Users
+ *  selecting one of these at intake should be blocked from continuing
+ *  rather than routed into an async or sync path. */
+export const BLOCKED_STATES = [
+  'AK', 'MS', 'NJ',
+] as const
+
+export const BLOCKED_STATES_SET = new Set<string>(BLOCKED_STATES)
 
 /** US states for the dropdown */
 export const US_STATES = [

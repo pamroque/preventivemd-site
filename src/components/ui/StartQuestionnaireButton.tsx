@@ -78,7 +78,7 @@ export default function StartQuestionnaireButton({ peptide }: { peptide?: string
           </div>
           <label
             htmlFor={checkboxId}
-            className="flex-1 text-sm font-medium leading-5 text-[#71717a] cursor-pointer"
+            className="flex-1 text-sm font-medium leading-5 text-[rgba(0,0,0,0.87)] cursor-pointer"
           >
             I consent to the collection and processing of my consumer health data
             as described in the{' '}

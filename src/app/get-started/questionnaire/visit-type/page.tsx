@@ -44,49 +44,69 @@ const CONSULT_ROUTE = '/get-started/questionnaire/book-consultation'
 interface VisitTypeCardProps {
   label: string
   title: string
-  price: string
+  /** When omitted, the price column is hidden and the heading takes the full row. */
+  price?: string
+  /** Caption shown beneath the price (e.g. "per visit"). Defaults to "per visit". */
+  priceCaption?: string
   badges: string[]
   cta: string
   cardGradient: string
   onClick: () => void
   disabled: boolean
   unavailable?: boolean
+  /** When true, applies the drifting orb highlight animation
+   *  (`.path-card-orb`) over the card composite to highlight it. */
+  shine?: boolean
 }
 
 function VisitTypeCard({
   label,
   title,
   price,
+  priceCaption = 'per visit',
   badges,
   cta,
   cardGradient,
   onClick,
   disabled,
   unavailable = false,
+  shine = false,
 }: VisitTypeCardProps) {
+  const showPrice = Boolean(price)
   return (
-    <div className="flex flex-col w-full">
+    <div
+      className={`relative flex flex-col w-full ${
+        shine ? 'path-card-orb overflow-hidden rounded-tl-[36px] rounded-br-[36px]' : ''
+      }`}
+    >
       {/* Card content — only top-left corner rounded */}
       <div
         className="flex items-center pl-6 pr-4 py-5 rounded-tl-[36px]"
         style={{ background: cardGradient }}
       >
-        <div className="flex flex-col gap-2 flex-1 min-w-0">
-          {/* 2-up: heading column + price */}
+        <div className="flex flex-col gap-4 flex-1 min-w-0">
+          {/* 2-up: heading column + (optional) price */}
           <div className="flex gap-2 items-start text-white w-full">
-            <div className="flex flex-col gap-1 flex-1 min-w-0 justify-center h-12">
+            <div className="flex flex-col gap-2 flex-1 min-w-0 justify-center min-h-12">
               <p className="text-xs font-light leading-4 tracking-[1.5px] uppercase">
                 {label}
               </p>
-              <p className="text-[20px] font-normal leading-7 tracking-[-0.5px]">
+              <p
+                className={`font-serif italic leading-[1.3] ${
+                  showPrice ? 'text-[2rem]' : 'text-[1.75rem]'
+                }`}
+              >
                 {title}
               </p>
             </div>
-            <p className="shrink-0 font-light whitespace-nowrap">
-              <span className="text-[20.64px] leading-[1.5]">$</span>
-              <span className="text-[32px] leading-[1.5]">{price}</span>
-              <span className="text-base leading-[1.5]"> fee</span>
-            </p>
+            {showPrice && (
+              <p className="shrink-0 font-light whitespace-nowrap text-right">
+                <span className="text-[20.64px] leading-none">$</span>
+                <span className="text-[2rem] leading-none">{price}</span>
+                <br aria-hidden="true" />
+                <span className="text-sm leading-tight">{priceCaption}</span>
+              </p>
+            )}
           </div>
 
           {/* Badges */}
@@ -94,7 +114,7 @@ function VisitTypeCard({
             {badges.map((badge) => (
               <span
                 key={badge}
-                className="inline-flex items-center justify-center px-1.5 py-1 rounded-xl text-xs leading-4 text-white/70 bg-white/[0.08] border border-white/[0.12]"
+                className="inline-flex items-center justify-center px-2 py-1 rounded-full text-xs leading-4 text-white/70 bg-white/[0.08] border border-white/[0.12]"
               >
                 {badge}
               </span>
@@ -136,6 +156,7 @@ function VisitTypeCard({
           <ChevronRightIcon />
         </button>
       )}
+
     </div>
   )
 }
@@ -251,7 +272,7 @@ export default function VisitTypePage() {
                     {words.slice(0, visibleWords).map((word, i) => {
                       const isName = nameToken !== null && word === nameToken
                       return (
-                        <span key={i} style={isName ? { color: '#1976d2' } : undefined}>
+                        <span key={i} className={isName ? 'text-[#3A5190]' : undefined}>
                           {word}
                           {i < visibleWords - 1 ? ' ' : ''}
                         </span>
@@ -279,33 +300,34 @@ export default function VisitTypePage() {
           <div className="flex flex-col gap-6 items-center animate-[fadeIn_0.4s_ease_forwards]">
 
             {requiresSync ? (
-              /* Restricted-state layout: consult first, async disabled second */
+              /* Restricted-state layout: concierge first, async disabled second */
               <>
                 <VisitTypeCard
-                  label="Need guidance?"
-                  title="Consult a provider"
-                  price="35"
-                  badges={['20 minutes (video/phone)', 'Personalized plan']}
+                  label="For a more personal touch"
+                  title="Meet with your concierge provider"
+                  price="99"
+                  priceCaption="per visit"
+                  badges={['30-minute video call', 'Personalized plan']}
                   cta="Book a live consultation"
-                  cardGradient="linear-gradient(268.18deg, #1d2d44 0%, #233d5a 100%)"
+                  cardGradient="linear-gradient(268.84deg, #1d2d44 0%, #0f172a 100%)"
                   onClick={handleConsult}
                   disabled={isNavigating}
+                  shine
                 />
 
                 <div className="flex items-center gap-3 w-[180px]">
                   <div className="flex-1 h-px bg-[#d4d4d8]" />
-                  <span className="text-sm font-medium leading-5 text-[#71717a]">OR</span>
+                  <span className="text-base leading-6 text-[#71717a]">OR</span>
                   <div className="flex-1 h-px bg-[#d4d4d8]" />
                 </div>
 
                 <div className="flex flex-col gap-3 w-full">
                   <VisitTypeCard
-                    label="Know what you want?"
+                    label="Already know what you want?"
                     title="Request your treatment"
-                    price="0"
-                    badges={['Decisions in 24 hours', 'No scheduling']}
+                    badges={['Decisions in 24 hrs', 'No fee', 'Consult via chat']}
                     cta="Unavailable*"
-                    cardGradient="linear-gradient(129.44deg, #1d2d44 0%, #233d5a 100%)"
+                    cardGradient="linear-gradient(127.64deg, #1d2d44 0%, #0f172a 100%)"
                     onClick={() => {}}
                     disabled
                     unavailable
@@ -320,33 +342,34 @@ export default function VisitTypePage() {
                 </div>
               </>
             ) : (
-              /* Standard layout: async first, consult second */
+              /* Standard layout: concierge first (highlighted), async second */
               <>
                 <VisitTypeCard
-                  label="Know what you want?"
-                  title="Request your treatment"
-                  price="0"
-                  badges={['Decisions in 24 hours', 'No scheduling']}
-                  cta="Choose medications"
-                  cardGradient="linear-gradient(129.44deg, #1d2d44 0%, #233d5a 100%)"
-                  onClick={handleAsync}
+                  label="For a more personal touch"
+                  title="Meet with your concierge provider"
+                  price="99"
+                  priceCaption="per visit"
+                  badges={['30-minute video call', 'Personalized plan']}
+                  cta="Book a live consultation"
+                  cardGradient="linear-gradient(268.84deg, #1d2d44 0%, #0f172a 100%)"
+                  onClick={handleConsult}
                   disabled={isNavigating}
+                  shine
                 />
 
                 <div className="flex items-center gap-3 w-[180px]">
                   <div className="flex-1 h-px bg-[#d4d4d8]" />
-                  <span className="text-sm font-medium leading-5 text-[#71717a]">OR</span>
+                  <span className="text-base leading-6 text-[#71717a]">OR</span>
                   <div className="flex-1 h-px bg-[#d4d4d8]" />
                 </div>
 
                 <VisitTypeCard
-                  label="Need guidance?"
-                  title="Consult a provider"
-                  price="35"
-                  badges={['20 minutes (video/phone)', 'Personalized plan']}
-                  cta="Book a live consultation"
-                  cardGradient="linear-gradient(268.18deg, #1d2d44 0%, #233d5a 100%)"
-                  onClick={handleConsult}
+                  label="Already know what you want?"
+                  title="Request your treatment"
+                  badges={['Decisions in 24 hrs', 'No fee', 'Consult via chat']}
+                  cta="Choose medications"
+                  cardGradient="linear-gradient(127.64deg, #1d2d44 0%, #0f172a 100%)"
+                  onClick={handleAsync}
                   disabled={isNavigating}
                 />
               </>

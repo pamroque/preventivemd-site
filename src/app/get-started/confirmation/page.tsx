@@ -350,7 +350,7 @@ export default function ConfirmationPage() {
               {typingStarted && (
                 <>
                   {words.slice(0, visibleWords).map((word, i) => (
-                    <span key={i} style={i === 0 && firstName ? { color: '#1976d2' } : undefined}>
+                    <span key={i} className={i === 0 && firstName ? 'text-[#3A5190]' : undefined}>
                       {word}{i < visibleWords - 1 ? ' ' : ''}
                     </span>
                   ))}

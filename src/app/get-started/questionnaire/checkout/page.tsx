@@ -1200,7 +1200,7 @@ function CheckoutPageInner() {
                     </div>
                     <label
                       htmlFor="telehealthConsent"
-                      className="flex-1 text-sm font-medium leading-5 text-[#71717a] cursor-pointer"
+                      className="flex-1 text-sm font-medium leading-5 text-[rgba(0,0,0,0.87)] cursor-pointer"
                     >
                       I have read the{' '}
                       <a
@@ -1223,11 +1223,11 @@ function CheckoutPageInner() {
                 {/* Trust badges — same 1x display dimensions as /get-started */}
                 <div className="flex items-center justify-center gap-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={BADGE_LEGIT} alt="LegitScript Certified" className="object-contain shrink-0" style={{ width: 50, height: 54 }} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={BADGE_HIPAA} alt="HIPAA Compliant" className="object-contain shrink-0" style={{ width: 46, height: 54 }} />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={BADGE_SSL} alt="SSL Secure" className="object-contain shrink-0" style={{ width: 48, height: 48 }} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={BADGE_LEGIT} alt="LegitScript Certified" className="object-contain shrink-0" style={{ width: 50, height: 54 }} />
                 </div>
               </div>
 

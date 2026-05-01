@@ -83,8 +83,8 @@ function TileText({
   const textColor = inverse ? 'text-white' : 'text-[#09090b]'
   return (
     <div className={`flex flex-col gap-2 ${textColor}`}>
-      <p className="font-serif italic leading-none text-[48px] md:text-[64px]">{stat}</p>
-      <p className="text-[16px] leading-6 md:text-[18px] md:leading-7">{description}</p>
+      <p className="font-serif italic leading-none text-5xl md:text-[4rem]">{stat}</p>
+      <p className="text-base leading-6 md:text-lg md:leading-7">{description}</p>
     </div>
   )
 }
@@ -101,7 +101,7 @@ function TileButton({
   return (
     <Link
       href={href}
-      className="inline-flex w-fit items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-[12px] font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:leading-5"
+      className="inline-flex w-fit items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:leading-5"
     >
       {children}
       {withChevron && <ChevronDoubleDownIcon className="size-5" />}

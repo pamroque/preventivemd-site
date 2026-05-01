@@ -65,7 +65,7 @@ export default function MedicalAdvisorsDialog() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="relative inline-flex w-fit items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-[12px] font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:leading-5"
+        className="relative inline-flex w-fit items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:leading-5"
       >
         {TRIGGER_LABEL}
       </button>
@@ -89,16 +89,13 @@ export default function MedicalAdvisorsDialog() {
             <XMarkIcon className="size-5" />
           </button>
 
-          <div className="flex flex-col gap-3 pr-8 text-[#09090b] md:pr-10">
+          <div className="flex flex-col pr-8 text-[#09090b] md:pr-10">
             <h2
               id="medical-advisors-heading"
-              className="font-serif italic text-[28px] leading-[1.2] md:text-[32px]"
+              className="font-serif italic text-[1.75rem] leading-[1.2] md:text-[2rem]"
             >
               Our medical advisors
             </h2>
-            <p className="text-[15px] leading-6 text-[#52525b] md:text-[16px]">
-              Every protocol we offer is curated by our medical advisors — a small, hand-selected group of physicians who share our philosophy of personalized, prevention-focused care.
-            </p>
           </div>
 
           <ul className="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-6">
@@ -109,15 +106,15 @@ export default function MedicalAdvisorsDialog() {
               >
                 <div
                   aria-hidden="true"
-                  className="relative flex size-20 items-center justify-center overflow-hidden rounded-full bg-[#f4f4f5] text-[14px] font-medium uppercase tracking-[0.96px] text-[#71717a]"
+                  className="relative flex size-20 items-center justify-center overflow-hidden rounded-full bg-[#f4f4f5] text-sm font-medium uppercase tracking-[0.96px] text-[#71717a]"
                 >
                   {a.photo ? null : initialsOf(a.name)}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-[16px] font-medium leading-6 text-[#09090b]">
+                  <p className="text-base font-medium leading-6 text-[#09090b]">
                     {a.name}
                   </p>
-                  <p className="text-[13px] leading-5 text-[#52525b]">
+                  <p className="text-[0.8125rem] leading-5 text-[#52525b]">
                     {a.credential}
                   </p>
                 </div>
@@ -126,7 +123,7 @@ export default function MedicalAdvisorsDialog() {
                     href={a.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-1 inline-flex w-fit items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-[12px] font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 md:leading-5"
+                    className="mt-1 inline-flex w-fit items-center justify-center gap-2 rounded-lg border border-[#e4e4e7] bg-white px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.96px] leading-4 text-[#09090b] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] transition-colors hover:bg-gray-50 md:leading-5"
                   >
                     Visit website
                     <span className="sr-only"> (opens in new tab)</span>

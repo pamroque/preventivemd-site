@@ -4,19 +4,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Logo from '@/components/ui/Logo'
+import AccessibilityMenu from '@/components/a11y/AccessibilityMenu'
 
 // ─── Inline SVG icons ────────────────────────────────────────────────────────
-
-/** heroicons-outline/globe-alt — Language & Accessibility button */
-function GlobeIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-      strokeWidth={1.5} stroke="currentColor" className={className ?? 'size-6'} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.038 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.038-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
-    </svg>
-  )
-}
 
 /** heroicons-outline/user-circle — Sign in (desktop button + mobile nav) */
 function UserCircleIcon({ className }: { className?: string }) {
@@ -87,23 +77,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Treatments', href: '/#treatments' },
   { label: 'Get started', href: '/get-started' },
 ]
-
-function AccessibilityMenuButton() {
-  return (
-    <button
-      type="button"
-      className="flex items-center gap-1 text-[#1d2d44] hover:opacity-75 transition-opacity"
-      aria-label="Language and Accessibility settings"
-    >
-      <GlobeIcon className="size-6 shrink-0" />
-      <span className="text-[10px] font-medium leading-[1.4] whitespace-nowrap text-left">
-        Language &amp;
-        <br />
-        Accessibility
-      </span>
-    </button>
-  )
-}
 
 const DISQUALIFICATION_PATH = '/get-started/questionnaire/disqualification'
 const VERIFY_PATH = '/sign-in/verify'
@@ -193,7 +166,7 @@ function DesktopNav({
 
       {/* Trailing */}
       <div className="flex items-center gap-6">
-        <AccessibilityMenuButton />
+        <AccessibilityMenu align="right" />
         {(() => {
           const isSignInActive = pathname.startsWith('/sign-in')
           return (
@@ -232,7 +205,7 @@ function MobileHeader({ pathname, hidden }: { pathname: string; hidden: boolean 
       <Link href="/" aria-label="PreventiveMD home" className="flex items-center text-[#1d2d44]">
         <Logo className="h-[18px] w-auto" />
       </Link>
-      <AccessibilityMenuButton />
+      <AccessibilityMenu align="right" />
     </header>
   )
 }

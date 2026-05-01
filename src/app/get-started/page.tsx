@@ -1,6 +1,4 @@
-import Link from 'next/link'
 import Image from 'next/image'
-import MedicationCarousel from '@/components/ui/MedicationCarousel'
 import StartQuestionnaireButton from '@/components/ui/StartQuestionnaireButton'
 import ReactivationGate from '@/components/ui/ReactivationGate'
 
@@ -22,7 +20,7 @@ function TimelineDot() {
       className="shrink-0"
       aria-hidden="true"
     >
-      <circle cx="6" cy="6" r="5" stroke="#bdbdbd" strokeWidth="2" />
+      <circle cx="6" cy="6" r="5" stroke="#a1a1aa" strokeWidth="2" />
     </svg>
   )
 }
@@ -31,7 +29,7 @@ function TimelineDot() {
 function TimelineConnector({ height }: { height: number }) {
   return (
     <div className="flex flex-col items-center shrink-0 w-3" aria-hidden="true">
-      <div className="w-0.5 bg-[#bdbdbd]" style={{ height }} />
+      <div className="w-0.5 bg-[#a1a1aa]" style={{ height }} />
     </div>
   )
 }
@@ -67,7 +65,7 @@ export default async function GetStartedPage({
      * pt-14 md → clears desktop nav (h-14)
      * pb-28 → clears mobile bottom nav bar (h-16) + 16px gap + safe area
      */
-    <main id="main-content" tabIndex={-1} className="min-h-screen bg-white pt-12 pb-28 md:pt-14 md:pb-12 focus:outline-none">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-white pt-12 pb-[52px] md:pt-14 md:pb-0 focus:outline-none">
       <ReactivationGate />
       <div className="mx-auto w-full px-4 py-9 md:max-w-lg md:px-0 md:py-12 lg:max-w-[480px] flex flex-col gap-9 md:gap-12">
 
@@ -96,16 +94,19 @@ export default async function GetStartedPage({
         </section>
 
         {/* ── Timeline ── */}
-        <section aria-label="How it works" className="flex flex-col">
+        <section
+          aria-label="How it works"
+          className="flex flex-col p-6 rounded-tr-[36px] rounded-bl-[36px] bg-gradient-to-r from-[#1d2d44] to-[#0f172a] text-white"
+        >
           {/* Step 1 */}
           <div className="flex items-center gap-4">
             <TimelineDot />
-            <p className="text-sm leading-5 text-[rgba(0,0,0,0.87)] flex-1 min-w-0">
-              Complete a 5-minute questionnaire
+            <p className="flex-1 min-w-0 leading-5">
+              <span className="font-serif italic text-base md:text-lg">A few questions to get to know you: </span>
+              <span className="text-sm md:text-base">Complete a 5-minute questionnaire</span>
             </p>
           </div>
 
-          {/* Short connector */}
           <div className="flex items-stretch gap-4">
             <TimelineConnector height={36} />
           </div>
@@ -113,27 +114,40 @@ export default async function GetStartedPage({
           {/* Step 2 */}
           <div className="flex items-center gap-4">
             <TimelineDot />
-            <p className="text-sm leading-5 text-[rgba(0,0,0,0.87)] flex-1 min-w-0">
-              <span className="text-xs font-medium tracking-[1.5px] uppercase mr-1">
-                Pick a path:
+            <p className="flex-1 min-w-0 leading-5">
+              <span className="font-serif italic text-base md:text-lg">Pick a path: </span>
+              <span className="text-sm md:text-base">
+                Meet with your provider concierge or request your treatment
               </span>
-              Choose your medications* or get guidance from a provider live
+              <sup className="text-[9px]">†</sup>
             </p>
           </div>
 
-          {/* Long connector with carousel */}
           <div className="flex items-stretch gap-4">
-            <TimelineConnector height={96} />
-            <div className="flex-1 min-w-0 flex items-center pl-3 overflow-hidden">
-              <MedicationCarousel />
-            </div>
+            <TimelineConnector height={36} />
           </div>
 
           {/* Step 3 */}
           <div className="flex items-center gap-4">
             <TimelineDot />
-            <p className="text-sm leading-5 text-[rgba(0,0,0,0.87)] flex-1 min-w-0">
-              A licensed provider reviews your request
+            <p className="flex-1 min-w-0 leading-5">
+              <span className="font-serif italic text-base md:text-lg">Self-pay checkout: </span>
+              <span className="text-sm md:text-base">Pay one upfront price</span>
+            </p>
+          </div>
+
+          <div className="flex items-stretch gap-4">
+            <TimelineConnector height={36} />
+          </div>
+
+          {/* Step 4 */}
+          <div className="flex items-center gap-4">
+            <TimelineDot />
+            <p className="flex-1 min-w-0 leading-5">
+              <span className="font-serif italic text-base md:text-lg">Provider-approved, then delivered: </span>
+              <span className="text-sm md:text-base">
+                A licensed provider prescribes if it&rsquo;s the right fit
+              </span>
             </p>
           </div>
         </section>
@@ -170,6 +184,24 @@ export default async function GetStartedPage({
 
           {/* Trust badges — 2x exports rendered at their 1x display dimensions */}
           <div className="flex items-center justify-center gap-4">
+            {/* LegitScript — 1x display: 50×54, clickable (URL TBD) */}
+            <a
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative shrink-0 block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
+              style={{ width: 50, height: 54 }}
+              aria-label="LegitScript Certified (opens in new tab)"
+            >
+              <Image
+                src={LEGIT_BADGE_URL}
+                alt="LegitScript Certified"
+                fill
+                sizes="50px"
+                className="object-contain"
+              />
+            </a>
+
             {/* HIPAA — 1x display: 46×54 */}
             <div className="relative shrink-0" style={{ width: 46, height: 54 }}>
               <Image
@@ -191,32 +223,14 @@ export default async function GetStartedPage({
                 className="object-contain"
               />
             </div>
-
-            {/* LegitScript — 1x display: 50×54, clickable (URL TBD) */}
-            <a
-              href="#"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative shrink-0 block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
-              style={{ width: 50, height: 54 }}
-              aria-label="LegitScript Certified (opens in new tab)"
-            >
-              <Image
-                src={LEGIT_BADGE_URL}
-                alt="LegitScript Certified"
-                fill
-                sizes="50px"
-                className="object-contain"
-              />
-            </a>
           </div>
         </section>
 
         {/* ── Footnote ── */}
         <p className="text-xs text-[#71717a] leading-4 text-center">
-          *If you live in Kentucky, Louisiana, Mississippi, New Mexico, Rhode
-          Island, or West Virginia, you&rsquo;ll be required to complete a $35
-          video consultation initially.
+          <sup className="text-[8px]">†</sup>If you live in Kentucky, Louisiana,
+          New Mexico, Rhode Island, or West Virginia, you&rsquo;ll be required
+          to complete a $99 video consultation initially.
         </p>
       </div>
     </main>
