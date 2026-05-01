@@ -186,7 +186,7 @@ export default function AboutSection() {
       {/* Mobile-style gradient CTA — present on mobile per Figma */}
       <Link
         href="/get-started"
-        className="relative flex h-[42px] w-full max-w-[240px] items-center justify-center gap-3 overflow-hidden rounded-br-[36px] rounded-tl-[36px] px-12 py-2 text-[16px] font-medium leading-6 text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-2 md:max-w-[360px]"
+        className="relative flex h-[42px] w-full items-center justify-center gap-3 overflow-hidden rounded-br-[36px] rounded-tl-[36px] px-12 py-2 text-[16px] font-medium leading-6 text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-2 md:max-w-[360px]"
         style={{
           background:
             'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',

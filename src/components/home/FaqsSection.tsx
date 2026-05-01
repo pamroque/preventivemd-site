@@ -146,7 +146,7 @@ function AccordionItem({
             }`}
           >
             <div className="mb-6 h-px w-full bg-[#e4e4e7]" />
-            <div className="flex flex-col gap-4 text-[14px] leading-5 text-[#09090b] md:text-[16px] md:leading-6">
+            <div className="flex flex-col gap-4 text-[16px] leading-6 text-[#09090b]">
               {(Array.isArray(faq.a) ? faq.a : [faq.a]).map((para, i) => (
                 <p key={i}>{para}</p>
               ))}
