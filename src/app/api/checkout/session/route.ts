@@ -366,22 +366,55 @@ async function handleAsyncSubscription(
     },
   )
 
-  // 3. Pull the clientSecret from the first invoice's PaymentIntent.
+  // 3. Pull the clientSecret from the first invoice.
+  //    Stripe API ≥ 2024-09-30 exposes this via `latest_invoice.confirmation_secret`
+  //    (the older `latest_invoice.payment_intent` was deprecated). The value is
+  //    still a PaymentIntent client_secret format (`pi_xxx_secret_xxx`), so
+  //    stripe.confirmCardPayment on the frontend works without changes.
   const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null
-  const paymentIntent = (latestInvoice as unknown as { payment_intent?: Stripe.PaymentIntent | string })?.payment_intent
-  const pi = typeof paymentIntent === 'string'
-    ? await stripe.paymentIntents.retrieve(paymentIntent)
-    : paymentIntent
+  const invoiceWithSecrets = latestInvoice as unknown as {
+    confirmation_secret?: { client_secret?: string; type?: string }
+    payment_intent?:      Stripe.PaymentIntent | string
+  } | null
 
-  if (!pi || !pi.client_secret) {
-    console.error('[payment-intent] Subscription missing PaymentIntent client_secret', {
-      subscription_id: subscription.id,
-      invoice_id:      latestInvoice?.id,
+  let clientSecret: string | null = null
+  let paymentIntentId: string | null = null
+
+  // Preferred (current API): confirmation_secret on the invoice.
+  if (invoiceWithSecrets?.confirmation_secret?.client_secret) {
+    clientSecret = invoiceWithSecrets.confirmation_secret.client_secret
+    // PI ID lives in the prefix of the client secret: pi_<ID>_secret_<rand>
+    if (clientSecret.startsWith('pi_')) {
+      paymentIntentId = clientSecret.split('_secret_')[0]
+    }
+  }
+  // Fallback (older API versions): direct payment_intent reference.
+  else if (invoiceWithSecrets?.payment_intent) {
+    const ref = invoiceWithSecrets.payment_intent
+    const pi = typeof ref === 'string' ? await stripe.paymentIntents.retrieve(ref) : ref
+    clientSecret    = pi.client_secret ?? null
+    paymentIntentId = pi.id
+  }
+
+  if (!clientSecret) {
+    console.error('[payment-intent] Subscription missing client_secret on invoice', {
+      subscription_id:        subscription.id,
+      invoice_id:             latestInvoice?.id,
+      has_confirmation_secret: !!invoiceWithSecrets?.confirmation_secret,
+      has_payment_intent:      !!invoiceWithSecrets?.payment_intent,
     })
     return NextResponse.json(
-      { error: 'Stripe did not return a confirmable PaymentIntent for the subscription' },
+      { error: 'Stripe did not return a confirmable client secret for the subscription' },
       { status: 502 },
     )
+  }
+
+  // For downstream code that expects a PI-like object, build a minimal stand-in.
+  // Used for the payments row insert below.
+  const pi = {
+    id:             paymentIntentId ?? `unknown_${subscription.id}`,
+    client_secret:  clientSecret,
+    currency:       resolved[0]?.currency ?? 'usd',
   }
 
   // 4. Mirror the subscription + first-invoice payment in Supabase.
