@@ -116,7 +116,7 @@ function TreatmentCard({ treatment, eager = false }: { treatment: Treatment; eag
           </h3>
           <TreatmentAudioButton name={treatment.name} audioSrc={treatment.audioSrc} />
         </div>
-        <p className="text-[14px] leading-5 text-[#09090b]">{treatment.description}</p>
+        <p className="text-[16px] leading-6 text-[#09090b]">{treatment.description}</p>
       </div>
 
       <div className="relative size-[144px] shrink-0">

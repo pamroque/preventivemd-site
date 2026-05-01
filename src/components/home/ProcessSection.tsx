@@ -140,7 +140,7 @@ function StepText({
       <p className="text-[24px] leading-8 tracking-[-0.6px] text-white md:text-[30px] md:leading-9 md:tracking-[-0.75px]">
         {title}
       </p>
-      <p className="text-[14px] leading-5 text-[#a1a1aa] md:text-[16px] md:leading-6">
+      <p className="text-[16px] leading-6 text-[#a1a1aa]">
         {description}
       </p>
     </div>

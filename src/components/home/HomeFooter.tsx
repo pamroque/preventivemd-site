@@ -46,13 +46,13 @@ export default function HomeFooter() {
               <h3 className="font-serif italic text-[20px] leading-6 text-[#a1a1aa]">Contact us</h3>
               <a
                 href="tel:+19876543210"
-                className="text-[14px] leading-5 underline decoration-solid"
+                className="text-[16px] leading-6 underline decoration-solid"
               >
                 +1 (987) 654-3210
               </a>
               <a
                 href="mailto:hello@preventivemd.com"
-                className="text-[14px] leading-5 underline decoration-solid"
+                className="text-[16px] leading-6 underline decoration-solid"
               >
                 hello@preventivemd.com
               </a>
@@ -67,7 +67,7 @@ export default function HomeFooter() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="text-[14px] leading-5 underline decoration-solid"
+                  className="text-[16px] leading-6 underline decoration-solid"
                 >
                   {link.label}
                 </Link>
@@ -82,7 +82,7 @@ export default function HomeFooter() {
             </h3>
             <Link
               href="#"
-              className="text-[14px] leading-5 underline decoration-solid"
+              className="text-[16px] leading-6 underline decoration-solid"
             >
               Accessibility Statement
             </Link>

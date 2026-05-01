@@ -66,7 +66,7 @@ function Tile({
         <h3 className="font-serif italic leading-[1.3] text-[32px] md:text-[36px]">
           {title}
         </h3>
-        <p className="text-[14px] leading-5 md:text-[16px] md:leading-6">{description}</p>
+        <p className="text-[16px] leading-6">{description}</p>
       </div>
       {ctaSlot ?? (
         ctaLabel && ctaHref ? (
