@@ -100,7 +100,7 @@ export default function BackHeader({ backHref, progress }: BackHeaderProps) {
 
           <Link
             href={backHref}
-            className="flex items-center gap-2 px-2 py-1 rounded-md text-[#1d2d44] hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+            className="flex items-center gap-2 px-2 py-1 rounded-md text-[#1d2d44] hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
             aria-label="Go back"
           >
             <ChevronLeftIcon />
@@ -124,9 +124,9 @@ export default function BackHeader({ backHref, progress }: BackHeaderProps) {
           aria-valuemax={100}
           aria-label="Intake form progress"
         >
-          <div className="absolute inset-0 bg-[#0778ba]/20" />
+          <div className="absolute inset-0 bg-[#3A5190]/20" />
           <div
-            className="absolute left-0 top-0 h-full bg-[#0778ba] transition-all duration-500"
+            className="absolute left-0 top-0 h-full bg-[#3A5190] transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>

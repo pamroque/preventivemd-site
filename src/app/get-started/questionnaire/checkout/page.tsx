@@ -120,7 +120,7 @@ type FormValues = z.infer<typeof checkoutSchema>
 const inputBase =
   'w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm ' +
   'text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] ' +
-  'focus:outline-none focus:border-[#0778ba] focus-within:border-[#0778ba] transition-colors'
+  'focus:outline-none focus:border-[#3A5190] focus-within:border-[#3A5190] transition-colors'
 
 const inputErrorCls = 'border-red-600 focus:border-red-600 focus-within:border-red-600'
 
@@ -700,7 +700,7 @@ function CheckoutPageInner() {
               /book-consultation. */}
           {isConsultation && holdExpiresAt && !holdExpired && (
             <div
-              className="rounded-lg border border-[#0778ba]/40 bg-[#e6f3fb] px-4 py-3"
+              className="rounded-lg border border-[#3A5190]/40 bg-[#e6f3fb] px-4 py-3"
               role="status"
               aria-live="polite"
             >
@@ -768,7 +768,7 @@ function CheckoutPageInner() {
               <div className="flex flex-col gap-4">
                 <SectionHeader label="Account Details" />
 
-                <p className="text-sm font-bold leading-5 text-[#0778ba]">
+                <p className="text-sm font-bold leading-5 text-[#3A5190]">
                   To sign in to your Care Portal later, make sure you have access to your mobile number or email so we can send you a one-time passcode (OTP).
                 </p>
 
@@ -930,9 +930,9 @@ function CheckoutPageInner() {
                     return (
                       <label
                         key={method}
-                        className={`flex-1 h-10 flex items-center justify-center cursor-pointer text-sm font-medium transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-[#0778ba] focus-within:outline-offset-[-2px] ${
+                        className={`flex-1 h-10 flex items-center justify-center cursor-pointer text-sm font-medium transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-[#3A5190] focus-within:outline-offset-[-2px] ${
                           isActive
-                            ? 'bg-[#0778ba] text-white'
+                            ? 'bg-[#3A5190] text-white'
                             : 'bg-white text-[rgba(0,0,0,0.6)] hover:bg-gray-50'
                         }`}
                       >
@@ -1052,7 +1052,7 @@ function CheckoutPageInner() {
                         id="sameAsDelivery"
                         type="checkbox"
                         {...register('sameAsDelivery')}
-                        className="size-4 rounded border-[#e4e4e7] accent-[#0778ba] focus-visible:ring-2 focus-visible:ring-[#0778ba] cursor-pointer"
+                        className="size-4 rounded border-[#e4e4e7] accent-[#3A5190] focus-visible:ring-2 focus-visible:ring-[#3b82f6] cursor-pointer"
                       />
                     </div>
                     <label htmlFor="sameAsDelivery" className="text-sm font-medium text-[#09090b] leading-5 cursor-pointer">
@@ -1192,7 +1192,7 @@ function CheckoutPageInner() {
                         id="telehealthConsent"
                         type="checkbox"
                         {...register('telehealthConsent')}
-                        className="size-4 rounded border-[#e4e4e7] accent-[#0778ba] focus-visible:ring-2 focus-visible:ring-[#0778ba] cursor-pointer"
+                        className="size-4 rounded border-[#e4e4e7] accent-[#3A5190] focus-visible:ring-2 focus-visible:ring-[#3b82f6] cursor-pointer"
                         aria-invalid={!!errors.telehealthConsent}
                         aria-describedby={errors.telehealthConsent ? 'telehealthConsent-error' : undefined}
                         aria-required="true"
@@ -1207,7 +1207,7 @@ function CheckoutPageInner() {
                         href="#"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#0778ba] underline underline-offset-2"
+                        className="text-[#3A5190] underline underline-offset-2"
                         onClick={(e) => e.stopPropagation()}
                       >
                         Telehealth Informed Consent
@@ -1260,10 +1260,10 @@ function CheckoutPageInner() {
               text-white text-base font-medium leading-6 whitespace-nowrap
               transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
               shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
             "
             style={{
-              background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)',
+              background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
             }}
           >
             {isSubmitting ? 'Submitting…' : isConsultation ? 'Secure appointment' : 'Submit request'}

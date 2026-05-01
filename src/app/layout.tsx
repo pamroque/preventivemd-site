@@ -1,11 +1,21 @@
 import type { Metadata } from 'next'
-import { DM_Sans } from 'next/font/google'
+import { DM_Sans, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 import SiteNav from '@/components/layout/SiteNav'
 import SkipLink from '@/components/a11y/SkipLink'
 import RouteFocus from '@/components/a11y/RouteFocus'
 
-const dmSans = DM_Sans({ subsets: ['latin'] })
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
+})
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: '400',
+  style: ['normal', 'italic'],
+  variable: '--font-instrument-serif',
+})
 
 export const metadata: Metadata = {
   title: 'PreventiveMD',
@@ -18,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${dmSans.variable} ${instrumentSerif.variable}`}>
       <body className={dmSans.className}>
         {/*
           SiteNav renders:

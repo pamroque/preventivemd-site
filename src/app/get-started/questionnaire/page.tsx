@@ -51,9 +51,9 @@ function FemaleIcon({ active }: { active: boolean }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
       className="size-4 shrink-0" aria-hidden="true">
-      <circle cx="8" cy="6" r="4.5" stroke={active ? '#0778ba' : '#09090b'} strokeWidth="1.5" />
-      <line x1="8" y1="10.5" x2="8" y2="15" stroke={active ? '#0778ba' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="5.5" y1="13" x2="10.5" y2="13" stroke={active ? '#0778ba' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="8" cy="6" r="4.5" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" />
+      <line x1="8" y1="10.5" x2="8" y2="15" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="5.5" y1="13" x2="10.5" y2="13" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }
@@ -62,9 +62,9 @@ function MaleIcon({ active }: { active: boolean }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
       className="size-4 shrink-0" aria-hidden="true">
-      <circle cx="7" cy="9" r="4.5" stroke={active ? '#0778ba' : '#09090b'} strokeWidth="1.5" />
-      <line x1="10.5" y1="5.5" x2="15" y2="1" stroke={active ? '#0778ba' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
-      <polyline points="11,1 15,1 15,5" stroke={active ? '#0778ba' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="7" cy="9" r="4.5" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" />
+      <line x1="10.5" y1="5.5" x2="15" y2="1" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
+      <polyline points="11,1 15,1 15,5" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -190,7 +190,7 @@ type FormValues = z.infer<typeof schema>
 const inputBase =
   'w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm ' +
   'text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] ' +
-  'focus:outline-none focus:border-[#0778ba] focus-within:border-[#0778ba] transition-colors'
+  'focus:outline-none focus:border-[#3A5190] focus-within:border-[#3A5190] transition-colors'
 
 const inputErrorCls = 'border-red-600 focus:border-red-600 focus-within:border-red-600'
 
@@ -415,7 +415,7 @@ export default function QuestionnaireStep1() {
                         className="flex-1 rounded-lg cursor-pointer"
                         style={isSelected ? {
                           padding: '2px',
-                          background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+                          background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
                         } : undefined}
                       >
                         <input
@@ -430,9 +430,9 @@ export default function QuestionnaireStep1() {
                           className={`
                             flex w-full items-center justify-center gap-3 h-10 px-4
                             rounded-[6px] shadow-sm text-base font-medium transition-colors
-                            peer-focus-visible:ring-2 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-[#0778ba]
+                            peer-focus-visible:ring-2 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-[#3b82f6]
                             ${isSelected
-                              ? 'bg-white text-[#0778ba]'
+                              ? 'bg-white text-[#3A5190]'
                               : 'bg-white border border-[#e4e4e7] text-[#09090b] hover:bg-gray-50'}
                           `}
                         >
@@ -538,7 +538,7 @@ export default function QuestionnaireStep1() {
                     id="smsConsent"
                     type="checkbox"
                     {...register('smsConsent')}
-                    className="size-4 rounded border-[#e4e4e7] text-[#0778ba] focus:ring-[#0778ba] cursor-pointer accent-[#0778ba]"
+                    className="size-4 rounded border-[#e4e4e7] text-[#3A5190] focus:ring-[#3b82f6] cursor-pointer accent-[#3A5190]"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -575,10 +575,10 @@ export default function QuestionnaireStep1() {
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
           style={{
-            background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)',
+            background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
           }}
         >
           {isSubmitting ? 'Saving…' : 'Save and continue'}

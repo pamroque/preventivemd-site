@@ -31,7 +31,7 @@ export const treatments: Treatment[] = [
     price: '$150',
     priceUnit: '/mo',
     iconBg: '#e8f5f0',
-    iconFill: '#0071bc',
+    iconFill: '#3A5190',
     hasDetailPage: true,
   },
   {
@@ -43,7 +43,7 @@ export const treatments: Treatment[] = [
     price: '$200',
     priceUnit: '/mo',
     iconBg: '#e8f5f0',
-    iconFill: '#0071bc',
+    iconFill: '#3A5190',
     hasDetailPage: true,
   },
   {
@@ -55,7 +55,7 @@ export const treatments: Treatment[] = [
     price: '$300',
     priceUnit: '/mo',
     iconBg: '#e8f5f0',
-    iconFill: '#0071bc',
+    iconFill: '#3A5190',
     hasDetailPage: true,
   },
   {
@@ -67,7 +67,7 @@ export const treatments: Treatment[] = [
     price: '$100',
     priceUnit: '/mo',
     iconBg: '#e8f5f0',
-    iconFill: '#0071bc',
+    iconFill: '#3A5190',
     hasDetailPage: false,
   },
   // ── ENERGY & LONGEVITY ──

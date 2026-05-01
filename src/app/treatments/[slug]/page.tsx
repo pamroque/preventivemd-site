@@ -62,8 +62,38 @@ export default async function TreatmentPage({
 
   return (
     <main id="main-content" tabIndex={-1} className="focus:outline-none">
+      {/* BREADCRUMB — also acts as the "back to Welcome" path */}
+      <nav
+        aria-label="Breadcrumb"
+        className="px-6 pb-2 pt-20 md:px-12 md:pt-24"
+      >
+        <ol className="mx-auto flex max-w-[1080px] items-center gap-2 text-xs text-muted">
+          <li>
+            <Link
+              href="/"
+              className="transition-colors hover:text-navy"
+            >
+              Welcome
+            </Link>
+          </li>
+          <li aria-hidden="true" className="text-muted/60">/</li>
+          <li>
+            <Link
+              href="/#treatments"
+              className="transition-colors hover:text-navy"
+            >
+              Treatments
+            </Link>
+          </li>
+          <li aria-hidden="true" className="text-muted/60">/</li>
+          <li aria-current="page" className="font-medium text-navy">
+            {t.highlight}
+          </li>
+        </ol>
+      </nav>
+
       {/* HERO */}
-      <section className="bg-gradient-to-b from-bg to-white pt-24 pb-14 px-6 md:px-12">
+      <section className="bg-gradient-to-b from-bg to-white pt-6 pb-14 px-6 md:px-12">
         <div className="max-w-[1080px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
             {/* Category badge */}

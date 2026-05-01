@@ -152,7 +152,7 @@ export default async function GetStartedPage({
               href="#"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#0778ba] underline underline-offset-2"
+              className="text-[#3A5190] underline underline-offset-2"
             >
               Terms of Use
             </a>{' '}
@@ -161,7 +161,7 @@ export default async function GetStartedPage({
               href="#"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#0778ba] underline underline-offset-2"
+              className="text-[#3A5190] underline underline-offset-2"
             >
               Privacy Policy
             </a>
@@ -197,7 +197,7 @@ export default async function GetStartedPage({
               href="#"
               target="_blank"
               rel="noopener noreferrer"
-              className="relative shrink-0 block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+              className="relative shrink-0 block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
               style={{ width: 50, height: 54 }}
               aria-label="LegitScript Certified (opens in new tab)"
             >

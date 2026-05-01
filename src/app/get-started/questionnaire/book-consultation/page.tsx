@@ -545,7 +545,7 @@ export default function BookConsultationPage() {
                       id="language"
                       value={language}
                       onChange={e => setLanguage(e.target.value)}
-                      className="w-full h-[42px] pl-3 pr-9 border border-[#e4e4e7] rounded-lg bg-white text-base text-[#09090b] shadow-sm appearance-none cursor-pointer focus:outline-none focus:border-[#0778ba] transition-colors"
+                      className="w-full h-[42px] pl-3 pr-9 border border-[#e4e4e7] rounded-lg bg-white text-base text-[#09090b] shadow-sm appearance-none cursor-pointer focus:outline-none focus:border-[#3A5190] transition-colors"
                     >
                       <option>English</option>
                       <option>Español</option>
@@ -572,7 +572,7 @@ export default function BookConsultationPage() {
                       aria-describedby={formatError ? 'format-error' : undefined}
                       aria-invalid={!!formatError}
                       aria-required="true"
-                      className={`w-full h-[42px] pl-3 pr-9 border rounded-lg bg-white text-base shadow-sm appearance-none focus:outline-none focus:border-[#0778ba] transition-colors ${
+                      className={`w-full h-[42px] pl-3 pr-9 border rounded-lg bg-white text-base shadow-sm appearance-none focus:outline-none focus:border-[#3A5190] transition-colors ${
                         requiresSync ? 'cursor-not-allowed' : 'cursor-pointer'
                       } ${!format ? 'text-[#a1a1aa]' : 'text-[#09090b]'} ${
                         formatError ? 'border-red-600' : 'border-[#e4e4e7]'
@@ -603,7 +603,7 @@ export default function BookConsultationPage() {
                   <button
                     type="button"
                     onClick={() => { setShowMonthPicker(p => !p); setPickerYear(viewMonth.year) }}
-                    className="flex items-center gap-1.5 flex-1 min-w-0 hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] rounded"
+                    className="flex items-center gap-1.5 flex-1 min-w-0 hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded"
                     aria-expanded={showMonthPicker}
                     aria-label="Select month and year"
                   >
@@ -626,7 +626,7 @@ export default function BookConsultationPage() {
                           type="button"
                           onClick={() => setPickerYear(y => y - 1)}
                           disabled={pickerYear <= today.getFullYear()}
-                          className="p-[5px] rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+                          className="p-[5px] rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
                           aria-label="Previous year"
                         >
                           <CalChevronLeftIcon />
@@ -634,7 +634,7 @@ export default function BookConsultationPage() {
                         <button
                           type="button"
                           onClick={() => setPickerYear(y => y + 1)}
-                          className="p-[5px] rounded-full hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+                          className="p-[5px] rounded-full hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
                           aria-label="Next year"
                         >
                           <CalChevronRightIcon />
@@ -646,7 +646,7 @@ export default function BookConsultationPage() {
                           type="button"
                           onClick={handlePrevMonth}
                           disabled={!canGoPrev}
-                          className="p-[5px] rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+                          className="p-[5px] rounded-full hover:bg-gray-100 disabled:opacity-30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
                           aria-label="Previous month"
                         >
                           <CalChevronLeftIcon />
@@ -654,7 +654,7 @@ export default function BookConsultationPage() {
                         <button
                           type="button"
                           onClick={handleNextMonth}
-                          className="p-[5px] rounded-full hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+                          className="p-[5px] rounded-full hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
                           aria-label="Next month"
                         >
                           <CalChevronRightIcon />
@@ -682,7 +682,7 @@ export default function BookConsultationPage() {
                             setShowMonthPicker(false)
                           }}
                           aria-current={isActive ? 'true' : undefined}
-                          className={`h-9 rounded-full text-[14px] leading-[1.43] tracking-[0.17px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
+                          className={`h-9 rounded-full text-[14px] leading-[1.43] tracking-[0.17px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
                             isActive
                               ? 'bg-[#1d2d44] text-white'
                               : isPast
@@ -732,7 +732,7 @@ export default function BookConsultationPage() {
                                   disabled={variant === 'past' || variant === 'disabled'}
                                   aria-current={variant === 'selected' ? 'date' : undefined}
                                   aria-label={`${MONTH_NAMES[viewMonth.month]} ${day}${variant === 'today' ? ', today' : ''}${variant === 'selected' ? ', selected' : ''}${variant === 'disabled' ? ', no slots available' : ''}`}
-                                  className={`flex items-center justify-center size-9 rounded-full text-[14px] leading-[1.43] tracking-[0.17px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
+                                  className={`flex items-center justify-center size-9 rounded-full text-[14px] leading-[1.43] tracking-[0.17px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
                                     variant === 'selected'
                                       ? 'bg-[#1d2d44] text-white'
                                       : variant === 'today'
@@ -785,7 +785,7 @@ export default function BookConsultationPage() {
                     href="#"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#0778ba] underline underline-offset-2"
+                    className="text-[#3A5190] underline underline-offset-2"
                   >
                     contact support
                   </a>
@@ -814,10 +814,10 @@ export default function BookConsultationPage() {
                               type="button"
                               onClick={() => setSelectedSlot(slot)}
                               aria-pressed={isSelected}
-                              className={`relative h-[42px] flex items-center justify-center px-2 rounded-lg text-base font-medium leading-6 whitespace-nowrap overflow-hidden transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
+                              className={`relative h-[42px] flex items-center justify-center px-2 rounded-lg text-base font-medium leading-6 whitespace-nowrap overflow-hidden transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
                                 isSelected
                                   ? 'border border-[#1d2d44] text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)]'
-                                  : 'bg-white border border-[#e4e4e7] text-[#09090b] shadow-sm hover:border-[#0778ba]/40'
+                                  : 'bg-white border border-[#e4e4e7] text-[#09090b] shadow-sm hover:border-[#3A5190]/40'
                               }`}
                               style={isSelected
                                 ? { background: 'linear-gradient(to right, #1d2d44, #233d5a)' }
@@ -838,7 +838,7 @@ export default function BookConsultationPage() {
               <button
                 type="button"
                 onClick={handleNextDay}
-                className="flex items-center gap-3 px-4 py-2 text-base font-medium text-[#0778ba] hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] rounded-lg self-end"
+                className="flex items-center gap-3 px-4 py-2 text-base font-medium text-[#3A5190] hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-lg self-end"
               >
                 Next: {formatNextDayLabel(selectedDate)}
                 <ChevronRightIcon />
@@ -870,9 +870,9 @@ export default function BookConsultationPage() {
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
         >
           {isNavigating ? 'Saving…' : 'Save and continue'}
           <ChevronRightIcon />

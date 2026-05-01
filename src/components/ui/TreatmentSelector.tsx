@@ -68,7 +68,7 @@ function GradientCard({
     <div
       style={isSelected ? {
         padding: '2px',
-        background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+        background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
         borderRadius: 12,
       } : undefined}
     >
@@ -80,12 +80,12 @@ function GradientCard({
         className={`w-full text-left p-4 flex items-start gap-3 transition-colors ${
           isSelected
             ? 'rounded-[10px] bg-white'
-            : 'rounded-xl border border-[#e3e3e3] hover:border-[#0778ba]/40'
+            : 'rounded-xl border border-[#e3e3e3] hover:border-[#3A5190]/40'
         }`}
       >
         <div
           className={`mt-0.5 shrink-0 size-4 rounded border-2 flex items-center justify-center transition-colors ${
-            isSelected ? 'border-[#0778ba] bg-[#0778ba]' : 'border-[#d4d4d8] bg-white'
+            isSelected ? 'border-[#3A5190] bg-[#3A5190]' : 'border-[#d4d4d8] bg-white'
           }`}
           aria-hidden="true"
         >
@@ -98,7 +98,7 @@ function GradientCard({
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-lg font-medium leading-7 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+            <span className={`text-lg font-medium leading-7 ${isSelected ? 'text-[#3A5190]' : 'text-[rgba(0,0,0,0.87)]'}`}>
               {treatment.name}
             </span>
             {isGoalMatch && (
@@ -129,7 +129,7 @@ function PlainCard({
     <div
       style={isSelected ? {
         padding: '2px',
-        background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+        background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
         borderRadius: 12,
       } : undefined}
     >
@@ -137,7 +137,7 @@ function PlainCard({
         className={`flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors bg-white ${
           isSelected
             ? 'rounded-[10px]'
-            : 'rounded-lg border border-[#e3e3e3] hover:border-[#0778ba]/40'
+            : 'rounded-lg border border-[#e3e3e3] hover:border-[#3A5190]/40'
         }`}
       >
         <input
@@ -146,8 +146,8 @@ function PlainCard({
           onChange={onToggle}
           className="
             shrink-0 size-4 rounded-[4px] border border-[#e4e4e7]
-            accent-[#0778ba]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1
+            accent-[#3A5190]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
             cursor-pointer
           "
         />
@@ -419,11 +419,11 @@ export default function TreatmentSelector({
                   disabled={isNavigating}
                   className="
                     w-full h-[42px] flex items-center justify-center px-4
-                    rounded-lg border border-[#0778ba] bg-white
-                    text-base font-medium text-[#0778ba]
-                    transition-colors hover:bg-[#0778ba]/5
+                    rounded-lg border border-[#3A5190] bg-white
+                    text-base font-medium text-[#3A5190]
+                    transition-colors hover:bg-[#3A5190]/5
                     disabled:opacity-60
-                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
                   "
                 >
                   {escapeLabel}
@@ -504,9 +504,9 @@ export default function TreatmentSelector({
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
         >
           {isNavigating ? 'Saving…' : 'Save and continue'}
           <ChevronRightIcon />

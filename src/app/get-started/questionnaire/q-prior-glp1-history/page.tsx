@@ -95,7 +95,7 @@ type FormValues = z.infer<typeof schema>
 
 const selectWrapperCls =
   'relative flex items-center h-[42px] rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden shadow-sm ' +
-  'focus-within:border-[#0778ba] transition-colors'
+  'focus-within:border-[#3A5190] transition-colors'
 
 // ─── Copy / config ────────────────────────────────────────────────────────────
 
@@ -326,7 +326,7 @@ export default function QPriorGlp1HistoryPage() {
                         type="radio"
                         value={opt}
                         {...register('timeSinceLastDose')}
-                        className="size-4 accent-[#0778ba] cursor-pointer"
+                        className="size-4 accent-[#3A5190] cursor-pointer"
                       />
                       <span className="text-sm text-[rgba(0,0,0,0.87)]">{TIME_LABELS[opt]}</span>
                     </label>
@@ -361,9 +361,9 @@ export default function QPriorGlp1HistoryPage() {
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
         >
           Save and continue
           <ChevronRightIcon />

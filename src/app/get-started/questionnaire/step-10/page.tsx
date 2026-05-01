@@ -173,7 +173,7 @@ export default function QuestionnaireStep10() {
                     key={opt.id}
                     style={isSelected ? {
                       padding: '2px',
-                      background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+                      background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
                       borderRadius: 8,
                     } : undefined}
                   >
@@ -185,10 +185,10 @@ export default function QuestionnaireStep10() {
                       className={`
                         w-full h-[42px] flex items-center justify-center px-4
                         text-base font-medium transition-colors shadow-sm disabled:opacity-60
-                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
                         ${isSelected
-                          ? 'rounded-[6px] text-[#0778ba] bg-white'
-                          : 'rounded-lg border border-[#e4e4e7] text-[#0778ba] bg-white hover:border-[#0778ba]/40'}
+                          ? 'rounded-[6px] text-[#3A5190] bg-white'
+                          : 'rounded-lg border border-[#e4e4e7] text-[#3A5190] bg-white hover:border-[#3A5190]/40'}
                       `}
                     >
                       {opt.label}

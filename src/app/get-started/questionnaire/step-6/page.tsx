@@ -235,8 +235,8 @@ export default function QuestionnaireStep6() {
                 className="
                   w-full h-[42px] flex items-center justify-center px-4
                   rounded-lg border border-[#e4e4e7] bg-white
-                  text-base font-medium text-[#0778ba]
-                  shadow-sm transition-colors hover:border-[#0778ba]/40
+                  text-base font-medium text-[#3A5190]
+                  shadow-sm transition-colors hover:border-[#3A5190]/40
                   disabled:opacity-60
                 "
               >
@@ -255,8 +255,8 @@ export default function QuestionnaireStep6() {
                           onChange={() => toggle(med.id)}
                           className="
                             size-4 rounded-[4px] border border-[#e4e4e7]
-                            accent-[#0778ba]
-                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1
+                            accent-[#3A5190]
+                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
                             cursor-pointer
                           "
                         />
@@ -281,7 +281,7 @@ export default function QuestionnaireStep6() {
                             text-base leading-6 text-[rgba(0,0,0,0.87)]
                             placeholder:text-[#71717a]
                             shadow-sm resize-y transition-colors
-                            focus:outline-none focus:border-[#0778ba]
+                            focus:outline-none focus:border-[#3A5190]
                           "
                         />
                       </div>
@@ -315,10 +315,10 @@ export default function QuestionnaireStep6() {
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
           style={{
-            background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)',
+            background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
           }}
         >
           {isNavigating ? 'Saving…' : 'Save and continue'}

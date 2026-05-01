@@ -148,7 +148,7 @@ export default function QPriorSurgeryTypePage() {
                   w-full rounded-lg border bg-white px-3 py-2.5
                   text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
                   resize-y shadow-sm focus:outline-none transition-colors
-                  ${error ? 'border-red-600 focus:border-red-600' : 'border-[rgba(0,0,0,0.12)] focus:border-[#0778ba]'}
+                  ${error ? 'border-red-600 focus:border-red-600' : 'border-[rgba(0,0,0,0.12)] focus:border-[#3A5190]'}
                 `}
                 aria-invalid={!!error}
                 aria-describedby={error ? 'surgery-error' : undefined}
@@ -183,9 +183,9 @@ export default function QPriorSurgeryTypePage() {
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
         >
           Save and continue
           <ChevronRightIcon />

@@ -110,7 +110,7 @@ type FormValues = z.infer<typeof schema>
 
 const inputWrapperCls =
   'flex items-center h-12 rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden ' +
-  'focus-within:border-[#0778ba] transition-colors'
+  'focus-within:border-[#3A5190] transition-colors'
 const inputErrorCls = 'border-red-600 focus-within:border-red-600'
 
 // ─── Progress ────────────────────────────────────────────────────────────────
@@ -228,7 +228,7 @@ export default function QuestionnaireStep2() {
                     {questionWords.slice(0, visibleWords).map((word, i) => {
                       const isName = firstName && word.replace(/[.,!?]/, '') === firstName
                       return (
-                        <span key={i} className={isName ? 'text-[#0778ba]' : undefined}>
+                        <span key={i} className={isName ? 'text-[#3A5190]' : undefined}>
                           {word}
                           {i < visibleWords - 1 ? ' ' : ''}
                         </span>
@@ -357,10 +357,10 @@ export default function QuestionnaireStep2() {
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
           style={{
-            background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)',
+            background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
           }}
         >
           {isSubmitting ? 'Saving…' : 'Save and continue'}

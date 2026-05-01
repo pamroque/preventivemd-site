@@ -68,7 +68,7 @@ export default function StartQuestionnaireButton({ peptide }: { peptide?: string
               type="checkbox"
               checked={consented}
               onChange={(e) => handleConsentChange(e.target.checked)}
-              className={`size-4 rounded accent-[#0778ba] focus-visible:ring-2 focus-visible:ring-[#0778ba] cursor-pointer ${
+              className={`size-4 rounded accent-[#3A5190] focus-visible:ring-2 focus-visible:ring-[#3b82f6] cursor-pointer ${
                 showError ? 'border-2 border-red-600' : 'border border-[#e4e4e7]'
               }`}
               aria-required="true"
@@ -86,7 +86,7 @@ export default function StartQuestionnaireButton({ peptide }: { peptide?: string
               href="#"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#0778ba] underline underline-offset-2"
+              className="text-[#3A5190] underline underline-offset-2"
               onClick={(e) => e.stopPropagation()}
             >
               Consumer Health Data Privacy Policy
@@ -112,10 +112,10 @@ export default function StartQuestionnaireButton({ peptide }: { peptide?: string
           text-white text-base font-medium leading-6 whitespace-nowrap
           transition-opacity hover:opacity-90
           shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
         "
         style={{
-          background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)',
+          background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
         }}
       >
         Start medical questionnaire

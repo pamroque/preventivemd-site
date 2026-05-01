@@ -15,10 +15,12 @@
  */
 
 :root {
-  /* Brand colors — same values as your HTML site */
+  /* Brand colors — Preventive Blue / Turquoise */
   --navy: #1d2d44;
-  --blue: #0071bc;
-  --teal: #00b4c8;
+  --blue: #3A5190;
+  /* Legacy alias kept so existing rules keep their visual intent. */
+  --teal: #A2D5BC;
+  --turquoise: #A2D5BC;
   --border: #e0edf4;
   --muted: #6b8899;
   --bg: #f7fbfd;
@@ -42,7 +44,133 @@ body {
 html,
 body,
 main {
+  /* Bottom: clears the fixed mobile bottom-nav (h-16 + 8px inset) so the
+   * focused control isn't covered (WCAG 2.4.11).
+   * Top: clears the fixed top nav (h-12 mobile / h-14 desktop) so tab-driven
+   * scrolls don't park focused elements behind the navbar (WCAG 2.4.11).
+   */
   scroll-padding-bottom: 10rem;
+  scroll-padding-top: 5rem;
+}
+
+/* ── PROCESS / PATH CARD SHINE ─────────────────────────────────────────────
+ * A single dot of light travels around the outline of the highlighted
+ * "Meet with your dedicated provider" card in ProcessSection. Built with a
+ * conic-gradient on a pseudo-element + a ring mask that hides the interior,
+ * rotated via an @property-registered angle so the sweep interpolates.
+ *
+ * To revert: delete this block plus the `highlight` prop wiring on
+ * PathCard in ProcessSection.tsx. */
+@property --path-card-shine-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes pathCardOutlineTravel {
+  to { --path-card-shine-angle: 360deg; }
+}
+
+.path-card-shine::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  pointer-events: none;
+  /* Comet: a soft trail fading into a bright head. */
+  background: conic-gradient(
+    from var(--path-card-shine-angle),
+    transparent 0deg,
+    transparent 310deg,
+    rgba(255, 255, 255, 0.15) 335deg,
+    rgba(255, 255, 255, 0.7) 352deg,
+    rgba(255, 255, 255, 1) 360deg
+  );
+  /* Cut out the interior so only the 2px ring remains visible. */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: pathCardOutlineTravel 4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .path-card-shine::before {
+    animation: none;
+    display: none;
+  }
+}
+
+/* Tile background zoom on hover — pair `tile-cta-magnify` on the tile
+ * wrapper with `tile-bg` on the absolutely-positioned background image.
+ * The wrapper is the hover surface (the entire tile is the click target;
+ * a JS handler on the wrapper forwards clicks to the inner CTA). */
+.tile-cta-magnify .tile-bg {
+  transition: transform 700ms ease;
+  will-change: transform;
+}
+
+.tile-cta-magnify:hover .tile-bg {
+  transform: scale(1.06);
+}
+
+/* Tiles with a gradient background (no bg image) — flip the gradient on
+ * hover so the same hover cadence still reads. The 200%-wide gradient lets
+ * us animate `background-position` instead of swapping `background-image`
+ * (which can't be transitioned). */
+.tile-bg-shift {
+  background-image: linear-gradient(270deg, #1d2d44 0%, #0f172a 50%, #1d2d44 100%);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  transition: background-position 800ms ease;
+}
+
+.tile-cta-magnify.tile-bg-shift:hover {
+  background-position: 100% 50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-cta-magnify .tile-bg,
+  .tile-bg-shift {
+    transition: none;
+  }
+  .tile-cta-magnify:hover .tile-bg {
+    transform: none;
+  }
+  .tile-cta-magnify.tile-bg-shift:hover {
+    background-position: 0% 50%;
+  }
+}
+
+/* Subtle floating motion — used on the peptides illustration. */
+@keyframes gentleFloat {
+  0%, 100% { transform: translateY(-4px); }
+  50%      { transform: translateY(4px); }
+}
+
+.float-gentle {
+  animation: gentleFloat 5.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-gentle { animation: none; }
+}
+
+/* Smooth in-page anchor jumps. Honors WCAG 2.3.3 (reduced motion). */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* ── GRADIENT TEXT UTILITY ── */
@@ -1450,6 +1578,27 @@ main {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero crossfade — overlay image fades in, holds, fades out, holds. The base
+ * image underneath stays at opacity 1, so the overlay's opacity is the only
+ * thing animating. Each image holds for ~3s; each fade is ~2s; cycle is 10s. */
+@keyframes heroCrossfade {
+  0%, 30% { opacity: 0; }
+  50%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.hero-crossfade {
+  animation: heroCrossfade 10s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-crossfade {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 /* ── RESPONSIVE ── */

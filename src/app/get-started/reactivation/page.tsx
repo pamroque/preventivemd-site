@@ -147,7 +147,7 @@ function ReactivationContent() {
                 {words.slice(0, visibleWords).map((word, i) => {
                   const isName = nameToken !== null && word === nameToken
                   return (
-                    <span key={i} style={isName ? { color: '#0778ba' } : undefined}>
+                    <span key={i} style={isName ? { color: '#3A5190' } : undefined}>
                       {word}{i < visibleWords - 1 ? ' ' : ''}
                     </span>
                   )
@@ -177,9 +177,9 @@ function ReactivationContent() {
                 text-white text-base font-medium leading-6 whitespace-nowrap
                 transition-opacity hover:opacity-90
                 shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
               "
-              style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+              style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
             >
               {resumeCopy}
               <ChevronRightIcon />
@@ -199,9 +199,9 @@ function ReactivationContent() {
               className="
                 w-full h-[42px] flex items-center justify-center px-4
                 rounded-lg border border-[#e4e4e7] bg-white shadow-sm
-                text-base font-medium text-[#0778ba] whitespace-nowrap
+                text-base font-medium text-[#3A5190] whitespace-nowrap
                 hover:bg-gray-50 transition-colors
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]
               "
             >
               Start from the beginning

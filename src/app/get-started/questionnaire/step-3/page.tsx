@@ -418,7 +418,7 @@ export default function QuestionnaireStep3() {
                       w-full min-h-[99px] px-3 py-1.5 bg-white border rounded-lg shadow-sm
                       text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
                       focus:outline-none transition-colors resize-y
-                      ${errors.otherText ? 'border-red-600 focus:border-red-600' : 'border-[#e4e4e7] focus:border-[#0778ba]'}
+                      ${errors.otherText ? 'border-red-600 focus:border-red-600' : 'border-[#e4e4e7] focus:border-[#3A5190]'}
                     `}
                     aria-invalid={!!errors.otherText}
                     aria-describedby={errors.otherText ? 'otherText-error' : undefined}
@@ -457,10 +457,10 @@ export default function QuestionnaireStep3() {
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
           style={{
-            background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)',
+            background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
           }}
         >
           {isSubmitting ? 'Saving…' : 'Save and continue'}
@@ -491,17 +491,17 @@ function GoalCard({
       className="rounded-lg"
       style={checked ? {
         padding: '2px',
-        background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+        background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
       } : undefined}
     >
     <label
       className={`
         flex items-center gap-4 md:gap-6 px-4 py-3 bg-white cursor-pointer
         transition-colors
-        focus-within:ring-2 focus-within:ring-[#0778ba] focus-within:ring-offset-1
+        focus-within:ring-2 focus-within:ring-[#3b82f6] focus-within:ring-offset-1
         ${checked
           ? 'rounded-[6px]'
-          : 'rounded-lg border border-[#e3e3e3] hover:border-[#0778ba]/40'}
+          : 'rounded-lg border border-[#e3e3e3] hover:border-[#3A5190]/40'}
       `}
     >
       <span className="flex h-5 items-center shrink-0">
@@ -517,7 +517,7 @@ function GoalCard({
           className={`
             relative flex items-center justify-center size-4 rounded shrink-0 transition-colors
             ${checked
-              ? 'bg-[#0778ba] border border-[#0778ba] text-white'
+              ? 'bg-[#3A5190] border border-[#3A5190] text-white'
               : 'bg-white border border-[#e4e4e7]'}
           `}
           aria-hidden="true"
@@ -530,13 +530,13 @@ function GoalCard({
         <span
           id={`${goal.id}-label`}
           className={`text-base font-medium leading-6 ${
-            checked ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'
+            checked ? 'text-[#3A5190]' : 'text-[rgba(0,0,0,0.87)]'
           }`}
         >
           {goal.label}
         </span>
         {subtext && (
-          <span id={`${goal.id}-desc`} className="text-sm font-bold leading-5 text-[#0778ba]">
+          <span id={`${goal.id}-desc`} className="text-sm font-bold leading-5 text-[#3A5190]">
             {subtext}
           </span>
         )}

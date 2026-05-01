@@ -54,8 +54,8 @@ function ActiveDot() {
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="shrink-0">
       <defs>
         <linearGradient id="activeDotGrad" x1="0" y1="0" x2="12" y2="12" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#00b4c8" />
-          <stop offset="1" stopColor="#0778ba" />
+          <stop stopColor="#A2D5BC" />
+          <stop offset="1" stopColor="#3A5190" />
         </linearGradient>
       </defs>
       <circle cx="6" cy="6" r="5" stroke="url(#activeDotGrad)" strokeWidth="2" />
@@ -78,7 +78,7 @@ function TimelineConnector({ height, gradient = false }: { height: number; gradi
         className="w-0.5"
         style={{
           height,
-          background: gradient ? 'linear-gradient(to bottom, #00b4c8, #0778ba)' : '#bdbdbd',
+          background: gradient ? 'linear-gradient(to bottom, #A2D5BC, #3A5190)' : '#bdbdbd',
         }}
       />
     </div>
@@ -108,7 +108,7 @@ function MedicationItem({ label, badgeBg, badgeText }: { label: string; badgeBg:
       role="listitem"
       tabIndex={0}
       aria-label={label}
-      className="flex items-center gap-1 shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-2"
+      className="flex items-center gap-1 shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-2"
     >
       <div className="h-[72px] w-[38px] relative shrink-0 overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -451,8 +451,8 @@ export default function ConfirmationPage() {
                 style={{ boxShadow: '0px 4px 16px 0px rgba(0,0,0,0.15)', animation: 'fadeIn 0.4s ease 100ms both' }}
               >
                 {/* Heading bar — edge-to-edge: gradient thumbnail + dark navy text panel */}
-                <div className="flex items-stretch bg-[#00b4c8]">
-                  <div className="shrink-0 size-[84px] flex items-center justify-center bg-gradient-to-r from-[#0778ba] to-[#00b4c8]">
+                <div className="flex items-stretch bg-[#A2D5BC]">
+                  <div className="shrink-0 size-[84px] flex items-center justify-center bg-gradient-to-r from-[#3A5190] to-[#A2D5BC]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/assets/cta-medications.png"
@@ -476,7 +476,7 @@ export default function ConfirmationPage() {
                     <label htmlFor="credential" className="text-[12px] font-medium tracking-[1.5px] uppercase text-[#71717a]">
                       Email or mobile number
                     </label>
-                    <div className={`h-[42px] border rounded-lg shadow-sm flex items-center overflow-hidden bg-white transition-colors ${credentialError ? 'border-red-600 focus-within:border-red-600' : credential ? 'border-[#0778ba]' : 'border-[#e4e4e7] focus-within:border-[#0778ba]'}`}>
+                    <div className={`h-[42px] border rounded-lg shadow-sm flex items-center overflow-hidden bg-white transition-colors ${credentialError ? 'border-red-600 focus-within:border-red-600' : credential ? 'border-[#3A5190]' : 'border-[#e4e4e7] focus-within:border-[#3A5190]'}`}>
                       <input
                         id="credential"
                         type="text"
@@ -507,9 +507,9 @@ export default function ConfirmationPage() {
                       text-white text-base font-medium leading-6
                       transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
                       shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
                     "
-                    style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+                    style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
                   >
                     {isSigningIn ? 'Signing in…' : 'Sign in'}
                     <ChevronRightIcon />
@@ -517,14 +517,23 @@ export default function ConfirmationPage() {
 
                   <div className="flex flex-col items-center gap-0.5">
                     <p className="text-sm text-center text-[rgba(0,0,0,0.6)] leading-[1.43] tracking-[0.17px]">
-                      Having trouble signing in?
+                      If having issues signing in, contact
                     </p>
-                    <Link
-                      href="/contact"
-                      className="text-[13px] font-medium text-[#1976d2] underline uppercase tracking-[0.46px] leading-[22px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] rounded-sm"
-                    >
-                      Contact us
-                    </Link>
+                    <p className="text-sm text-center text-[rgba(0,0,0,0.6)] leading-[1.43] tracking-[0.17px]">
+                      <a
+                        href="tel:+19876543210"
+                        className="font-medium text-[#3A5190] underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
+                      >
+                        +1 (987) 654-3210
+                      </a>
+                      {' or '}
+                      <a
+                        href="mailto:hello@preventivemd.com"
+                        className="font-medium text-[#3A5190] underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
+                      >
+                        hello@preventivemd.com
+                      </a>
+                    </p>
                   </div>
                 </div>
               </div>

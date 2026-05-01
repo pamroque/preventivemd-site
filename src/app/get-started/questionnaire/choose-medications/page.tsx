@@ -40,7 +40,7 @@ function ChevronRightIcon() {
 function CheckFilledIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-      className="size-5 shrink-0 text-[#00b4c8]" aria-hidden="true">
+      className="size-5 shrink-0 text-[#A2D5BC]" aria-hidden="true">
       <path fillRule="evenodd"
         d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
         clipRule="evenodd" />
@@ -121,7 +121,7 @@ function MedOptionCard({
       className="flex-1"
       style={isSelected ? {
         padding: 2,
-        background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+        background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
         borderRadius: 10,
       } : undefined}
     >
@@ -129,13 +129,13 @@ function MedOptionCard({
         type="button"
         onClick={onClick}
         aria-pressed={isSelected}
-        className={`w-full flex flex-col items-start gap-1 px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
+        className={`w-full flex flex-col items-start gap-1 px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
           isSelected
             ? 'rounded-[8px] bg-white'
-            : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#0778ba]/40'
+            : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#3A5190]/40'
         }`}
       >
-        <span className={`text-[18px] font-medium leading-7 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+        <span className={`text-[18px] font-medium leading-7 ${isSelected ? 'text-[#3A5190]' : 'text-[rgba(0,0,0,0.87)]'}`}>
           {label}
         </span>
         <span className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
@@ -171,7 +171,7 @@ function PlanRow({ def, isSelected, onClick, priceCents, oneMonthCents }: PlanRo
     <div
       style={isSelected ? {
         padding: 2,
-        background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+        background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
         borderRadius: 10,
       } : undefined}
     >
@@ -179,15 +179,15 @@ function PlanRow({ def, isSelected, onClick, priceCents, oneMonthCents }: PlanRo
         type="button"
         onClick={onClick}
         aria-pressed={isSelected}
-        className={`w-full flex flex-col gap-1 p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
+        className={`w-full flex flex-col gap-1 p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
           isSelected
             ? 'rounded-[8px] bg-white'
-            : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#0778ba]/40'
+            : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#3A5190]/40'
         }`}
       >
         {/* Supply label + optional inline tag */}
         <div className="flex items-center gap-2">
-          <span className={`text-base font-normal leading-6 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+          <span className={`text-base font-normal leading-6 ${isSelected ? 'text-[#3A5190]' : 'text-[rgba(0,0,0,0.87)]'}`}>
             {def.label}
           </span>
           {def.tag && (
@@ -200,7 +200,7 @@ function PlanRow({ def, isSelected, onClick, priceCents, oneMonthCents }: PlanRo
         {/* Price row */}
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
-            <span className={`text-[24px] font-normal leading-8 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+            <span className={`text-[24px] font-normal leading-8 ${isSelected ? 'text-[#3A5190]' : 'text-[rgba(0,0,0,0.87)]'}`}>
               {totalDollars != null ? `$${totalDollars.toLocaleString()}` : '—'}
             </span>
             {perMonthDollars != null && (
@@ -460,7 +460,7 @@ export default function ChooseMedicationsPage() {
                         <button
                           type="button"
                           onClick={() => removeTreatment(tid)}
-                          className="shrink-0 border border-[#e4e4e7] rounded-md px-2 py-1 text-xs font-medium text-[#09090b] bg-white shadow-sm hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]"
+                          className="shrink-0 border border-[#e4e4e7] rounded-md px-2 py-1 text-xs font-medium text-[#09090b] bg-white shadow-sm hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
                         >
                           Remove
                         </button>
@@ -596,9 +596,9 @@ export default function ChooseMedicationsPage() {
               text-white text-base font-medium leading-6 whitespace-nowrap
               transition-opacity hover:opacity-90 disabled:opacity-60
               shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
             "
-            style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+            style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
           >
             Save and continue
             <ChevronRightIcon />

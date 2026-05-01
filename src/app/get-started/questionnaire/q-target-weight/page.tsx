@@ -158,7 +158,7 @@ export default function QTargetWeightPage() {
           {done && (
             <div className="flex flex-col gap-2 animate-[fadeIn_0.4s_ease_forwards]">
               {/* Input */}
-              <div className="flex items-center h-[42px] rounded-lg border border-[#e4e4e7] bg-white shadow-sm overflow-hidden px-3 focus-within:border-[#0778ba] transition-colors">
+              <div className="flex items-center h-[42px] rounded-lg border border-[#e4e4e7] bg-white shadow-sm overflow-hidden px-3 focus-within:border-[#3A5190] transition-colors">
                 <input
                   type="number"
                   inputMode="decimal"
@@ -181,7 +181,7 @@ export default function QTargetWeightPage() {
 
               {/* Live BMI */}
               {bmiText && (
-                <p id="bmi-display" className="text-sm font-bold text-[#0778ba]">
+                <p id="bmi-display" className="text-sm font-bold text-[#3A5190]">
                   {bmiText}
                 </p>
               )}
@@ -218,9 +218,9 @@ export default function QTargetWeightPage() {
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
         >
           Save and continue
           <ChevronRightIcon />

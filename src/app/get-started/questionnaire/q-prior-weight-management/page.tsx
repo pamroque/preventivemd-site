@@ -217,9 +217,9 @@ export default function QPriorWeightManagementPage() {
                 className="
                   w-full h-[42px] flex items-center justify-center px-4
                   rounded-lg border border-[#e4e4e7] bg-white
-                  text-base font-medium text-[#0778ba]
+                  text-base font-medium text-[#3A5190]
                   hover:bg-gray-50 transition-colors
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba]
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]
                   disabled:opacity-60
                 "
               >
@@ -234,7 +234,7 @@ export default function QPriorWeightManagementPage() {
                     key={approach.id}
                     style={isSelected ? {
                       padding: 2,
-                      background: 'linear-gradient(90deg, #0778ba 0%, #00b4c8 100%)',
+                      background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
                       borderRadius: 10,
                     } : undefined}
                   >
@@ -242,16 +242,16 @@ export default function QPriorWeightManagementPage() {
                       type="button"
                       onClick={() => toggle(approach.id)}
                       aria-pressed={isSelected}
-                      className={`w-full flex items-center gap-6 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0778ba] focus-visible:ring-offset-1 ${
+                      className={`w-full flex items-center gap-6 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
                         isSelected
                           ? 'rounded-[8px] bg-white'
-                          : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#0778ba]/40'
+                          : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#3A5190]/40'
                       }`}
                     >
                       {/* Checkbox indicator */}
                       <div className={`shrink-0 size-4 rounded-[4px] border flex items-center justify-center transition-colors ${
                         isSelected
-                          ? 'bg-[#0778ba] border-[#0778ba]'
+                          ? 'bg-[#3A5190] border-[#3A5190]'
                           : 'bg-white border-[#e4e4e7]'
                       }`}>
                         {isSelected && (
@@ -265,7 +265,7 @@ export default function QPriorWeightManagementPage() {
 
                       {/* Label + subtitle */}
                       <div className="flex-1 min-w-0 flex flex-col gap-1">
-                        <span className={`text-base font-medium leading-6 ${isSelected ? 'text-[#0778ba]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+                        <span className={`text-base font-medium leading-6 ${isSelected ? 'text-[#3A5190]' : 'text-[rgba(0,0,0,0.87)]'}`}>
                           {approach.label}
                         </span>
                         {approach.sub && (
@@ -307,9 +307,9 @@ export default function QPriorWeightManagementPage() {
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
         >
           Save and continue
           <ChevronRightIcon />

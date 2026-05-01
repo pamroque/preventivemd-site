@@ -128,9 +128,9 @@ function VisitTypeCard({
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0778ba]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #0778ba 0%, #0778ba 64.61%, #00b4c8 100%)' }}
+          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
         >
           {cta}
           <ChevronRightIcon />
@@ -303,7 +303,7 @@ export default function VisitTypePage() {
                     label="Know what you want?"
                     title="Request your treatment"
                     price="0"
-                    badges={['Decisions in 12 hours', 'No scheduling']}
+                    badges={['Decisions in 24 hours', 'No scheduling']}
                     cta="Unavailable*"
                     cardGradient="linear-gradient(129.44deg, #1d2d44 0%, #233d5a 100%)"
                     onClick={() => {}}
@@ -326,7 +326,7 @@ export default function VisitTypePage() {
                   label="Know what you want?"
                   title="Request your treatment"
                   price="0"
-                  badges={['Decisions in 12 hours', 'No scheduling']}
+                  badges={['Decisions in 24 hours', 'No scheduling']}
                   cta="Choose medications"
                   cardGradient="linear-gradient(129.44deg, #1d2d44 0%, #233d5a 100%)"
                   onClick={handleAsync}

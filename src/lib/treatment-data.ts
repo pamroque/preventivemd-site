@@ -36,7 +36,7 @@ export const treatmentDetails: Record<string, TreatmentDetail> = {
   semaglutide: {
     slug: 'semaglutide',
     category: 'Metabolic Health',
-    categoryColor: '#0071bc',
+    categoryColor: '#3A5190',
     title: 'Compounded',
     highlight: 'Semaglutide',
     subtitle:
@@ -131,7 +131,7 @@ export const treatmentDetails: Record<string, TreatmentDetail> = {
   tirzepatide: {
     slug: 'tirzepatide',
     category: 'Metabolic Health',
-    categoryColor: '#0071bc',
+    categoryColor: '#3A5190',
     title: 'Compounded',
     highlight: 'Tirzepatide',
     subtitle:
@@ -333,7 +333,7 @@ export const treatmentDetails: Record<string, TreatmentDetail> = {
   tesamorelin: {
     slug: 'tesamorelin',
     category: 'Metabolic Health',
-    categoryColor: '#0071bc',
+    categoryColor: '#3A5190',
     title: 'FDA-Approved',
     highlight: 'Tesamorelin',
     subtitle:
