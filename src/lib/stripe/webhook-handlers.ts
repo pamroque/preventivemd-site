@@ -200,6 +200,182 @@ export async function handlePaymentIntentFailed(
 }
 
 
+// ─── customer.subscription.updated / .deleted ───────────────────────────────
+// Reflects Stripe-side state changes onto our subscriptions rows. Triggers
+// include: first invoice paid (incomplete → active), pause/resume, dunning
+// (active → past_due → canceled), final cancellation.
+//
+// We update ALL subscriptions rows that share the gateway_subscription_id
+// because a single Stripe Subscription may have multiple line items, each
+// of which we mirror as its own subscriptions row in Supabase.
+const STRIPE_TO_PMD_STATUS: Record<string, string> = {
+  active:             'active',
+  trialing:           'trialing',
+  past_due:           'past_due',
+  canceled:           'cancelled',
+  incomplete:         'trialing',
+  incomplete_expired: 'expired',
+  unpaid:             'past_due',
+  paused:             'paused',
+}
+
+export async function handleSubscriptionUpdated(
+  supabase:    SupabaseClient,
+  subscription: Stripe.Subscription,
+): Promise<void> {
+  const stripeStatus = subscription.status
+  const localStatus  = STRIPE_TO_PMD_STATUS[stripeStatus] ?? 'active'
+
+  const update: Record<string, unknown> = {
+    status: localStatus,
+    current_period_start: subscription.items?.data[0]?.current_period_start
+      ? new Date(subscription.items.data[0].current_period_start * 1000).toISOString()
+      : null,
+    current_period_end:   subscription.items?.data[0]?.current_period_end
+      ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString()
+      : null,
+  }
+
+  if (subscription.cancel_at) {
+    update.cancel_at = new Date(subscription.cancel_at * 1000).toISOString()
+  }
+  if (subscription.canceled_at) {
+    update.cancelled_at = new Date(subscription.canceled_at * 1000).toISOString()
+  }
+
+  const { error } = await supabase
+    .from('subscriptions')
+    .update(update)
+    .eq('gateway', 'stripe')
+    .eq('gateway_subscription_id', subscription.id)
+
+  if (error) {
+    throw new Error(`subscriptions update failed: ${error.message}`)
+  }
+}
+
+
+// ─── invoice.payment_succeeded ──────────────────────────────────────────────
+// Fires for the first invoice (subscription activation) and every renewal.
+// We use it to write a payments row for each successful invoice — gives us
+// a clean audit trail of every charge under a subscription, which is much
+// easier to reconcile than parsing Stripe's invoice list later.
+export async function handleInvoicePaymentSucceeded(
+  supabase: SupabaseClient,
+  invoice:  Stripe.Invoice,
+): Promise<void> {
+  // Subscription invoices have a `subscription` reference; one-off invoices
+  // (e.g., manual invoices for ad-hoc charges) won't and we ignore those.
+  const subscriptionId = (invoice as unknown as { subscription?: string | Stripe.Subscription }).subscription
+  if (!subscriptionId) return
+  const subId = typeof subscriptionId === 'string' ? subscriptionId : subscriptionId.id
+
+  // For the FIRST invoice we already inserted a 'pending' payments row in
+  // /api/checkout/session keyed by the PaymentIntent ID. The webhook
+  // handler for payment_intent.succeeded flips it to 'succeeded'.
+  // For RENEWAL invoices (no pre-inserted row), we insert a fresh one.
+
+  // Pull the PaymentIntent ID from the invoice.
+  // In API ≥ 2024-09-30 it lives at invoice.confirmation_secret; older API
+  // exposed `invoice.payment_intent`. Both encode the PI ID either inline
+  // or via client_secret prefix.
+  const invSecrets = invoice as unknown as {
+    confirmation_secret?: { client_secret?: string }
+    payment_intent?:      string | { id: string }
+  }
+
+  let paymentIntentId: string | null = null
+  if (invSecrets.confirmation_secret?.client_secret?.startsWith('pi_')) {
+    paymentIntentId = invSecrets.confirmation_secret.client_secret.split('_secret_')[0]
+  } else if (invSecrets.payment_intent) {
+    paymentIntentId = typeof invSecrets.payment_intent === 'string'
+      ? invSecrets.payment_intent
+      : invSecrets.payment_intent.id
+  }
+
+  // First-invoice path: a pending payments row already exists. The
+  // payment_intent.succeeded handler will reconcile it. We only need to
+  // ensure the subscription's status flips to 'active'.
+  if (paymentIntentId) {
+    const { data: existing } = await supabase
+      .from('payments')
+      .select('id, status')
+      .eq('gateway', 'stripe')
+      .eq('gateway_payment_id', paymentIntentId)
+      .maybeSingle()
+    if (existing) {
+      // Pre-existing row — let payment_intent.succeeded handle it. No-op.
+      return
+    }
+  }
+
+  // Renewal-invoice path: insert a fresh payments row.
+  // Look up the subscription row to find the patient_id + customer_id.
+  const { data: subRow } = await supabase
+    .from('subscriptions')
+    .select('patient_id, gateway_customer_id')
+    .eq('gateway', 'stripe')
+    .eq('gateway_subscription_id', subId)
+    .limit(1)
+    .maybeSingle()
+
+  if (!subRow) {
+    console.warn('[webhook] invoice.payment_succeeded for unknown subscription', { subscription_id: subId, invoice_id: invoice.id })
+    return
+  }
+
+  await supabase
+    .from('payments')
+    .insert({
+      patient_id:           subRow.patient_id,
+      gateway:              'stripe',
+      gateway_payment_id:   paymentIntentId ?? `inv_${invoice.id}`,
+      gateway_customer_id:  subRow.gateway_customer_id,
+      gateway_metadata: {
+        invoice_id:        invoice.id,
+        subscription_id:   subId,
+        billing_reason:    invoice.billing_reason,
+        period_start:      invoice.period_start,
+        period_end:        invoice.period_end,
+      },
+      amount_cents: invoice.amount_paid,
+      currency:     invoice.currency,
+      type:         'subscription',
+      status:       'succeeded',
+      paid_at:      new Date().toISOString(),
+      description:  `Subscription renewal — invoice ${invoice.number ?? invoice.id}`,
+      subscription_id: null, // we don't have a 1:1 mapping (multi-item subs)
+    })
+}
+
+
+// ─── invoice.payment_failed ─────────────────────────────────────────────────
+// Card declined on a subscription renewal (or first invoice retry). Stripe
+// retries automatically per Smart Retries; we record the failure for ops
+// visibility and let Stripe drive the retry cadence.
+export async function handleInvoicePaymentFailed(
+  supabase: SupabaseClient,
+  invoice:  Stripe.Invoice,
+): Promise<void> {
+  const subscriptionId = (invoice as unknown as { subscription?: string | Stripe.Subscription }).subscription
+  if (!subscriptionId) return
+  const subId = typeof subscriptionId === 'string' ? subscriptionId : subscriptionId.id
+
+  // Mark all subscription rows under this Stripe Subscription as past_due.
+  await supabase
+    .from('subscriptions')
+    .update({
+      status: 'past_due',
+      gateway_metadata: {
+        last_failed_invoice_id: invoice.id,
+        last_failure_at:        new Date().toISOString(),
+      },
+    })
+    .eq('gateway', 'stripe')
+    .eq('gateway_subscription_id', subId)
+}
+
+
 // ─── charge.refunded ─────────────────────────────────────────────────────────
 // Fires when a refund is issued — manually via Stripe Dashboard, via API,
 // or via Stripe Radar reversal. We mark the payment refunded (or partially)

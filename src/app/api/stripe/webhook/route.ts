@@ -37,6 +37,9 @@ import {
   handlePaymentIntentSucceeded,
   handlePaymentIntentFailed,
   handleChargeRefunded,
+  handleSubscriptionUpdated,
+  handleInvoicePaymentSucceeded,
+  handleInvoicePaymentFailed,
 } from '@/lib/stripe/webhook-handlers'
 
 // Pin to Node runtime — signature verification uses Node crypto.
@@ -134,6 +137,20 @@ export async function POST(request: NextRequest) {
 
       case 'charge.refunded':
         await handleChargeRefunded(supabase, event.data.object as Stripe.Charge)
+        break
+
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+        await handleSubscriptionUpdated(supabase, event.data.object as Stripe.Subscription)
+        break
+
+      case 'invoice.payment_succeeded':
+        await handleInvoicePaymentSucceeded(supabase, event.data.object as Stripe.Invoice)
+        break
+
+      case 'invoice.payment_failed':
+        await handleInvoicePaymentFailed(supabase, event.data.object as Stripe.Invoice)
         break
 
       default:
