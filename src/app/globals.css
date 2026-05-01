@@ -27,9 +27,16 @@
 }
 
 /* ── BASE RESETS ── */
+/* `overflow-x: hidden` on both html and body — body alone leaks on iOS
+ * Safari when an absolutely-positioned child (e.g. the Treatments wisp
+ * at w-[200vw]) extends past the viewport, producing a horizontal scroll. */
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   color: var(--navy);
-  overflow-x: hidden;
 }
 
 /*
