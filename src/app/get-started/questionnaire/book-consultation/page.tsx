@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BackHeader from '@/components/ui/BackHeader'
+import DisqualificationGate from '@/components/ui/DisqualificationGate'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
@@ -498,6 +499,7 @@ export default function BookConsultationPage() {
 
   return (
     <>
+      <DisqualificationGate />
       <BackHeader backHref="/get-started/questionnaire/desired-treatments" progress={PROGRESS} />
 
       <main
@@ -509,7 +511,7 @@ export default function BookConsultationPage() {
           marginTop: '52px',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 pt-4 md:pt-6">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 pt-4 md:pt-6">
 
           {/* Prior step Q&A bubble */}
           <ChatHistory
@@ -564,7 +566,7 @@ export default function BookConsultationPage() {
                       value={language}
                       onChange={e => setLanguage(e.target.value)}
                       disabled
-                      className="w-full h-[42px] pl-3 pr-9 border border-[#e4e4e7] rounded-lg bg-white text-base text-[#09090b] shadow-sm appearance-none cursor-not-allowed focus:outline-none focus:border-[#3A5190] transition-colors"
+                      className="w-full h-[42px] pl-3 pr-9 border border-[#e4e4e7] rounded-lg bg-white text-base text-[#09090b] shadow-sm appearance-none cursor-not-allowed focus:outline-none focus:border-brand-blue transition-colors"
                     >
                       <option>English</option>
                     </select>
@@ -590,7 +592,7 @@ export default function BookConsultationPage() {
                       aria-describedby={formatError ? 'format-error' : undefined}
                       aria-invalid={!!formatError}
                       aria-required="true"
-                      className={`w-full h-[42px] pl-3 pr-9 border rounded-lg bg-white text-base shadow-sm appearance-none focus:outline-none focus:border-[#3A5190] transition-colors ${
+                      className={`w-full h-[42px] pl-3 pr-9 border rounded-lg bg-white text-base shadow-sm appearance-none focus:outline-none focus:border-brand-blue transition-colors ${
                         requiresSync ? 'cursor-not-allowed' : 'cursor-pointer'
                       } ${!format ? 'text-[#a1a1aa]' : 'text-[#09090b]'} ${
                         formatError ? 'border-red-600' : 'border-[#e4e4e7]'
@@ -702,7 +704,7 @@ export default function BookConsultationPage() {
                           aria-current={isActive ? 'true' : undefined}
                           className={`h-9 rounded-full text-[14px] leading-[1.43] tracking-[0.17px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
                             isActive
-                              ? 'bg-[#1d2d44] text-white'
+                              ? 'bg-brand-navy text-white'
                               : isPast
                               ? 'text-[rgba(0,0,0,0.38)] cursor-default'
                               : 'text-[rgba(0,0,0,0.87)] hover:bg-gray-100'
@@ -752,7 +754,7 @@ export default function BookConsultationPage() {
                                   aria-label={`${MONTH_NAMES[viewMonth.month]} ${day}${variant === 'today' ? ', today' : ''}${variant === 'selected' ? ', selected' : ''}${variant === 'disabled' ? ', no slots available' : ''}`}
                                   className={`flex items-center justify-center size-9 rounded-full text-[14px] leading-[1.43] tracking-[0.17px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
                                     variant === 'selected'
-                                      ? 'bg-[#1d2d44] text-white'
+                                      ? 'bg-brand-navy text-white'
                                       : variant === 'today'
                                       ? 'border border-[rgba(0,0,0,0.54)] text-[rgba(0,0,0,0.87)] hover:bg-gray-100'
                                       : variant === 'past' || variant === 'disabled'
@@ -825,11 +827,11 @@ export default function BookConsultationPage() {
                               aria-pressed={isSelected}
                               className={`relative h-[42px] flex items-center justify-center px-2 rounded-lg text-base font-medium leading-6 whitespace-nowrap overflow-hidden transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
                                 isSelected
-                                  ? 'border border-[#1d2d44] text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)]'
-                                  : 'bg-white border border-[#e4e4e7] text-[#09090b] shadow-sm hover:border-[#3A5190]/40'
+                                  ? 'border border-brand-navy text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)]'
+                                  : 'bg-white border border-[#e4e4e7] text-[#09090b] shadow-sm hover:border-brand-blue/40'
                               }`}
                               style={isSelected
-                                ? { background: 'linear-gradient(to right, #1d2d44, #233d5a)' }
+                                ? { background: 'linear-gradient(to right, var(--brand-navy), #233d5a)' }
                                 : undefined
                               }
                             >
@@ -847,7 +849,7 @@ export default function BookConsultationPage() {
               <button
                 type="button"
                 onClick={handleNextDay}
-                className="flex items-center gap-3 px-4 py-2 text-base font-medium text-[#3A5190] hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-lg self-end"
+                className="flex items-center gap-3 px-4 py-2 text-base font-medium text-brand-blue hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-lg self-end"
               >
                 Next: {formatNextDayLabel(selectedDate)}
                 <ChevronRightIcon />
@@ -874,14 +876,14 @@ export default function BookConsultationPage() {
           disabled={isNavigating}
           className="
             relative flex items-center justify-center gap-3
-            w-full md:w-[480px] h-[42px] px-4 overflow-hidden
+            w-full md:w-[560px] h-[42px] px-4 overflow-hidden
             rounded-br-[36px] rounded-tl-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+          style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
         >
           {isNavigating ? 'Saving…' : 'Save and continue'}
           <ChevronRightIcon />

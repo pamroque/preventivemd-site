@@ -175,7 +175,7 @@ export default function QuestionnaireStep6() {
           marginTop: '52px',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -234,8 +234,8 @@ export default function QuestionnaireStep6() {
                 className="
                   w-full h-[42px] flex items-center justify-center px-4
                   rounded-lg border border-[#e4e4e7] bg-white
-                  text-base font-medium text-[#3A5190]
-                  shadow-sm transition-colors hover:border-[#3A5190]/40
+                  text-base font-medium text-brand-blue
+                  shadow-sm transition-colors hover:border-brand-blue/40
                   disabled:opacity-60
                 "
               >
@@ -254,7 +254,7 @@ export default function QuestionnaireStep6() {
                           onChange={() => toggle(med.id)}
                           className="
                             size-4 rounded-[4px] border border-[#e4e4e7]
-                            accent-[#3A5190]
+                            accent-brand-blue
                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
                             cursor-pointer
                           "
@@ -280,7 +280,7 @@ export default function QuestionnaireStep6() {
                             text-base leading-6 text-[rgba(0,0,0,0.87)]
                             placeholder:text-[#71717a]
                             shadow-sm resize-y transition-colors
-                            focus:outline-none focus:border-[#3A5190]
+                            focus:outline-none focus:border-brand-blue
                           "
                         />
                       </div>
@@ -309,7 +309,7 @@ export default function QuestionnaireStep6() {
           disabled={isNavigating || !hasSelection}
           className="
             relative flex items-center justify-center gap-3
-            w-full md:w-[480px] h-[42px] px-4 overflow-hidden
+            w-full md:w-[560px] h-[42px] px-4 overflow-hidden
             rounded-br-[36px] rounded-tl-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
@@ -317,7 +317,7 @@ export default function QuestionnaireStep6() {
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
           style={{
-            background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
+            background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)',
           }}
         >
           {isNavigating ? 'Saving…' : 'Save and continue'}

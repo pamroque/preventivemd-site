@@ -18,16 +18,18 @@ type LogoProps = {
    * `text-white` themes the whole mark. Use on dark backgrounds (hero,
    * footer) where the brand colors would lose contrast.
    *
-   * Implementation: `next.config.js` swaps the baked `#3A5190` and `#1D2D44`
-   * fills for `var(--logo-blue, #3A5190)` and `var(--logo-navy, #1D2D44)`.
-   * Inverse tone overrides both vars to `currentColor` here.
+   * Implementation: `next.config.js` swaps the SVG's baked `#3A5190` and
+   * `#1D2D44` fills for `var(--brand-blue)` and `var(--brand-navy)`. The
+   * inverse tone scopes those vars to `currentColor` on this element only,
+   * so the override doesn't leak to other brand-colored elements rendered
+   * inside the Logo's subtree (currently none).
    */
   tone?: 'brand' | 'inverse'
 }
 
 const inverseStyle = {
-  '--logo-blue': 'currentColor',
-  '--logo-navy': 'currentColor',
+  '--brand-blue': 'currentColor',
+  '--brand-navy': 'currentColor',
 } as CSSProperties
 
 /**

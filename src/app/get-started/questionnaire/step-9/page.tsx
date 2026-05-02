@@ -137,7 +137,7 @@ export default function QuestionnaireStep9() {
           paddingBottom: '2rem',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -196,7 +196,7 @@ export default function QuestionnaireStep9() {
                     key={opt.id}
                     style={isSelected ? {
                       padding: '2px',
-                      background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
+                      background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-mint) 100%)',
                       borderRadius: 8,
                     } : undefined}
                   >
@@ -210,8 +210,8 @@ export default function QuestionnaireStep9() {
                         text-base font-medium transition-colors shadow-sm disabled:opacity-60
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
                         ${isSelected
-                          ? 'rounded-[6px] text-[#3A5190] bg-white'
-                          : 'rounded-lg border border-[#e4e4e7] text-[#3A5190] bg-white hover:border-[#3A5190]/40'}
+                          ? 'rounded-[6px] text-brand-blue bg-white'
+                          : 'rounded-lg border border-[#e4e4e7] text-brand-blue bg-white hover:border-brand-blue/40'}
                       `}
                     >
                       {opt.icon}

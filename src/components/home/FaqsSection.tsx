@@ -53,9 +53,9 @@ const FAQS: Faq[] = [
     a: [
       'Common side effects vary by medication. Your provider will walk through what to expect for your specific protocol once they review your information. You will also be able to see this information in your Care Portal.',
       'If you experience a concerning reaction, message your care team — they respond within 24 hours, or sooner for urgent symptoms.',
-      <strong className="font-bold text-red-600">
+      <span className="text-red-600">
         For severe reactions (difficulty breathing, swelling, or signs of an allergic response), seek emergency care first, then let us know.
-      </strong>,
+      </span>,
     ],
   },
   {
@@ -116,7 +116,7 @@ function AccordionItem({
       >
         <span
           className={`flex-1 text-base font-medium leading-6 transition-colors md:text-lg md:leading-7 ${
-            isOpen ? 'text-[#3A5190]' : 'text-[#09090b]'
+            isOpen ? 'text-brand-blue' : 'text-[#09090b]'
           }`}
         >
           {faq.q}

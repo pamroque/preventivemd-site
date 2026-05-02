@@ -33,7 +33,7 @@ const COLUMNS: FooterColumn[] = [
 
 export default function HomeFooter() {
   return (
-    <footer className="overflow-hidden rounded-bl-[48px] rounded-tr-[48px] bg-gradient-to-t from-[#1d2d44] to-[#071024] px-6 py-9 text-white md:rounded-bl-[72px] md:rounded-tr-[72px] md:px-12 md:pb-12 md:pt-9">
+    <footer className="overflow-hidden rounded-bl-[48px] rounded-tr-[48px] bg-gradient-to-t from-brand-navy to-[#071024] px-6 py-9 text-white md:rounded-bl-[72px] md:rounded-tr-[72px] md:px-12 md:pb-12 md:pt-9">
       <div className="flex flex-col gap-6">
         {/* Columns */}
         <div className="flex flex-col gap-9 md:flex-row md:items-start md:gap-12">

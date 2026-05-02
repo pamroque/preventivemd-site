@@ -193,7 +193,7 @@ const schema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['otherText'],
-        message: 'Please specify your other health goal',
+        message: 'Please specify your other health goal(s)',
       })
     }
   })
@@ -285,7 +285,7 @@ export default function QuestionnaireStep3() {
       .filter((l): l is string => !!l)
     const bubbles =
       data.goals.includes('other') && data.otherText?.trim()
-        ? [...labels.filter((l) => l !== 'Others'), `Other: ${data.otherText.trim()}`]
+        ? [...labels.filter((l) => l !== 'Others'), `Others: ${data.otherText.trim()}`]
         : labels
     clearGoalQuestionData()
     saveStep(
@@ -309,7 +309,7 @@ export default function QuestionnaireStep3() {
           marginTop: '52px',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -419,7 +419,7 @@ export default function QuestionnaireStep3() {
                       w-full min-h-[99px] px-3 py-1.5 bg-white border rounded-lg shadow-sm
                       text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
                       focus:outline-none transition-colors resize-y
-                      ${errors.otherText ? 'border-red-600 focus:border-red-600' : 'border-[#e4e4e7] focus:border-[#3A5190]'}
+                      ${errors.otherText ? 'border-red-600 focus:border-red-600' : 'border-[#e4e4e7] focus:border-brand-blue'}
                     `}
                     aria-invalid={!!errors.otherText}
                     aria-describedby={errors.otherText ? 'otherText-error' : undefined}
@@ -453,7 +453,7 @@ export default function QuestionnaireStep3() {
           disabled={isSubmitting || !done}
           className="
             relative flex items-center justify-center gap-3
-            w-full md:w-[480px] h-[42px] px-4 overflow-hidden
+            w-full md:w-[560px] h-[42px] px-4 overflow-hidden
             rounded-br-[36px] rounded-tl-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
@@ -461,7 +461,7 @@ export default function QuestionnaireStep3() {
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
           style={{
-            background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
+            background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)',
           }}
         >
           {isSubmitting ? 'Saving…' : 'Save and continue'}
@@ -492,7 +492,7 @@ function GoalCard({
       className="rounded-lg"
       style={checked ? {
         padding: '2px',
-        background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
+        background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-mint) 100%)',
       } : undefined}
     >
     <label
@@ -502,7 +502,7 @@ function GoalCard({
         focus-within:ring-2 focus-within:ring-[#3b82f6] focus-within:ring-offset-1
         ${checked
           ? 'rounded-[6px]'
-          : 'rounded-lg border border-[#e3e3e3] hover:border-[#3A5190]/40'}
+          : 'rounded-lg border border-[#e3e3e3] hover:border-brand-blue/40'}
       `}
     >
       <span className="flex h-5 items-center shrink-0">
@@ -518,7 +518,7 @@ function GoalCard({
           className={`
             relative flex items-center justify-center size-4 rounded shrink-0 transition-colors
             ${checked
-              ? 'bg-[#3A5190] border border-[#3A5190] text-white'
+              ? 'bg-brand-blue border border-brand-blue text-white'
               : 'bg-white border border-[#e4e4e7]'}
           `}
           aria-hidden="true"
@@ -531,13 +531,13 @@ function GoalCard({
         <span
           id={`${goal.id}-label`}
           className={`text-base font-medium leading-6 ${
-            checked ? 'text-[#3A5190]' : 'text-[rgba(0,0,0,0.87)]'
+            checked ? 'text-brand-blue' : 'text-[rgba(0,0,0,0.87)]'
           }`}
         >
           {goal.label}
         </span>
         {subtext && (
-          <span id={`${goal.id}-desc`} className="text-sm font-bold leading-5 text-[#3A5190]">
+          <span id={`${goal.id}-desc`} className="text-sm font-bold leading-5 text-brand-blue">
             {subtext}
           </span>
         )}

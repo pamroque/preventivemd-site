@@ -30,7 +30,7 @@ function ChevronRightIcon() {
 function VideoCameraIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
-      stroke="currentColor" className="size-5 text-[#1d2d44] shrink-0" aria-hidden="true">
+      stroke="currentColor" className="size-5 text-brand-navy shrink-0" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round"
         d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9A2.25 2.25 0 0 0 13.5 5.25h-9A2.25 2.25 0 0 0 2.25 7.5v9A2.25 2.25 0 0 0 4.5 18.75Z" />
     </svg>
@@ -40,7 +40,7 @@ function VideoCameraIcon() {
 function PhoneIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
-      stroke="currentColor" className="size-5 text-[#1d2d44] shrink-0" aria-hidden="true">
+      stroke="currentColor" className="size-5 text-brand-navy shrink-0" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round"
         d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 6.75Z" />
     </svg>
@@ -54,8 +54,8 @@ function ActiveDot() {
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="shrink-0">
       <defs>
         <linearGradient id="activeDotGrad" x1="0" y1="0" x2="12" y2="12" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#A2D5BC" />
-          <stop offset="1" stopColor="#3A5190" />
+          <stop stopColor="var(--brand-mint)" />
+          <stop offset="1" stopColor="var(--brand-blue)" />
         </linearGradient>
       </defs>
       <circle cx="6" cy="6" r="5" stroke="url(#activeDotGrad)" strokeWidth="2" />
@@ -78,7 +78,7 @@ function TimelineConnector({ height, gradient = false }: { height: number; gradi
         className="w-0.5"
         style={{
           height,
-          background: gradient ? 'linear-gradient(to bottom, #A2D5BC, #3A5190)' : '#bdbdbd',
+          background: gradient ? 'linear-gradient(to bottom, var(--brand-mint), var(--brand-blue))' : '#bdbdbd',
         }}
       />
     </div>
@@ -316,7 +316,7 @@ export default function ConfirmationPage() {
       tabIndex={-1}
       className="min-h-[100dvh] bg-white pt-12 md:pt-14 focus:outline-none"
     >
-      <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 py-4 md:py-6">
+      <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 py-4 md:py-6">
 
           {/* ── Response bubble ── */}
           <div className="flex flex-col items-end">
@@ -348,7 +348,7 @@ export default function ConfirmationPage() {
               {typingStarted && (
                 <>
                   {words.slice(0, visibleWords).map((word, i) => (
-                    <span key={i} className={i === 0 && firstName ? 'text-[#3A5190]' : undefined}>
+                    <span key={i} className={i === 0 && firstName ? 'text-brand-blue' : undefined}>
                       {word}{i < visibleWords - 1 ? ' ' : ''}
                     </span>
                   ))}
@@ -390,12 +390,12 @@ export default function ConfirmationPage() {
                       <div className="flex flex-col gap-1.5 py-3">
                         <div className="flex items-center gap-2">
                           {consultationDetails.format === 'Video' ? <VideoCameraIcon /> : <PhoneIcon />}
-                          <span className="text-sm font-medium text-[#1d2d44]">
+                          <span className="text-sm font-medium text-brand-navy">
                             {consultationDetails.format === 'Video' ? 'Video Call' : 'Phone Call'}
                           </span>
                         </div>
-                        <div className="inline-flex self-start items-center border border-[#1d2d44] rounded-xl px-1.5 py-1">
-                          <span className="text-[12px] text-[#1d2d44] leading-4 whitespace-nowrap">
+                        <div className="inline-flex self-start items-center border border-brand-navy rounded-xl px-1.5 py-1">
+                          <span className="text-[12px] text-brand-navy leading-4 whitespace-nowrap">
                             {consultationDetails.dateLabel} @ {consultationDetails.time}
                           </span>
                         </div>
@@ -449,8 +449,8 @@ export default function ConfirmationPage() {
                 style={{ boxShadow: '0px 4px 16px 0px rgba(0,0,0,0.15)', animation: 'fadeIn 0.4s ease 100ms both' }}
               >
                 {/* Heading bar — edge-to-edge: gradient thumbnail + dark navy text panel */}
-                <div className="flex items-stretch bg-[#A2D5BC]">
-                  <div className="shrink-0 size-[84px] flex items-center justify-center bg-gradient-to-r from-[#3A5190] to-[#A2D5BC]">
+                <div className="flex items-stretch bg-brand-mint">
+                  <div className="shrink-0 size-[84px] flex items-center justify-center bg-gradient-to-r from-brand-blue to-brand-mint">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/assets/cta-medications.png"
@@ -474,7 +474,7 @@ export default function ConfirmationPage() {
                     <label htmlFor="credential" className="text-[12px] font-medium tracking-[1.5px] uppercase text-[#71717a]">
                       Email or mobile number
                     </label>
-                    <div className={`h-[42px] border rounded-lg shadow-sm flex items-center overflow-hidden bg-white transition-colors ${credentialError ? 'border-red-600 focus-within:border-red-600' : credential ? 'border-[#3A5190]' : 'border-[#e4e4e7] focus-within:border-[#3A5190]'}`}>
+                    <div className={`h-[42px] border rounded-lg shadow-sm flex items-center overflow-hidden bg-white transition-colors ${credentialError ? 'border-red-600 focus-within:border-red-600' : credential ? 'border-brand-blue' : 'border-[#e4e4e7] focus-within:border-brand-blue'}`}>
                       <input
                         id="credential"
                         type="text"
@@ -507,7 +507,7 @@ export default function ConfirmationPage() {
                       shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
                     "
-                    style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+                    style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
                   >
                     {isSigningIn ? 'Signing in…' : 'Sign in'}
                     <ChevronRightIcon />
@@ -520,14 +520,14 @@ export default function ConfirmationPage() {
                     <p className="text-sm text-center text-[rgba(0,0,0,0.6)] leading-[1.43] tracking-[0.17px]">
                       <a
                         href="tel:+19876543210"
-                        className="font-medium text-[#3A5190] underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
+                        className="font-medium text-brand-blue underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
                       >
                         +1 (987) 654-3210
                       </a>
                       {' or '}
                       <a
                         href="mailto:hello@preventivemd.com"
-                        className="font-medium text-[#3A5190] underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
+                        className="font-medium text-brand-blue underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
                       >
                         hello@preventivemd.com
                       </a>

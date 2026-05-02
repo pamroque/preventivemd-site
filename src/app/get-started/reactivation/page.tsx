@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { getStepValues, clearSession } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
 import { getSelectedGoals, getGoalQuestionSequence, AFTER_GOAL_QUESTIONS, GOAL_QUESTION_INDEX_MIN, GOAL_QUESTION_INDEX_MAX } from '@/lib/goal-routing'
+import { isIntakeDisqualified } from '@/lib/disqualification'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,15 @@ function getResumeHref(): string {
   const hasData = (step: number) => Object.keys(getStepValues(step)).length > 0
 
   if (!hasData(0)) return '/get-started/questionnaire'
+
+  // If the patient's saved answers would disqualify them at step-11,
+  // resume there directly. Without this guard, a returning user could
+  // navigate past the disqualification screen because the
+  // index-based lookup below would route them to /visit-type or
+  // wherever they last were in the questionnaire.
+  if (isIntakeDisqualified()) {
+    return '/get-started/questionnaire/disqualification'
+  }
 
   // Step 13 done: consult → checkout if hold still alive, else /book-consultation;
   // async → checkout (no hold to worry about).
@@ -153,7 +163,7 @@ function ReactivationContent() {
       tabIndex={-1}
       className="min-h-screen bg-white pt-12 md:pt-14 pb-24 focus:outline-none"
     >
-      <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 py-9 md:py-12">
+      <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 py-9 md:py-12">
 
         {/* ── Eve's message ── */}
         <div className="flex items-start gap-3 w-full">
@@ -171,7 +181,7 @@ function ReactivationContent() {
                 {words.slice(0, visibleWords).map((word, i) => {
                   const isName = nameToken !== null && word === nameToken
                   return (
-                    <span key={i} style={isName ? { color: '#3A5190' } : undefined}>
+                    <span key={i} style={isName ? { color: 'var(--brand-blue)' } : undefined}>
                       {word}{i < visibleWords - 1 ? ' ' : ''}
                     </span>
                   )
@@ -203,7 +213,7 @@ function ReactivationContent() {
                 shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
               "
-              style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+              style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
             >
               {resumeCopy}
               <ChevronRightIcon />
@@ -223,7 +233,7 @@ function ReactivationContent() {
               className="
                 w-full h-[42px] flex items-center justify-center px-4
                 rounded-lg border border-[#e4e4e7] bg-white shadow-sm
-                text-base font-medium text-[#3A5190] whitespace-nowrap
+                text-base font-medium text-brand-blue whitespace-nowrap
                 hover:bg-gray-50 transition-colors
                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]
               "

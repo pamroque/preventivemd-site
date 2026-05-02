@@ -8,29 +8,33 @@ export interface Treatment {
 export const TREATMENTS: readonly Treatment[] = [
   {
     id: 'ghk-cu',
-    name: 'GHK-Copper',
-    description: 'May support collagen and elastin production, skin repair, and healthier hair',
+    name: 'GHK-Cu',
+    description: 'Starting at $99/mo. A copper-binding peptide found in the body, studied for its role in skin and tissue health.',
+    boldFirstSentence: true,
   },
   {
     id: 'glp-1',
     name: 'GLP-1',
-    description: 'Examples include Semaglutide and Tirzepatide. May help support weight management by helping you feel fuller.',
+    description: 'Examples include Semaglutide and Tirzepatide. Builds on natural hormones involved in appetite and metabolic regulation.',
     boldFirstSentence: true,
   },
   {
     id: 'glutathione',
     name: 'Glutathione',
-    description: 'May help support antioxidant defense, liver function, skin appearance, and immunity',
+    description: 'Starting at $99/mo. An antioxidant the body produces, involved in cellular and metabolic processes.',
+    boldFirstSentence: true,
   },
   {
     id: 'nad-plus',
     name: 'NAD+',
-    description: 'May help support cellular energy production, healthy aging, and metabolic function',
+    description: 'Starting at $99/mo. A coenzyme found in every cell, central to energy metabolism and cellular function.',
+    boldFirstSentence: true,
   },
   {
     id: 'sermorelin',
     name: 'Sermorelin',
-    description: "May help support your body's natural growth hormone production to promote healthy metabolism and body composition",
+    description: "Starting at $99/mo. Builds on GHRH, the body's natural signal for growth hormone release.",
+    boldFirstSentence: true,
   },
 ] as const
 

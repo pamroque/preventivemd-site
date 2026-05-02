@@ -69,7 +69,7 @@ export default function SignInPage() {
               <label htmlFor="identifier" className="text-[12px] font-medium tracking-[1.5px] uppercase text-[#71717a]">
                 Email or mobile number
               </label>
-              <div className={`h-[42px] border rounded-lg shadow-sm flex items-center overflow-hidden bg-white transition-colors ${error ? 'border-red-600 focus-within:border-red-600' : 'border-[#e4e4e7] focus-within:border-[#3A5190]'}`}>
+              <div className={`h-[42px] border rounded-lg shadow-sm flex items-center overflow-hidden bg-white transition-colors ${error ? 'border-red-600 focus-within:border-red-600' : 'border-[#e4e4e7] focus-within:border-brand-blue'}`}>
                 <input
                   id="identifier"
                   type="text"
@@ -101,7 +101,7 @@ export default function SignInPage() {
                 shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
               "
-              style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+              style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
             >
               Sign in
               <ChevronRightIcon />
@@ -114,14 +114,14 @@ export default function SignInPage() {
               <p className="text-sm text-center text-[rgba(0,0,0,0.6)] leading-[1.43] tracking-[0.17px]">
                 <a
                   href="tel:+19876543210"
-                  className="font-medium text-[#3A5190] underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
+                  className="font-medium text-brand-blue underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
                 >
                   +1 (987) 654-3210
                 </a>
                 {' or '}
                 <a
                   href="mailto:hello@preventivemd.com"
-                  className="font-medium text-[#3A5190] underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
+                  className="font-medium text-brand-blue underline decoration-solid underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
                 >
                   hello@preventivemd.com
                 </a>

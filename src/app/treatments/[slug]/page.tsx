@@ -71,7 +71,7 @@ export default async function TreatmentPage({
           <li>
             <Link
               href="/"
-              className="transition-colors hover:text-navy"
+              className="transition-colors hover:text-brand-navy"
             >
               Welcome
             </Link>
@@ -80,13 +80,13 @@ export default async function TreatmentPage({
           <li>
             <Link
               href="/#treatments"
-              className="transition-colors hover:text-navy"
+              className="transition-colors hover:text-brand-navy"
             >
               Treatments
             </Link>
           </li>
           <li aria-hidden="true" className="text-muted/60">/</li>
-          <li aria-current="page" className="font-medium text-navy">
+          <li aria-current="page" className="font-medium text-brand-navy">
             {t.highlight}
           </li>
         </ol>
@@ -107,12 +107,12 @@ export default async function TreatmentPage({
             >
               <span
                 className="w-1.5 h-1.5 rounded-full"
-                style={{ background: `linear-gradient(135deg, ${t.categoryColor}, var(--teal))` }}
+                style={{ background: `linear-gradient(135deg, ${t.categoryColor}, var(--brand-mint))` }}
               />
               {t.category}
             </div>
 
-            <h1 className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-extralight tracking-tight text-navy leading-[1.15] mb-4">
+            <h1 className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-extralight tracking-tight text-brand-navy leading-[1.15] mb-4">
               {t.title}{' '}
               <strong className="font-semibold gradient-text">{t.highlight}</strong>
             </h1>
@@ -165,7 +165,7 @@ export default async function TreatmentPage({
                 <div className="w-10 h-10 rounded-full bg-brand-gradient text-white text-sm font-semibold flex items-center justify-center mx-auto mb-4">
                   {i + 1}
                 </div>
-                <h3 className="text-sm font-semibold text-navy mb-2">{step.title}</h3>
+                <h3 className="text-sm font-semibold text-brand-navy mb-2">{step.title}</h3>
                 <p className="text-xs text-muted font-light leading-relaxed">{step.desc}</p>
               </div>
             ))}
@@ -184,7 +184,7 @@ export default async function TreatmentPage({
                 className="bg-white border border-border rounded-2xl p-6 hover:shadow-md transition-shadow"
               >
                 <div className="text-2xl mb-3">{benefit.icon}</div>
-                <h3 className="text-sm font-semibold text-navy mb-2">{benefit.title}</h3>
+                <h3 className="text-sm font-semibold text-brand-navy mb-2">{benefit.title}</h3>
                 <p className="text-xs text-muted font-light leading-relaxed">{benefit.desc}</p>
               </div>
             ))}
@@ -206,7 +206,7 @@ export default async function TreatmentPage({
                   )}
                 </div>
                 <div className="pb-8">
-                  <h3 className="text-sm font-semibold text-navy">{step.title}</h3>
+                  <h3 className="text-sm font-semibold text-brand-navy">{step.title}</h3>
                   <p className="text-xs text-muted font-light leading-relaxed mt-1">
                     {step.desc}
                   </p>
@@ -228,7 +228,7 @@ export default async function TreatmentPage({
       </section>
 
       {/* BOTTOM CTA */}
-      <section className="py-16 px-6 md:px-12 bg-navy text-center">
+      <section className="py-16 px-6 md:px-12 bg-brand-navy text-center">
         <h2 className="text-[clamp(1.6rem,3vw,2.4rem)] font-extralight text-white mb-4">
           Ready to take the <strong className="font-semibold gradient-text">next step?</strong>
         </h2>

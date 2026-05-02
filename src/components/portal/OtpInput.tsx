@@ -109,7 +109,7 @@ export default function OtpInput({
           className={`
             flex-1 min-w-0 aspect-square text-center text-base text-[rgba(0,0,0,0.87)]
             bg-white border rounded-lg shadow-sm
-            focus:outline-none focus:border-[#3A5190] transition-colors
+            focus:outline-none focus:border-brand-blue transition-colors
             disabled:opacity-60 disabled:cursor-not-allowed
             ${invalid ? 'border-red-600 focus:border-red-600' : 'border-[#e4e4e7]'}
           `}

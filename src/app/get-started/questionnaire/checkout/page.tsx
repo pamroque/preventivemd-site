@@ -15,6 +15,7 @@ import {
 } from '@stripe/react-stripe-js'
 import type { StripeCardNumberElementOptions } from '@stripe/stripe-js'
 import BackHeader from '@/components/ui/BackHeader'
+import DisqualificationGate from '@/components/ui/DisqualificationGate'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { US_STATES } from '@/lib/us-states'
 import {
@@ -120,7 +121,7 @@ type FormValues = z.infer<typeof checkoutSchema>
 const inputBase =
   'w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm ' +
   'text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] ' +
-  'focus:outline-none focus:border-[#3A5190] focus-within:border-[#3A5190] transition-colors'
+  'focus:outline-none focus:border-brand-blue focus-within:border-brand-blue transition-colors'
 
 const inputErrorCls = 'border-red-600 focus:border-red-600 focus-within:border-red-600'
 
@@ -229,7 +230,7 @@ function formatCountdown(seconds: number): string {
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
-const PROGRESS = 90
+const PROGRESS = 100
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
@@ -396,7 +397,7 @@ function CheckoutPageInner() {
       }
 
       const TREATMENT_NAMES: Record<string, string> = {
-        'ghk-cu': 'GHK-Copper', 'glp-1': 'GLP-1', 'glutathione': 'Glutathione',
+        'ghk-cu': 'GHK-Cu', 'glp-1': 'GLP-1', 'glutathione': 'Glutathione',
         'nad-plus': 'NAD+', 'sermorelin': 'Sermorelin',
       }
 
@@ -410,10 +411,24 @@ function CheckoutPageInner() {
           const cents = lookupPriceCents(pricingCatalog, slug, c.form, plan)
           if (cents != null) totalCents += cents
         }
+        const GLP1_NAMES: Record<string, string> = {
+          semaglutide: 'Semaglutide',
+          tirzepatide: 'Tirzepatide',
+          foundayo:    'Foundayo®',
+          wegovy:      'Wegovy®',
+          zepbound:    'Zepbound®',
+        }
         const name = id === 'glp-1' && c?.type
-          ? (c.type === 'semaglutide' ? 'Semaglutide' : 'Tirzepatide')
+          ? (GLP1_NAMES[c.type] ?? 'GLP-1')
           : (TREATMENT_NAMES[id] ?? id)
-        const form = c?.form === 'injection' ? 'Injections' : c?.form === 'oral' ? 'Oral Tablets' : null
+        const FORM_LABELS_CART: Record<string, string> = {
+          injection: 'Injections',
+          oral:      'Oral Tablets',
+          kwikpen:   'KwikPen®',
+          pen:       'Injection pens',
+          cream:     'Cream',
+        }
+        const form = c?.form ? (FORM_LABELS_CART[c.form] ?? null) : null
         const planLabel = plan ? plan.replace('mo', ' mo') : null
         if (form && planLabel) items.push(`${name} ${form} (${planLabel})`)
       })
@@ -466,8 +481,36 @@ function CheckoutPageInner() {
     expiry: false,
     cvc: false,
   })
+  // Per-field error messages for the Stripe-managed card fields. RHF/zod
+  // can't validate these (the inputs live in iframes), so we surface the
+  // empty-on-submit case ourselves to match the rest of the form's UX.
+  const [cardErrors, setCardErrors] = useState<{ number: string; expiry: string; cvc: string }>({
+    number: '',
+    expiry: '',
+    cvc: '',
+  })
 
   async function onSubmit(data: FormValues) {
+    // Validate the Stripe-managed card fields BEFORE any side effects.
+    // RHF/zod can't see these because the inputs live in cross-origin
+    // iframes — we mirror their `complete` state in `cardComplete` and
+    // surface the empty-on-submit case here so the user sees a normal
+    // inline error instead of a silent failure. We validate whenever the
+    // card form is visible (`paymentMethod === 'card'`) rather than only
+    // when a charge is queued, because the form is always shown when the
+    // Card tab is selected and the user expects it to validate.
+    if (data.paymentMethod === 'card') {
+      const nextCardErrors = {
+        number: cardComplete.number ? '' : 'Card number is required',
+        expiry: cardComplete.expiry ? '' : 'Expiration is required',
+        cvc:    cardComplete.cvc    ? '' : 'Security code is required',
+      }
+      setCardErrors(nextCardErrors)
+      if (nextCardErrors.number || nextCardErrors.expiry || nextCardErrors.cvc) {
+        return
+      }
+    }
+
     // Existing local persistence — keeps the chat-history bubbles and
     // back-navigation behavior intact.
     saveStep(
@@ -668,6 +711,7 @@ function CheckoutPageInner() {
 
   return (
     <>
+      <DisqualificationGate />
       <BackHeader
         backHref={isConsultation
           ? '/get-started/questionnaire/desired-treatments'
@@ -685,7 +729,7 @@ function CheckoutPageInner() {
           ['--cta-h' as string]: `${stickyCtaHeight}px`,
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -748,7 +792,7 @@ function CheckoutPageInner() {
               <div className="flex flex-col gap-4">
                 <SectionHeader label="Account Details" />
 
-                <p className="text-sm font-bold leading-5 text-[#3A5190]">
+                <p className="text-sm font-bold leading-5 text-brand-blue">
                   To get updates about your care and sign in to your Care Portal, make sure you have access to your mobile number or email.
                 </p>
 
@@ -909,9 +953,13 @@ function CheckoutPageInner() {
                     return (
                       <label
                         key={method}
-                        className={`flex-1 h-10 flex items-center justify-center cursor-pointer text-sm font-medium transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-[#3A5190] focus-within:outline-offset-[-2px] ${
+                        // Focus ring uses focus-visible (so mouse-clicks
+                        // don't draw it) and a high-contrast color via the
+                        // ring API so it's visible on both selected
+                        // (brand-blue bg) and unselected (white bg) states.
+                        className={`relative flex-1 h-10 flex items-center justify-center cursor-pointer text-sm font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#3b82f6] has-[:focus-visible]:ring-offset-1 has-[:focus-visible]:z-10 ${
                           isActive
-                            ? 'bg-[#3A5190] text-white'
+                            ? 'bg-brand-blue text-white'
                             : 'bg-white text-[rgba(0,0,0,0.6)] hover:bg-gray-50'
                         }`}
                       >
@@ -949,18 +997,20 @@ function CheckoutPageInner() {
                         </label>
                         <div
                           id="cardNumber"
-                          className={`${inputBase} flex items-center ${stripeError ? inputErrorCls : ''}`}
+                          className={`${inputBase} flex items-center ${stripeError || cardErrors.number ? inputErrorCls : ''}`}
                         >
                           <CardNumberElement
                             options={STRIPE_ELEMENT_OPTIONS}
                             onChange={(e) => {
                               setCardComplete((prev) => ({ ...prev, number: e.complete }))
+                              if (e.complete) setCardErrors((prev) => ({ ...prev, number: '' }))
                               if (e.error) setStripeError(e.error.message)
                               else setStripeError(null)
                             }}
                             className="w-full"
                           />
                         </div>
+                        <FieldError id="cardNumber-error" message={cardErrors.number} />
                       </div>
 
                       <div className="flex gap-3 items-start">
@@ -968,25 +1018,33 @@ function CheckoutPageInner() {
                           <label htmlFor="expiration" className="text-sm font-medium text-[#09090b] leading-5">
                             Expiration <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                           </label>
-                          <div id="expiration" className={`${inputBase} flex items-center`}>
+                          <div id="expiration" className={`${inputBase} flex items-center ${cardErrors.expiry ? inputErrorCls : ''}`}>
                             <CardExpiryElement
                               options={STRIPE_ELEMENT_OPTIONS}
-                              onChange={(e) => setCardComplete((prev) => ({ ...prev, expiry: e.complete }))}
+                              onChange={(e) => {
+                                setCardComplete((prev) => ({ ...prev, expiry: e.complete }))
+                                if (e.complete) setCardErrors((prev) => ({ ...prev, expiry: '' }))
+                              }}
                               className="w-full"
                             />
                           </div>
+                          <FieldError id="expiration-error" message={cardErrors.expiry} />
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                           <label htmlFor="security" className="text-sm font-medium text-[#09090b] leading-5">
                             Security code <span className="text-red-600" aria-hidden="true">*</span><span className="sr-only"> (required)</span>
                           </label>
-                          <div id="security" className={`${inputBase} flex items-center`}>
+                          <div id="security" className={`${inputBase} flex items-center ${cardErrors.cvc ? inputErrorCls : ''}`}>
                             <CardCvcElement
                               options={STRIPE_ELEMENT_OPTIONS}
-                              onChange={(e) => setCardComplete((prev) => ({ ...prev, cvc: e.complete }))}
+                              onChange={(e) => {
+                                setCardComplete((prev) => ({ ...prev, cvc: e.complete }))
+                                if (e.complete) setCardErrors((prev) => ({ ...prev, cvc: '' }))
+                              }}
                               className="w-full"
                             />
                           </div>
+                          <FieldError id="security-error" message={cardErrors.cvc} />
                         </div>
                       </div>
 
@@ -1031,7 +1089,7 @@ function CheckoutPageInner() {
                         id="sameAsDelivery"
                         type="checkbox"
                         {...register('sameAsDelivery')}
-                        className="size-4 rounded border-[#e4e4e7] accent-[#3A5190] focus-visible:ring-2 focus-visible:ring-[#3b82f6] cursor-pointer"
+                        className="size-4 rounded border-[#e4e4e7] accent-brand-blue focus-visible:ring-2 focus-visible:ring-[#3b82f6] cursor-pointer"
                       />
                     </div>
                     <label htmlFor="sameAsDelivery" className="text-sm font-medium text-[#09090b] leading-5 cursor-pointer">
@@ -1143,50 +1201,35 @@ function CheckoutPageInner() {
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
                   {isConsultation ? (
-                    <>
-                      <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
-                        By securing your appointment, you authorize ${dueToday.toLocaleString()} today to schedule your live consultation.
-                      </p>
-                      <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
-                        This fee is non-refundable if you cancel within 24 hours of your scheduled appointment.
-                      </p>
-                    </>
+                    <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
+                      By securing your appointment, you authorize ${dueToday.toLocaleString()} today to schedule your live consultation. This fee is non-refundable if you cancel within 24 hours of your scheduled appointment.
+                    </p>
                   ) : (
-                    <>
-                      <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
-                        By submitting, you authorize ${dueToday.toLocaleString()} today. If your prescription is approved, you will be charged according to the plan and billing cycle you selected until you cancel.
-                      </p>
-                      <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
-                        Payment does not guarantee a prescription. If treatment is not approved, you will receive a refund.
-                      </p>
-                    </>
+                    <p className="text-sm font-medium text-[rgba(0,0,0,0.6)] leading-5">
+                      By submitting, you authorize ${dueToday.toLocaleString()} today. If your prescription is approved, you will be charged according to the plan and billing cycle you selected until you cancel. If your prescription is not approved, you will receive a refund.
+                    </p>
                   )}
                 </div>
 
                 {/* Telehealth informed consent — required */}
+                {/*
+                 * DOM order is [label, checkbox] so the embedded link gets
+                 * focused first when tabbing — keeps tab order: read the
+                 * legalese, then consent. Visual order preserved via flex
+                 * `order`, so the checkbox still appears on the left.
+                 */}
                 <div className="flex flex-col gap-1">
                   <div className="flex gap-3 items-start">
-                    <div className="flex items-center justify-center h-5 w-4 shrink-0">
-                      <input
-                        id="telehealthConsent"
-                        type="checkbox"
-                        {...register('telehealthConsent')}
-                        className="size-4 rounded border-[#e4e4e7] accent-[#3A5190] focus-visible:ring-2 focus-visible:ring-[#3b82f6] cursor-pointer"
-                        aria-invalid={!!errors.telehealthConsent}
-                        aria-describedby={errors.telehealthConsent ? 'telehealthConsent-error' : undefined}
-                        aria-required="true"
-                      />
-                    </div>
                     <label
                       htmlFor="telehealthConsent"
-                      className="flex-1 text-sm font-medium leading-5 text-[rgba(0,0,0,0.87)] cursor-pointer"
+                      className="order-2 flex-1 text-sm font-medium leading-5 text-[rgba(0,0,0,0.87)] cursor-pointer"
                     >
                       I have read the{' '}
                       <a
                         href="#"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#3A5190] underline underline-offset-2"
+                        className="text-brand-blue underline underline-offset-2"
                         onClick={(e) => e.stopPropagation()}
                       >
                         Telehealth Informed Consent
@@ -1195,6 +1238,17 @@ function CheckoutPageInner() {
                       <span className="text-red-600" aria-hidden="true">*</span>
                       <span className="sr-only">(required)</span>
                     </label>
+                    <div className="order-1 flex items-center justify-center h-5 w-4 shrink-0">
+                      <input
+                        id="telehealthConsent"
+                        type="checkbox"
+                        {...register('telehealthConsent')}
+                        className="size-4 rounded border-[#e4e4e7] accent-brand-blue focus-visible:ring-2 focus-visible:ring-[#3b82f6] cursor-pointer"
+                        aria-invalid={!!errors.telehealthConsent}
+                        aria-describedby={errors.telehealthConsent ? 'telehealthConsent-error' : undefined}
+                        aria-required="true"
+                      />
+                    </div>
                   </div>
                   <FieldError id="telehealthConsent-error" message={errors.telehealthConsent?.message} />
                 </div>
@@ -1226,7 +1280,7 @@ function CheckoutPageInner() {
           transition: 'opacity 0.5s',
         }}
       >
-        <div className="w-full md:w-[480px] flex flex-col">
+        <div className="w-full md:w-[560px] flex flex-col">
 
           {/* Submit request button */}
           <button
@@ -1242,7 +1296,7 @@ function CheckoutPageInner() {
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
             "
             style={{
-              background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
+              background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)',
             }}
           >
             {isSubmitting ? 'Submitting…' : isConsultation ? 'Secure appointment' : 'Submit request'}

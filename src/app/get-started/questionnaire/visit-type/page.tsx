@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BackHeader from '@/components/ui/BackHeader'
+import DisqualificationGate from '@/components/ui/DisqualificationGate'
 import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
@@ -32,7 +33,7 @@ function ChevronRightIcon() {
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
-const PROGRESS = 100
+const PROGRESS = 70
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
@@ -142,15 +143,21 @@ function VisitTypeCard({
           type="button"
           onClick={onClick}
           disabled={disabled}
+          // Focus ring uses `ring-inset` so it stays inside the button and
+          // isn't clipped by the parent card's `overflow-hidden` (added on
+          // shined cards to clip the path-card-orb to the rounded silhouette).
+          // Without `ring-inset`, the offset ring on the "Book a live
+          // consultation" button is invisible while the unshined "Choose
+          // medications" button shows it normally.
           className="
             relative w-full h-[42px] flex items-center justify-center gap-3 px-4
             rounded-br-[36px] overflow-hidden
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+          style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
         >
           {cta}
           <ChevronRightIcon />
@@ -230,6 +237,7 @@ export default function VisitTypePage() {
 
   return (
     <>
+      <DisqualificationGate />
       <BackHeader backHref="/get-started/questionnaire/step-11" progress={PROGRESS} />
 
       <main
@@ -241,7 +249,7 @@ export default function VisitTypePage() {
           marginTop: '52px',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           {/* ── Previous step's Q&A ── */}
           <ChatHistory
@@ -271,7 +279,7 @@ export default function VisitTypePage() {
                     {words.slice(0, visibleWords).map((word, i) => {
                       const isName = nameToken !== null && word === nameToken
                       return (
-                        <span key={i} className={isName ? 'text-[#3A5190]' : undefined}>
+                        <span key={i} className={isName ? 'text-brand-blue' : undefined}>
                           {word}
                           {i < visibleWords - 1 ? ' ' : ''}
                         </span>
@@ -308,7 +316,7 @@ export default function VisitTypePage() {
                   priceCaption="per visit"
                   badges={['30-minute video call', 'Personalized plan']}
                   cta="Book a live consultation"
-                  cardGradient="linear-gradient(268.84deg, #1d2d44 0%, #0f172a 100%)"
+                  cardGradient="linear-gradient(268.84deg, var(--brand-navy) 0%, #0f172a 100%)"
                   onClick={handleConsult}
                   disabled={isNavigating}
                   shine
@@ -326,7 +334,7 @@ export default function VisitTypePage() {
                     title="Request your treatment"
                     badges={['Decisions in 24 hrs', 'No fee', 'Consult via chat']}
                     cta="Unavailable*"
-                    cardGradient="linear-gradient(127.64deg, #1d2d44 0%, #0f172a 100%)"
+                    cardGradient="linear-gradient(127.64deg, var(--brand-navy) 0%, #0f172a 100%)"
                     onClick={() => {}}
                     disabled
                     unavailable
@@ -350,7 +358,7 @@ export default function VisitTypePage() {
                   priceCaption="per visit"
                   badges={['30-minute video call', 'Personalized plan']}
                   cta="Book a live consultation"
-                  cardGradient="linear-gradient(268.84deg, #1d2d44 0%, #0f172a 100%)"
+                  cardGradient="linear-gradient(268.84deg, var(--brand-navy) 0%, #0f172a 100%)"
                   onClick={handleConsult}
                   disabled={isNavigating}
                   shine
@@ -367,7 +375,7 @@ export default function VisitTypePage() {
                   title="Request your treatment"
                   badges={['Decisions in 24 hrs', 'No fee', 'Consult via chat']}
                   cta="Choose medications"
-                  cardGradient="linear-gradient(127.64deg, #1d2d44 0%, #0f172a 100%)"
+                  cardGradient="linear-gradient(127.64deg, var(--brand-navy) 0%, #0f172a 100%)"
                   onClick={handleAsync}
                   disabled={isNavigating}
                 />

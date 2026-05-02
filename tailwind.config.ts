@@ -8,18 +8,21 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // PreventiveMD brand tokens — Preventive Blue / Turquoise
+      // Brand color tokens. Use these (e.g. `text-brand-blue`,
+      // `bg-brand-navy`) instead of writing the hex via Tailwind arbitrary
+      // values like `bg-[var(--brand-blue)]`. `brand-*` is intentionally generic so
+      // the tokens survive a future rebrand without a codemod.
       colors: {
-        navy: '#1d2d44',
-        blue: {
-          brand: '#3A5190',
-        },
-        // Legacy alias — kept so existing utilities keep compiling.
-        teal: {
-          brand: '#A2D5BC',
-        },
-        turquoise: {
-          brand: '#A2D5BC',
+        // The `rgb(var(--…-rgb) / <alpha-value>)` form lets Tailwind's
+        // opacity modifiers (`bg-brand-blue/20`, `border-brand-mint/30`,
+        // etc.) decompose the color into channels. The matching
+        // `--brand-*-rgb` channel-list vars live in `globals.css :root`.
+        brand: {
+          blue:  'rgb(var(--brand-blue-rgb) / <alpha-value>)',
+          navy:  'rgb(var(--brand-navy-rgb) / <alpha-value>)',
+          teal:  'rgb(var(--brand-teal-rgb) / <alpha-value>)',
+          mint:  'rgb(var(--brand-mint-rgb) / <alpha-value>)',
+          cream: 'rgb(var(--brand-cream-rgb) / <alpha-value>)',
         },
         border: '#e0edf4',
         muted: '#6b8899',
@@ -34,8 +37,8 @@ const config: Config = {
       },
       backgroundImage: {
         // Reusable gradient matching your brand (blue → turquoise)
-        'brand-gradient': 'linear-gradient(135deg, #3A5190, #A2D5BC)',
-        'brand-gradient-90': 'linear-gradient(90deg, #3A5190, #A2D5BC)',
+        'brand-gradient': 'linear-gradient(135deg, var(--brand-blue), var(--brand-mint))',
+        'brand-gradient-90': 'linear-gradient(90deg, var(--brand-blue), var(--brand-mint))',
       },
     },
   },

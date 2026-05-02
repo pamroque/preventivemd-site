@@ -135,7 +135,7 @@ export default function VerifyPage() {
               </div>
               <h1 className="flex-1 min-w-0 text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)]">
                 Please verify your identity and enter the passcode sent to{' '}
-                <span className="text-[#3A5190]">{hydrated ? headingTarget : '…'}</span>.
+                <span className="text-brand-blue">{hydrated ? headingTarget : '…'}</span>.
               </h1>
             </div>
 
@@ -156,7 +156,7 @@ export default function VerifyPage() {
                     value={dob}
                     onChange={handleDobInput}
                     aria-required="true"
-                    className="w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none focus:border-[#3A5190] transition-colors"
+                    className="w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none focus:border-brand-blue transition-colors"
                   />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
@@ -171,7 +171,7 @@ export default function VerifyPage() {
                     value={lastName}
                     onChange={e => { setLastName(e.target.value); if (error) setError(null) }}
                     aria-required="true"
-                    className="w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none focus:border-[#3A5190] transition-colors"
+                    className="w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none focus:border-brand-blue transition-colors"
                   />
                 </div>
               </div>
@@ -197,7 +197,7 @@ export default function VerifyPage() {
                   <button
                     type="button"
                     onClick={handleResend}
-                    className="self-start text-sm font-bold text-[#3A5190] underline leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
+                    className="self-start text-sm font-bold text-brand-blue underline leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] rounded-sm"
                   >
                     Resend now
                   </button>
@@ -221,7 +221,7 @@ export default function VerifyPage() {
                   shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
                 "
-                style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+                style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
               >
                 {isSubmitting ? 'Verifying…' : 'Continue'}
                 <ChevronRightIcon />

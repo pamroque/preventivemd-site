@@ -142,7 +142,7 @@ function TreatmentCard({ treatment, eager = false }: { treatment: Treatment; eag
         </Link>
         <Link
           href={treatment.href}
-          className="relative flex flex-1 items-center justify-center gap-3 rounded-lg border border-[#3A5190] bg-[#3A5190] px-4 py-2 text-base font-medium leading-6 text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-2"
+          className="relative flex flex-1 items-center justify-center gap-3 rounded-lg border border-brand-blue bg-brand-blue px-4 py-2 text-base font-medium leading-6 text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-2"
         >
           Get started
         </Link>

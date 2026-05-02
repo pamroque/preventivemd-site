@@ -122,7 +122,7 @@ export default function QTargetWeightPage() {
         className={`overflow-y-auto bg-white focus:outline-none ${done ? "pb-[58px] md:pb-[138px]" : "pb-8"}`}
         style={{ height: 'calc(100dvh - 52px)', marginTop: '52px' }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -164,7 +164,7 @@ export default function QTargetWeightPage() {
             <div className="flex flex-col gap-2 animate-[fadeIn_0.4s_ease_forwards]">
               {/* Input — matches step-2 weight field: h-12 wrapper, spinners
                   visible so the user can step the value up/down. */}
-              <div className="flex items-center h-12 rounded-lg border border-[#e4e4e7] bg-white shadow-sm overflow-hidden px-3 focus-within:border-[#3A5190] transition-colors">
+              <div className="flex items-center h-12 rounded-lg border border-[#e4e4e7] bg-white shadow-sm overflow-hidden px-3 focus-within:border-brand-blue transition-colors">
                 <input
                   type="number"
                   inputMode="decimal"
@@ -189,7 +189,7 @@ export default function QTargetWeightPage() {
 
               {/* Live BMI */}
               {bmiText && (
-                <p id="bmi-display" className="text-sm font-bold text-[#3A5190]">
+                <p id="bmi-display" className="text-sm font-bold text-brand-blue">
                   {bmiText}
                 </p>
               )}
@@ -221,14 +221,14 @@ export default function QTargetWeightPage() {
           onClick={handleContinue}
           disabled={isNavigating}
           className="
-            relative w-full md:w-[480px] h-[42px] flex items-center justify-center gap-3 px-4
+            relative w-full md:w-[560px] h-[42px] flex items-center justify-center gap-3 px-4
             overflow-hidden rounded-tl-[36px] rounded-br-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+          style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
         >
           Save and continue
           <ChevronRightIcon />

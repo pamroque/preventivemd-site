@@ -52,9 +52,9 @@ function FemaleIcon({ active }: { active: boolean }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
       className="size-4 shrink-0" aria-hidden="true">
-      <circle cx="8" cy="6" r="4.5" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" />
-      <line x1="8" y1="10.5" x2="8" y2="15" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="5.5" y1="13" x2="10.5" y2="13" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="8" cy="6" r="4.5" stroke={active ? 'var(--brand-blue)' : '#09090b'} strokeWidth="1.5" />
+      <line x1="8" y1="10.5" x2="8" y2="15" stroke={active ? 'var(--brand-blue)' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="5.5" y1="13" x2="10.5" y2="13" stroke={active ? 'var(--brand-blue)' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }
@@ -63,9 +63,9 @@ function MaleIcon({ active }: { active: boolean }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
       className="size-4 shrink-0" aria-hidden="true">
-      <circle cx="7" cy="9" r="4.5" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" />
-      <line x1="10.5" y1="5.5" x2="15" y2="1" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
-      <polyline points="11,1 15,1 15,5" stroke={active ? '#3A5190' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="7" cy="9" r="4.5" stroke={active ? 'var(--brand-blue)' : '#09090b'} strokeWidth="1.5" />
+      <line x1="10.5" y1="5.5" x2="15" y2="1" stroke={active ? 'var(--brand-blue)' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" />
+      <polyline points="11,1 15,1 15,5" stroke={active ? 'var(--brand-blue)' : '#09090b'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -165,7 +165,7 @@ function calculateAge(dob: string): number {
 const schema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  sex: z.enum(['female', 'male'], { required_error: 'Please select a sex assigned at birth' }),
+  sex: z.enum(['female', 'male'], { required_error: 'Sex assigned at birth is required' }),
   dateOfBirth: z
     .string()
     .min(1, 'Date of birth is required')
@@ -196,7 +196,7 @@ type FormValues = z.infer<typeof schema>
 const inputBase =
   'w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm ' +
   'text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] ' +
-  'focus:outline-none focus:border-[#3A5190] focus-within:border-[#3A5190] transition-colors'
+  'focus:outline-none focus:border-brand-blue focus-within:border-brand-blue transition-colors'
 
 const inputErrorCls = 'border-red-600 focus:border-red-600 focus-within:border-red-600'
 
@@ -289,7 +289,7 @@ export default function QuestionnaireStep1() {
       <BackHeader backHref="/get-started" progress={PROGRESS} />
 
       <main id="main-content" tabIndex={-1} className={`min-h-screen bg-white pt-12 md:pt-14 focus:outline-none ${done ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}>
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           {/* ── Previous question — static, no animation ── */}
           <div className="flex flex-col gap-4 items-end w-full">
@@ -399,7 +399,10 @@ export default function QuestionnaireStep1() {
 
               {/* Sex assigned at birth — 0.5rem (8px) gap between label and buttons.
                   <legend> sits outside the fieldset's flex flow, so use mb-2
-                  on the legend instead of gap on the fieldset. */}
+                  on the legend instead of gap on the fieldset. The radiogroup
+                  + FieldError are wrapped in their own `flex flex-col gap-2`
+                  to match the buttons-to-error spacing on the other fields
+                  (gap-2 + the FieldError's mt-1 = 12px total). */}
               <fieldset
                 className="border-0 p-0 m-0"
                 aria-describedby={errors.sex ? 'sex-error' : undefined}
@@ -408,6 +411,7 @@ export default function QuestionnaireStep1() {
                   Sex assigned at birth <span className="text-red-600" aria-hidden="true">*</span>
                   <span className="sr-only">(required)</span>
                 </legend>
+                <div className="flex flex-col gap-2">
                 <div role="radiogroup" aria-labelledby="sex-label" className="flex gap-3">
                   {(['female', 'male'] as const).map((sex) => {
                     const isSelected = selectedSex === sex
@@ -421,7 +425,7 @@ export default function QuestionnaireStep1() {
                         className="flex-1 rounded-lg cursor-pointer"
                         style={isSelected ? {
                           padding: '2px',
-                          background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
+                          background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-mint) 100%)',
                         } : undefined}
                       >
                         <input
@@ -438,7 +442,7 @@ export default function QuestionnaireStep1() {
                             rounded-[6px] shadow-sm text-base font-medium transition-colors
                             peer-focus-visible:ring-2 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-[#3b82f6]
                             ${isSelected
-                              ? 'bg-white text-[#3A5190]'
+                              ? 'bg-white text-brand-blue'
                               : 'bg-white border border-[#e4e4e7] text-[#09090b] hover:bg-gray-50'}
                           `}
                         >
@@ -452,11 +456,8 @@ export default function QuestionnaireStep1() {
                     )
                   })}
                 </div>
-                {errors.sex && (
-                  <p id="sex-error" className="text-xs text-red-600 leading-4" role="alert">
-                    {errors.sex.message}
-                  </p>
-                )}
+                  <FieldError id="sex-error" message={errors.sex?.message} />
+                </div>
               </fieldset>
 
               {/* Date of birth + State */}
@@ -543,7 +544,7 @@ export default function QuestionnaireStep1() {
                     id="smsConsent"
                     type="checkbox"
                     {...register('smsConsent')}
-                    className="size-4 rounded border-[#e4e4e7] text-[#3A5190] focus:ring-[#3b82f6] cursor-pointer accent-[#3A5190]"
+                    className="size-4 rounded border-[#e4e4e7] text-brand-blue focus:ring-[#3b82f6] cursor-pointer accent-brand-blue"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -575,7 +576,7 @@ export default function QuestionnaireStep1() {
           disabled={isSubmitting || !done}
           className="
             relative flex items-center justify-center gap-3
-            w-full md:w-[480px] h-[42px] px-4 overflow-hidden
+            w-full md:w-[560px] h-[42px] px-4 overflow-hidden
             rounded-br-[36px] rounded-tl-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
@@ -583,7 +584,7 @@ export default function QuestionnaireStep1() {
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
           style={{
-            background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
+            background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)',
           }}
         >
           {isSubmitting ? 'Saving…' : 'Save and continue'}

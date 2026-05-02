@@ -45,7 +45,7 @@ function ToggleSwitch({
       onClick={() => onChange(!checked)}
       className={`relative h-5 w-8 shrink-0 rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
         checked
-          ? 'bg-[#3A5190] border-[#0778ba]'
+          ? 'bg-brand-blue border-[#0778ba]'
           : 'bg-[#a1a1aa] border-[#a1a1aa]'
       }`}
     >
@@ -102,7 +102,7 @@ function RadioOption({
           aria-hidden="true"
           className={`relative block size-4 rounded-lg border ${
             checked
-              ? 'border-[#3A5190] bg-[#3A5190] shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)]'
+              ? 'border-brand-blue bg-brand-blue shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)]'
               : 'border-[#e4e4e7] bg-white'
           }`}
         >
@@ -183,7 +183,7 @@ export default function AccessibilityMenu({
   }, [open])
 
   const defaultTrigger =
-    'flex items-center gap-1 rounded-md text-[#1d2d44] transition-opacity hover:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]'
+    'flex items-center gap-1 rounded-md text-brand-navy transition-opacity hover:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]'
 
   return (
     <div ref={containerRef} className={wrapperClassName ?? 'relative'}>

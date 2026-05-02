@@ -110,7 +110,7 @@ type FormValues = z.infer<typeof schema>
 
 const inputWrapperCls =
   'flex items-center h-12 rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden ' +
-  'focus-within:border-[#3A5190] transition-colors'
+  'focus-within:border-brand-blue transition-colors'
 const inputErrorCls = 'border-red-600 focus-within:border-red-600'
 
 // ─── Progress ────────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ export default function QuestionnaireStep2() {
           marginTop: '52px',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={historicSteps}
@@ -227,7 +227,7 @@ export default function QuestionnaireStep2() {
                     {questionWords.slice(0, visibleWords).map((word, i) => {
                       const isName = firstName && word.replace(/[.,!?]/, '') === firstName
                       return (
-                        <span key={i} className={isName ? 'text-[#3A5190]' : undefined}>
+                        <span key={i} className={isName ? 'text-brand-blue' : undefined}>
                           {word}
                           {i < visibleWords - 1 ? ' ' : ''}
                         </span>
@@ -351,7 +351,7 @@ export default function QuestionnaireStep2() {
           disabled={isSubmitting || !done}
           className="
             relative flex items-center justify-center gap-3
-            w-full md:w-[480px] h-[42px] px-4 overflow-hidden
+            w-full md:w-[560px] h-[42px] px-4 overflow-hidden
             rounded-br-[36px] rounded-tl-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
@@ -359,7 +359,7 @@ export default function QuestionnaireStep2() {
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
           style={{
-            background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
+            background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)',
           }}
         >
           {isSubmitting ? 'Saving…' : 'Save and continue'}

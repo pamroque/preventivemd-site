@@ -93,7 +93,7 @@ export default function QPriorSurgeryTypePage() {
         className={`overflow-y-auto bg-white focus:outline-none ${done ? "pb-[58px] md:pb-[138px]" : "pb-8"}`}
         style={{ height: 'calc(100dvh - 52px)', marginTop: '52px' }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -148,7 +148,7 @@ export default function QPriorSurgeryTypePage() {
                   w-full rounded-lg border bg-white px-3 py-2.5
                   text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
                   resize-y shadow-sm focus:outline-none transition-colors
-                  ${error ? 'border-red-600 focus:border-red-600' : 'border-[rgba(0,0,0,0.12)] focus:border-[#3A5190]'}
+                  ${error ? 'border-red-600 focus:border-red-600' : 'border-[rgba(0,0,0,0.12)] focus:border-brand-blue'}
                 `}
                 aria-invalid={!!error}
                 aria-describedby={error ? 'surgery-error' : undefined}
@@ -178,14 +178,14 @@ export default function QPriorSurgeryTypePage() {
           onClick={handleContinue}
           disabled={isNavigating}
           className="
-            relative w-full md:w-[480px] h-[42px] flex items-center justify-center gap-3 px-4
+            relative w-full md:w-[560px] h-[42px] flex items-center justify-center gap-3 px-4
             overflow-hidden rounded-tl-[36px] rounded-br-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+          style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
         >
           Save and continue
           <ChevronRightIcon />

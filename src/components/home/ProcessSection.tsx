@@ -199,7 +199,7 @@ export default function ProcessSection() {
 
       {/* Dark container — stacks on mobile + tablet, three columns at lg+
           where there's enough room to give Step 2 the width it needs. */}
-      <div className="flex w-full flex-col gap-12 overflow-hidden rounded-br-[48px] rounded-tl-[48px] bg-gradient-to-t from-[#1d2d44] to-[#071024] px-6 pt-9 pb-6 md:rounded-br-[72px] md:rounded-tl-[72px] md:px-12 md:pt-9 md:pb-12 lg:flex-row">
+      <div className="flex w-full flex-col gap-12 overflow-hidden rounded-br-[48px] rounded-tl-[48px] bg-gradient-to-t from-brand-navy to-[#071024] px-6 pt-9 pb-6 md:rounded-br-[72px] md:rounded-tl-[72px] md:px-12 md:pt-9 md:pb-12 lg:flex-row">
         {/* Step 1 — left column. CTA sits directly below the step copy. */}
         <div
           className={`flex flex-col gap-6 lg:w-[300px] ${stepAnimClass(visible)}`}
@@ -212,7 +212,7 @@ export default function ProcessSection() {
           />
           <Link
             href="/get-started"
-            className="relative flex w-full items-center justify-center gap-3 rounded-lg border border-[#3A5190] bg-[#3A5190] px-4 py-2 text-base font-medium leading-6 text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1d2d44]"
+            className="relative flex w-full items-center justify-center gap-3 rounded-lg border border-brand-blue bg-brand-blue px-4 py-2 text-base font-medium leading-6 text-white shadow-[inset_0px_2px_0px_0px_rgba(255,255,255,0.15)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy"
           >
             Get started
           </Link>

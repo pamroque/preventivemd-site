@@ -11,7 +11,7 @@ import Link from 'next/link'
 
 export function Footer() {
   return (
-    <footer className="bg-navy text-white/50 text-center text-xs font-light py-10 px-6 leading-relaxed">
+    <footer className="bg-brand-navy text-white/50 text-center text-xs font-light py-10 px-6 leading-relaxed">
       <p>
         All peptides require a valid physician consultation and prescription.
         Pricing reflects compounded medication costs and may vary.

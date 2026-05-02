@@ -60,25 +60,16 @@ export default function StartQuestionnaireButton({ peptide }: { peptide?: string
   return (
     <div className="flex flex-col gap-9">
       <div className="flex flex-col gap-1">
+        {/*
+         * DOM order is [label, checkbox] so the embedded link gets focused
+         * first when tabbing — the user wanted to read the legalese before
+         * being asked to consent. Visual order is preserved via flex `order`,
+         * so the checkbox still appears on the left.
+         */}
         <div className="flex items-start gap-3">
-          <div className="flex items-center justify-center h-5 w-4 shrink-0">
-            <input
-              ref={checkboxRef}
-              id={checkboxId}
-              type="checkbox"
-              checked={consented}
-              onChange={(e) => handleConsentChange(e.target.checked)}
-              className={`size-4 rounded accent-[#3A5190] focus-visible:ring-2 focus-visible:ring-[#3b82f6] cursor-pointer ${
-                showError ? 'border-2 border-red-600' : 'border border-[#e4e4e7]'
-              }`}
-              aria-required="true"
-              aria-invalid={showError}
-              aria-describedby={showError ? errorId : undefined}
-            />
-          </div>
           <label
             htmlFor={checkboxId}
-            className="flex-1 text-sm font-medium leading-5 text-[rgba(0,0,0,0.87)] cursor-pointer"
+            className="order-2 flex-1 text-sm font-medium leading-5 text-[rgba(0,0,0,0.87)] cursor-pointer"
           >
             I consent to the collection and processing of my consumer health data
             as described in the{' '}
@@ -86,7 +77,7 @@ export default function StartQuestionnaireButton({ peptide }: { peptide?: string
               href="#"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#3A5190] underline underline-offset-2"
+              className="text-brand-blue underline underline-offset-2"
               onClick={(e) => e.stopPropagation()}
             >
               Consumer Health Data Privacy Policy
@@ -94,33 +85,79 @@ export default function StartQuestionnaireButton({ peptide }: { peptide?: string
             . <span className="text-red-600" aria-hidden="true">*</span>
             <span className="sr-only">(required)</span>
           </label>
+          <div className="order-1 flex items-center justify-center h-5 w-4 shrink-0">
+            <input
+              ref={checkboxRef}
+              id={checkboxId}
+              type="checkbox"
+              checked={consented}
+              onChange={(e) => handleConsentChange(e.target.checked)}
+              className={`size-4 rounded accent-brand-blue focus-visible:ring-2 focus-visible:ring-[#3b82f6] cursor-pointer ${
+                showError ? 'border-2 border-red-600' : 'border border-[#e4e4e7]'
+              }`}
+              aria-required="true"
+              aria-invalid={showError}
+              aria-describedby={showError ? errorId : undefined}
+            />
+          </div>
         </div>
         {showError && (
           <p id={errorId} className="text-xs text-red-600 leading-4 ml-7" role="alert">
-            You must consent before continuing.
+            You must consent before continuing
           </p>
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={handleClick}
-        className="
-          relative flex items-center justify-center gap-3
-          w-full h-[42px] px-4 py-2 overflow-hidden
-          rounded-tl-[36px] rounded-br-[36px] rounded-tr-none rounded-bl-none
-          text-white text-base font-medium leading-6 whitespace-nowrap
-          transition-opacity hover:opacity-90
-          shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
-        "
-        style={{
-          background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
-        }}
-      >
-        Start medical questionnaire
-        <ChevronRightIcon />
-      </button>
+      {/*
+       * DOM order inside this CTA cluster is [legal copy, button] so the
+       * Terms of Use and Privacy Policy links get focused before the
+       * "Start medical questionnaire" button. Visual order is preserved
+       * via flex `order`: button on top (order-1), legal copy below
+       * (order-2).
+       */}
+      <div className="flex flex-col gap-4">
+        <p className="order-2 text-sm text-[#71717a] text-center leading-5">
+          By starting, you agree to our{' '}
+          <a
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-blue underline underline-offset-2"
+          >
+            Terms of Use
+          </a>{' '}
+          and acknowledge our{' '}
+          <a
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-blue underline underline-offset-2"
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
+        <button
+          type="button"
+          onClick={handleClick}
+          className="
+            order-1
+            relative flex items-center justify-center gap-3
+            w-full h-[42px] px-4 py-2 overflow-hidden
+            rounded-tl-[36px] rounded-br-[36px] rounded-tr-none rounded-bl-none
+            text-white text-base font-medium leading-6 whitespace-nowrap
+            transition-opacity hover:opacity-90
+            shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
+          "
+          style={{
+            background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)',
+          }}
+        >
+          Start medical questionnaire
+          <ChevronRightIcon />
+        </button>
+      </div>
     </div>
   )
 }

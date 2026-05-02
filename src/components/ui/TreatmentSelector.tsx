@@ -68,7 +68,7 @@ function GradientCard({
     <div
       style={isSelected ? {
         padding: '2px',
-        background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
+        background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-mint) 100%)',
         borderRadius: 12,
       } : undefined}
     >
@@ -80,12 +80,12 @@ function GradientCard({
         className={`w-full text-left p-4 flex items-start gap-3 transition-colors ${
           isSelected
             ? 'rounded-[10px] bg-white'
-            : 'rounded-xl border border-[#e3e3e3] hover:border-[#3A5190]/40'
+            : 'rounded-xl border border-[#e3e3e3] hover:border-brand-blue/40'
         }`}
       >
         <div
           className={`mt-0.5 shrink-0 size-4 rounded border-2 flex items-center justify-center transition-colors ${
-            isSelected ? 'border-[#3A5190] bg-[#3A5190]' : 'border-[#d4d4d8] bg-white'
+            isSelected ? 'border-brand-blue bg-brand-blue' : 'border-[#d4d4d8] bg-white'
           }`}
           aria-hidden="true"
         >
@@ -98,16 +98,16 @@ function GradientCard({
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-lg font-medium leading-7 ${isSelected ? 'text-[#3A5190]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+            <span className={`text-lg font-medium leading-7 ${isSelected ? 'text-brand-blue' : 'text-[rgba(0,0,0,0.87)]'}`}>
               {treatment.name}
             </span>
             {isGoalMatch && (
-              <span className="text-[11px] font-semibold tracking-[1.5px] uppercase text-[#07808d] leading-none">
+              <span className="text-[11px] font-semibold tracking-[1.5px] uppercase text-brand-teal leading-none">
                 GOAL MATCH
               </span>
             )}
           </div>
-          <TreatmentDescription treatment={treatment} boldFirst={false} />
+          <TreatmentDescription treatment={treatment} boldFirst={true} />
         </div>
       </button>
     </div>
@@ -129,7 +129,7 @@ function PlainCard({
     <div
       style={isSelected ? {
         padding: '2px',
-        background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
+        background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-mint) 100%)',
         borderRadius: 12,
       } : undefined}
     >
@@ -137,7 +137,7 @@ function PlainCard({
         className={`flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors bg-white ${
           isSelected
             ? 'rounded-[10px]'
-            : 'rounded-lg border border-[#e3e3e3] hover:border-[#3A5190]/40'
+            : 'rounded-lg border border-[#e3e3e3] hover:border-brand-blue/40'
         }`}
       >
         <input
@@ -146,7 +146,7 @@ function PlainCard({
           onChange={onToggle}
           className="
             shrink-0 size-4 rounded-[4px] border border-[#e4e4e7]
-            accent-[#3A5190]
+            accent-brand-blue
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
             cursor-pointer
           "
@@ -157,7 +157,7 @@ function PlainCard({
               {treatment.name}
             </span>
             {isGoalMatch && (
-              <span className="text-[11px] font-semibold tracking-[1.5px] uppercase text-[#07808d] leading-none">
+              <span className="text-[11px] font-semibold tracking-[1.5px] uppercase text-brand-teal leading-none">
                 GOAL MATCH
               </span>
             )}
@@ -328,17 +328,24 @@ export default function TreatmentSelector({
       return
     }
     setIsNavigating(true)
-    const selectedTreatments = TREATMENTS.filter(t => selected.has(t.id))
+    // Save in the same order the user actually saw the treatments — so
+    // the next page (choose-medications / desired-treatments / etc.)
+    // can render the picks in matching order without re-sorting.
+    const orderedSelected = sortedTreatments.eligible.filter(t => selected.has(t.id))
     saveStep(
       stepIndex,
-      { question: questionText, bubbles: selectedTreatments.map(t => t.name) },
-      { treatments: JSON.stringify([...selected]) },
+      { question: questionText, bubbles: orderedSelected.map(t => t.name) },
+      { treatments: JSON.stringify(orderedSelected.map(t => t.id)) },
     )
     router.push(nextHref)
   }
 
   const hasSelection = selected.size > 0
-  const showStickyCta = done && hasSelection
+  // Sticky CTA shows as soon as Eve finishes typing — even before any
+  // treatment is checked. Clicking "Save and continue" with nothing
+  // selected raises `showEmptyError`, which renders the inline message
+  // above the picker (and references the escape option when one exists).
+  const showStickyCta = done
 
   return (
     <>
@@ -353,7 +360,7 @@ export default function TreatmentSelector({
           marginTop: '52px',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -399,7 +406,7 @@ export default function TreatmentSelector({
                 <p id="treatments-error" role="alert" className="text-sm leading-5 text-red-600">
                   {escapeLabel
                     ? `Please select at least one treatment, or choose \u201c${escapeLabel}.\u201d`
-                    : 'Please check at least one treatment.'}
+                    : 'Please check at least one treatment'}
                 </p>
               )}
             </div>
@@ -418,9 +425,9 @@ export default function TreatmentSelector({
                   disabled={isNavigating}
                   className="
                     w-full h-[42px] flex items-center justify-center px-4
-                    rounded-lg border border-[#3A5190] bg-white
-                    text-base font-medium text-[#3A5190]
-                    transition-colors hover:bg-[#3A5190]/5
+                    rounded-lg border border-brand-blue bg-white
+                    text-base font-medium text-brand-blue
+                    transition-colors hover:bg-brand-blue/5
                     disabled:opacity-60
                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
                   "
@@ -498,14 +505,14 @@ export default function TreatmentSelector({
           disabled={isNavigating}
           className="
             flex items-center justify-center gap-3
-            w-full md:w-[480px] h-[42px] px-4
+            w-full md:w-[560px] h-[42px] px-4
             rounded-br-[36px] rounded-tl-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+          style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
         >
           {isNavigating ? 'Saving…' : 'Save and continue'}
           <ChevronRightIcon />

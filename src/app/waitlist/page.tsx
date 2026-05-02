@@ -35,7 +35,7 @@ function WaitlistForm() {
     <section className="pt-32 pb-20 px-6 md:px-12">
       <div className="max-w-lg mx-auto text-center">
         <div className="section-label justify-center">Coming Soon</div>
-        <h1 className="text-[clamp(1.8rem,3.5vw,2.6rem)] font-extralight tracking-tight text-navy mb-4">
+        <h1 className="text-[clamp(1.8rem,3.5vw,2.6rem)] font-extralight tracking-tight text-brand-navy mb-4">
           {peptide ? (
             <>
               Get early access to{' '}
@@ -51,9 +51,9 @@ function WaitlistForm() {
         </p>
 
         {submitted ? (
-          <div className="bg-teal-brand/10 border border-teal-brand/30 rounded-2xl p-8">
+          <div className="bg-brand-mint/10 border border-brand-mint/30 rounded-2xl p-8">
             <div className="text-3xl mb-3">&#10003;</div>
-            <h2 className="text-lg font-semibold text-navy mb-2">You&apos;re on the list!</h2>
+            <h2 className="text-lg font-semibold text-brand-navy mb-2">You&apos;re on the list!</h2>
             <p className="text-sm text-muted font-light">
               We&apos;ll email you at <strong>{email}</strong> when{' '}
               {peptide || 'this treatment'} is available.
@@ -67,7 +67,7 @@ function WaitlistForm() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:border-blue-brand/50 focus:ring-2 focus:ring-blue-brand/10"
+              className="flex-1 px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:border-brand-blue/50 focus:ring-2 focus:ring-brand-blue/10"
             />
             <button
               type="submit"

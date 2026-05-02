@@ -67,7 +67,7 @@ export default async function GetStartedPage({
      */
     <main id="main-content" tabIndex={-1} className="min-h-screen bg-white pt-12 pb-[52px] md:pt-14 md:pb-0 focus:outline-none">
       <ReactivationGate />
-      <div className="mx-auto w-full px-4 py-9 md:max-w-lg md:px-0 md:py-12 lg:max-w-[480px] flex flex-col gap-9 md:gap-12">
+      <div className="mx-auto w-full px-4 py-9 md:max-w-[560px] md:px-0 md:py-12 flex flex-col gap-9 md:gap-12">
 
         {/* ── Greeting ── */}
         <section aria-labelledby="greeting-heading" className="flex items-start gap-3 md:gap-4">
@@ -91,14 +91,21 @@ export default async function GetStartedPage({
               Hi, I&rsquo;m Eve, your concierge. Getting started is simple.
             </h1>
             <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
-              Please note that we are not yet available in Alaska, Mississippi, and New Jersey.
+              Please note that we are not yet available in Alaska, Mississippi, and New Jersey.{' '}
+              <a
+                href="/waitlist"
+                className="text-brand-blue underline underline-offset-2"
+              >
+                Sign up
+              </a>{' '}
+              to get notified once we are.
             </p>
           </div>
         </section>
 
         {/* ── Timeline + footnote ── */}
         <section aria-label="How it works" className="flex flex-col gap-3">
-          <div className="flex flex-col p-6 rounded-tr-[36px] rounded-bl-[36px] bg-gradient-to-r from-[#1d2d44] to-[#0f172a] text-white">
+          <div className="flex flex-col p-6 rounded-tr-[36px] rounded-bl-[36px] bg-gradient-to-r from-brand-navy to-[#0f172a] text-white">
             {/* Step 1 */}
             <div className="flex items-center gap-4">
               <TimelineDot />
@@ -157,31 +164,11 @@ export default async function GetStartedPage({
         <section aria-labelledby="cta-heading" className="flex flex-col gap-4">
           <h2 id="cta-heading" className="sr-only">Start your intake</h2>
 
-          {/* Primary CTA button — saves get-started Q&A to session store */}
+          {/* Primary CTA button — saves get-started Q&A to session store.
+              The Terms of Use / Privacy Policy legal copy now lives inside
+              this component so the links can be DOM-ordered (and tab-focused)
+              before the gradient button itself. */}
           <StartQuestionnaireButton peptide={peptide} />
-
-          {/* Legal copy */}
-          <p className="text-sm text-[#71717a] text-center leading-5">
-            By continuing, you agree to our{' '}
-            <a
-              href="#"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#3A5190] underline underline-offset-2"
-            >
-              Terms of Use
-            </a>{' '}
-            and acknowledge our{' '}
-            <a
-              href="#"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#3A5190] underline underline-offset-2"
-            >
-              Privacy Policy
-            </a>
-            .
-          </p>
 
           {/* Trust badges — 2x exports rendered at their 1x display dimensions */}
           <div className="flex items-center justify-center gap-4">

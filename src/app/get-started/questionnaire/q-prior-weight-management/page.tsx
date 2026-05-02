@@ -151,7 +151,7 @@ export default function QPriorWeightManagementPage() {
         className={`overflow-y-auto bg-white focus:outline-none ${done && hasSelection ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
         style={{ height: 'calc(100dvh - 52px)', marginTop: '52px' }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -208,7 +208,7 @@ export default function QPriorWeightManagementPage() {
                 className="
                   w-full h-[42px] flex items-center justify-center px-4
                   rounded-lg border border-[#e4e4e7] bg-white
-                  text-base font-medium text-[#3A5190]
+                  text-base font-medium text-brand-blue
                   hover:bg-gray-50 transition-colors
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]
                   disabled:opacity-60
@@ -225,7 +225,7 @@ export default function QPriorWeightManagementPage() {
                     key={approach.id}
                     style={isSelected ? {
                       padding: 2,
-                      background: 'linear-gradient(90deg, #3A5190 0%, #A2D5BC 100%)',
+                      background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-mint) 100%)',
                       borderRadius: 10,
                     } : undefined}
                   >
@@ -236,13 +236,13 @@ export default function QPriorWeightManagementPage() {
                       className={`w-full flex items-center gap-6 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1 ${
                         isSelected
                           ? 'rounded-[8px] bg-white'
-                          : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-[#3A5190]/40'
+                          : 'rounded-lg border border-[#e3e3e3] bg-white hover:border-brand-blue/40'
                       }`}
                     >
                       {/* Checkbox indicator */}
                       <div className={`shrink-0 size-4 rounded-[4px] border flex items-center justify-center transition-colors ${
                         isSelected
-                          ? 'bg-[#3A5190] border-[#3A5190]'
+                          ? 'bg-brand-blue border-brand-blue'
                           : 'bg-white border-[#e4e4e7]'
                       }`}>
                         {isSelected && (
@@ -256,7 +256,7 @@ export default function QPriorWeightManagementPage() {
 
                       {/* Label + subtitle */}
                       <div className="flex-1 min-w-0 flex flex-col gap-1">
-                        <span className={`text-base font-medium leading-6 ${isSelected ? 'text-[#3A5190]' : 'text-[rgba(0,0,0,0.87)]'}`}>
+                        <span className={`text-base font-medium leading-6 ${isSelected ? 'text-brand-blue' : 'text-[rgba(0,0,0,0.87)]'}`}>
                           {approach.label}
                         </span>
                         {approach.sub && (
@@ -293,14 +293,14 @@ export default function QPriorWeightManagementPage() {
           onClick={handleContinue}
           disabled={isNavigating}
           className="
-            relative w-full md:w-[480px] h-[42px] flex items-center justify-center gap-3 px-4
+            relative w-full md:w-[560px] h-[42px] flex items-center justify-center gap-3 px-4
             overflow-hidden rounded-tl-[36px] rounded-br-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60
             shadow-[inset_0_2px_0_0_rgba(255,255,255,0.15)]
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
-          style={{ background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)' }}
+          style={{ background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)' }}
         >
           Save and continue
           <ChevronRightIcon />

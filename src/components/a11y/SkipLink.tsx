@@ -16,7 +16,7 @@ export default function SkipLink() {
         focus:fixed focus:top-4 focus:left-4 focus:z-[100]
         focus:inline-flex focus:items-center
         focus:px-4 focus:py-2
-        focus:rounded-md focus:bg-[#3A5190] focus:text-white
+        focus:rounded-md focus:bg-brand-blue focus:text-white
         focus:text-sm focus:font-medium focus:leading-5
         focus:shadow-lg
         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6]

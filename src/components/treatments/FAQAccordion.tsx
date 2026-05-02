@@ -36,7 +36,7 @@ export function FAQAccordion({ faqs }: { faqs: FAQ[] }) {
               onClick={() => setOpenIndex(isOpen ? null : i)}
               className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-bg/50 transition-colors"
             >
-              <span className="text-sm font-medium text-navy pr-4">{faq.q}</span>
+              <span className="text-sm font-medium text-brand-navy pr-4">{faq.q}</span>
               <svg
                 className={`w-4 h-4 text-muted shrink-0 transition-transform duration-200 ${
                   isOpen ? 'rotate-180' : ''

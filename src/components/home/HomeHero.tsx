@@ -66,7 +66,7 @@ export default function HomeHero() {
         align="right"
         compact
         wrapperClassName="absolute right-0 top-0 z-10"
-        triggerClassName="flex items-center gap-1 rounded-bl-lg bg-white pb-2 pl-2 pr-2 pt-1.5 text-[#1d2d44] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:gap-1 md:pl-3 md:pr-3"
+        triggerClassName="flex items-center gap-1 rounded-bl-lg bg-white pb-2 pl-2 pr-2 pt-1.5 text-brand-navy transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] md:gap-1 md:pl-3 md:pr-3"
       />
 
       {/* Content — logo top-left, headline + buttons bottom-left.

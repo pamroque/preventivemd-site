@@ -127,7 +127,12 @@ const PROGRESS = 25
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 const NEXT_STEP = '/get-started/questionnaire/step-6'
-const DISQUALIFICATION_STEP = '/get-started/questionnaire/disqualification'
+
+// Disqualifying answers no longer reroute here — the user finishes the
+// questionnaire and the decision is made at step-11 via
+// `src/lib/disqualification.ts > isIntakeDisqualified()`. The
+// `disqualifying: true` flags on the CONDITIONS list are kept for
+// documentation; the routing source of truth lives in the lib helper.
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
@@ -192,14 +197,13 @@ export default function QuestionnaireStep5() {
 
     const selectedConditions = CONDITIONS.filter((c) => selected.has(c.id))
     const bubbles = selectedConditions.map((c) => c.label)
-    const isDisqualified = selectedConditions.some((c) => c.disqualifying)
 
     saveStep(
       4,
       { question: QUESTION_TEXT, bubbles },
       { conditions: [...selected].join(',') }
     )
-    router.push(isDisqualified ? DISQUALIFICATION_STEP : NEXT_STEP)
+    router.push(NEXT_STEP)
   }
 
   return (
@@ -215,7 +219,7 @@ export default function QuestionnaireStep5() {
           marginTop: '52px',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
+        <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -274,8 +278,8 @@ export default function QuestionnaireStep5() {
                 className="
                   w-full h-[42px] flex items-center justify-center px-4
                   rounded-lg border border-[#e4e4e7] bg-white
-                  text-base font-medium text-[#3A5190]
-                  shadow-sm transition-colors hover:border-[#3A5190]/40
+                  text-base font-medium text-brand-blue
+                  shadow-sm transition-colors hover:border-brand-blue/40
                   disabled:opacity-60
                 "
               >
@@ -296,7 +300,7 @@ export default function QuestionnaireStep5() {
                         onChange={() => toggle(condition.id)}
                         className="
                           size-4 rounded-[4px] border border-[#e4e4e7]
-                          accent-[#3A5190]
+                          accent-brand-blue
                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
                           cursor-pointer
                         "
@@ -329,7 +333,7 @@ export default function QuestionnaireStep5() {
           disabled={isNavigating || !hasSelection}
           className="
             relative flex items-center justify-center gap-3
-            w-full md:w-[480px] h-[42px] px-4 overflow-hidden
+            w-full md:w-[560px] h-[42px] px-4 overflow-hidden
             rounded-br-[36px] rounded-tl-[36px]
             text-white text-base font-medium leading-6 whitespace-nowrap
             transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed
@@ -337,7 +341,7 @@ export default function QuestionnaireStep5() {
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#3b82f6]
           "
           style={{
-            background: 'linear-gradient(90deg, #3A5190 0%, #3A5190 64.61%, #A2D5BC 100%)',
+            background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-blue) 64.61%, var(--brand-mint) 100%)',
           }}
         >
           {isNavigating ? 'Saving…' : 'Save and continue'}

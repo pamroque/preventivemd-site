@@ -21,7 +21,7 @@ function UserCircleIcon({ className }: { className?: string }) {
 
 function WelcomeIcon({ active }: { active: boolean }) {
   return (
-    <span className={`size-8 flex items-center justify-center ${active ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+    <span className={`size-8 flex items-center justify-center ${active ? 'text-brand-blue' : 'text-[#71717a]'}`}>
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <g clipPath="url(#clip0_welcome)">
           <path d="M31.9889 9.80974C32.1196 14.2794 31.1344 19.3061 26.99 22.0504C25.2468 23.0789 23.0877 23.0972 21.3037 22.5104C20.003 22.0927 18.8128 21.4428 17.7659 20.586C17.9307 20.3754 18.0958 20.1647 18.2606 19.9541C19.2572 20.6624 20.4164 21.1982 21.5922 21.4938C23.2265 21.9136 24.9528 21.7636 26.2843 20.8817C29.2245 18.7922 30.2293 14.5757 30.1402 10.8479C25.0636 11.117 21.3769 14.3102 17.9229 18.3229C17.7251 18.531 17.535 18.7295 17.3341 18.9369C14.9267 21.414 11.8259 23.3699 8.27489 23.9433C6.51468 24.2099 4.592 24.14 2.85364 23.2375C1.08282 22.3857 -0.0976532 20.2861 0.0100256 18.3816C-0.217242 14.7169 3.46102 11.8396 6.80853 11.9166C8.68972 11.9543 10.3805 12.7887 11.7855 13.7955C12.8697 14.5759 13.8348 15.4949 14.7137 16.4659C14.5215 16.6519 14.3291 16.8379 14.1369 17.024C13.2232 16.1447 12.2429 15.3304 11.1949 14.6719C9.83273 13.8156 8.30851 13.2067 6.80853 13.2641C4.03689 13.4614 1.5239 15.5656 1.77282 18.3816C1.68748 21.3314 5.05403 22.5437 7.94467 21.9322C10.9046 21.4017 13.6469 19.6748 15.7968 17.4487C15.9919 17.2469 16.1773 17.0531 16.371 16.8491C18.2513 14.9043 20.0526 12.6788 22.6052 11.0842C25.1577 9.47365 28.1979 8.97606 31.0136 8.93572L31.9326 8.92035L31.9889 9.80974Z" fill="currentColor"/>
@@ -38,7 +38,7 @@ function WelcomeIcon({ active }: { active: boolean }) {
 
 function TreatmentsIcon({ active }: { active: boolean }) {
   return (
-    <span className={`size-8 flex items-center justify-center ${active ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+    <span className={`size-8 flex items-center justify-center ${active ? 'text-brand-blue' : 'text-[#71717a]'}`}>
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M15.5649 15.0212C15.9686 15.0212 16.2961 15.348 16.2963 15.7516V18.7341H19.2787C19.6824 18.7343 20.0092 19.0618 20.0092 19.4655C20.0092 19.8693 19.6824 20.1968 19.2787 20.197H16.2963V23.1794C16.2961 23.5831 15.9686 23.9099 15.5649 23.9099C15.1611 23.9098 14.8336 23.5831 14.8334 23.1794V20.197H11.851C11.4473 20.1967 11.1205 19.8692 11.1205 19.4655C11.1206 19.0618 11.4473 18.7343 11.851 18.7341H14.8334V15.7516C14.8336 15.348 15.1611 15.0212 15.5649 15.0212Z" fill="currentColor" stroke="currentColor" strokeWidth="0.2"/>
         <path d="M22.2015 1.2337C23.6684 1.23392 24.8616 2.42697 24.8616 3.89386V4.7962C24.8616 6.26309 23.6683 7.45615 22.2015 7.45636H21.3841V8.43097C21.6875 8.5693 22.0987 8.77006 22.5013 9.01105C22.929 9.26706 23.3559 9.57179 23.6322 9.89972L24.4818 10.9095C24.8814 11.384 25.2346 12.0455 25.4876 12.7386C25.7406 13.4317 25.8968 14.1652 25.8968 14.7855V28.1068C25.8966 29.5736 24.7025 30.7669 23.2357 30.7669H7.89388C6.42701 30.7669 5.23397 29.5736 5.23372 28.1068V14.7855C5.23372 14.1651 5.38989 13.4317 5.6429 12.7386C5.89589 12.0455 6.24819 11.384 6.64778 10.9095L7.49837 9.89972C7.77454 9.57198 8.20078 9.26694 8.62825 9.01105C9.03061 8.77021 9.44209 8.57027 9.74544 8.43195V7.45636H8.92903C7.46199 7.45636 6.2679 6.26322 6.2679 4.7962V3.89386C6.2679 2.42684 7.46202 1.2337 8.92903 1.2337H22.2015ZM11.2083 8.91046C11.2083 9.20917 11.0265 9.4779 10.7493 9.58917C10.4341 9.71576 9.98926 9.92186 9.57747 10.1517C9.16186 10.3836 8.79331 10.6322 8.61653 10.8421L7.76692 11.8519C7.48567 12.1858 7.2163 12.697 7.0179 13.2405C6.81951 13.7841 6.69563 14.3489 6.69563 14.7855V28.1068C6.69588 28.7669 7.23364 29.304 7.89388 29.304H23.2357C23.8959 29.304 24.4337 28.7669 24.4339 28.1068V14.7855C24.4339 14.3488 24.31 13.7841 24.1116 13.2405C23.9133 12.6972 23.6448 12.1858 23.3636 11.8519L22.513 10.8421C22.3362 10.6322 21.9677 10.3836 21.5521 10.1517C21.1403 9.92185 20.6956 9.7158 20.3802 9.58917C20.1033 9.47779 19.9212 9.20904 19.9212 8.91046V7.45636H11.2083V8.91046ZM19.8812 5.99445H20.8089V2.69562H19.8812V5.99445ZM10.3206 5.99445H11.2484V2.69562H10.3206V5.99445ZM17.4915 5.99445H18.4183V2.69562H17.4915V5.99445ZM15.1009 5.99445H16.0286V2.69562H15.1009V5.99445ZM12.7113 5.99445H13.639V2.69562H12.7113V5.99445ZM8.85872 2.69952C8.23078 2.73593 7.73079 3.25699 7.73079 3.89386V4.7962C7.73079 5.43307 8.23078 5.95414 8.85872 5.99054V2.69952ZM22.2708 5.99054C22.8989 5.95424 23.3988 5.43315 23.3988 4.7962V3.89386C23.3988 3.2569 22.8989 2.73482 22.2708 2.69855V5.99054Z" fill="currentColor" stroke="currentColor" strokeWidth="0.2"/>
@@ -49,7 +49,7 @@ function TreatmentsIcon({ active }: { active: boolean }) {
 
 function GetStartedIcon({ active }: { active: boolean }) {
   return (
-    <span className={`size-8 flex items-center justify-center ${active ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+    <span className={`size-8 flex items-center justify-center ${active ? 'text-brand-blue' : 'text-[#71717a]'}`}>
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <g clipPath="url(#clip0_getstarted)">
           <path d="M20.8876 5.18385C20.5322 3.92363 19.3739 3 18 3H14C12.6261 3 11.4678 3.92363 11.1124 5.18385M20.8876 5.18385C20.9608 5.44334 21 5.7171 21 6C21 6.55228 20.5523 7 20 7H12C11.4477 7 11 6.55228 11 6C11 5.7171 11.0392 5.44334 11.1124 5.18385M20.8876 5.18385C21.7492 5.24891 22.606 5.33103 23.4578 5.42988C24.9252 5.60018 26 6.86533 26 8.34265V26C26 27.6569 24.6569 29 23 29H9C7.34315 29 6 27.6569 6 26V8.34265C6 6.86533 7.07477 5.60018 8.54224 5.42988C9.39396 5.33103 10.2508 5.24891 11.1124 5.18385" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -119,7 +119,7 @@ function DesktopNav({
       {/* Leading */}
       <div className="flex items-center gap-6">
         {/* Logo */}
-        <Link href="/" aria-label="PreventiveMD home" className="text-[#1d2d44]">
+        <Link href="/" aria-label="PreventiveMD home" className="text-brand-navy">
           <Logo className="h-[18px] w-auto" />
         </Link>
 
@@ -144,8 +144,8 @@ function DesktopNav({
                     href={href}
                     className={`flex items-center justify-center px-2 py-2 rounded-lg text-sm font-medium leading-5 whitespace-nowrap transition-colors ${
                       isActive
-                        ? 'text-[#3A5190]'
-                        : 'text-[#1d2d44] hover:text-[#3A5190]'
+                        ? 'text-brand-blue'
+                        : 'text-brand-navy hover:text-brand-blue'
                     }`}
                     aria-current={isActive ? 'page' : undefined}
                   >
@@ -153,7 +153,7 @@ function DesktopNav({
                   </Link>
                   {isActive && (
                     <span
-                      className="absolute -bottom-[10px] left-0 right-0 h-0.5 bg-[#3A5190] rounded-full"
+                      className="absolute -bottom-[10px] left-0 right-0 h-0.5 bg-brand-blue rounded-full"
                       aria-hidden="true"
                     />
                   )}
@@ -175,12 +175,12 @@ function DesktopNav({
               aria-current={isSignInActive ? 'page' : undefined}
               className={`flex items-center gap-2 px-[10px] py-[6px] rounded-lg border bg-white shadow-sm text-sm font-medium transition-colors ${
                 isSignInActive
-                  ? 'border-[#3A5190] text-[#3A5190]'
+                  ? 'border-brand-blue text-brand-blue'
                   : 'border-[#e4e4e7] text-[#09090b] hover:bg-gray-50'
               }`}
             >
               <UserCircleIcon
-                className={`size-4 ${isSignInActive ? 'text-[#3A5190]' : 'text-[#09090b]'}`}
+                className={`size-4 ${isSignInActive ? 'text-brand-blue' : 'text-[#09090b]'}`}
               />
               Sign in
             </Link>
@@ -202,7 +202,7 @@ function MobileHeader({ pathname, hidden }: { pathname: string; hidden: boolean 
         hidden ? 'pointer-events-none -translate-y-full opacity-0' : 'translate-y-0 opacity-100'
       }`}
     >
-      <Link href="/" aria-label="PreventiveMD home" className="flex items-center text-[#1d2d44]">
+      <Link href="/" aria-label="PreventiveMD home" className="flex items-center text-brand-navy">
         <Logo className="h-[18px] w-auto" />
       </Link>
       <AccessibilityMenu align="right" />
@@ -256,7 +256,7 @@ function MobileBottomNav({
           aria-current={isHome ? 'page' : undefined}
         >
           <WelcomeIcon active={isHome} />
-          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isHome ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isHome ? 'text-brand-blue' : 'text-[#71717a]'}`}>
             Welcome
           </span>
         </Link>
@@ -268,7 +268,7 @@ function MobileBottomNav({
           aria-current={isTreatments ? 'page' : undefined}
         >
           <TreatmentsIcon active={isTreatments} />
-          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isTreatments ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isTreatments ? 'text-brand-blue' : 'text-[#71717a]'}`}>
             Treatments
           </span>
         </Link>
@@ -280,7 +280,7 @@ function MobileBottomNav({
           aria-current={isGetStarted ? 'page' : undefined}
         >
           <GetStartedIcon active={isGetStarted} />
-          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isGetStarted ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isGetStarted ? 'text-brand-blue' : 'text-[#71717a]'}`}>
             Get started
           </span>
         </Link>
@@ -291,8 +291,8 @@ function MobileBottomNav({
           className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]"
           aria-current={isSignIn ? 'page' : undefined}
         >
-          <UserCircleIcon className={`size-8 ${isSignIn ? 'text-[#3A5190]' : 'text-[#71717a]'}`} />
-          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isSignIn ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+          <UserCircleIcon className={`size-8 ${isSignIn ? 'text-brand-blue' : 'text-[#71717a]'}`} />
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isSignIn ? 'text-brand-blue' : 'text-[#71717a]'}`}>
             Sign in
           </span>
         </Link>
@@ -312,7 +312,7 @@ function ChatSupportIcon({ active }: { active: boolean }) {
       height="32"
       viewBox="0 0 32 32"
       fill="none"
-      className={`size-8 ${active ? 'text-[#3A5190]' : 'text-[#71717a]'}`}
+      className={`size-8 ${active ? 'text-brand-blue' : 'text-[#71717a]'}`}
       aria-hidden="true"
     >
       <path
@@ -361,7 +361,7 @@ function JourneyBottomNav({ pathname }: { pathname: string }) {
           aria-current={isJourney ? 'page' : undefined}
         >
           <WelcomeIcon active={isJourney} />
-          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isJourney ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isJourney ? 'text-brand-blue' : 'text-[#71717a]'}`}>
             Journey
           </span>
         </Link>
@@ -372,7 +372,7 @@ function JourneyBottomNav({ pathname }: { pathname: string }) {
           aria-current={isTreatments ? 'page' : undefined}
         >
           <TreatmentsIcon active={isTreatments} />
-          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isTreatments ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isTreatments ? 'text-brand-blue' : 'text-[#71717a]'}`}>
             Treatments
           </span>
         </Link>
@@ -383,7 +383,7 @@ function JourneyBottomNav({ pathname }: { pathname: string }) {
           aria-current={isSupport ? 'page' : undefined}
         >
           <ChatSupportIcon active={isSupport} />
-          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isSupport ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isSupport ? 'text-brand-blue' : 'text-[#71717a]'}`}>
             Support
           </span>
         </Link>
@@ -394,14 +394,14 @@ function JourneyBottomNav({ pathname }: { pathname: string }) {
           aria-current={isProfile ? 'page' : undefined}
         >
           <span
-            className={`size-8 flex items-center justify-center ${isProfile ? 'text-[#3A5190]' : 'text-[#71717a]'}`}
+            className={`size-8 flex items-center justify-center ${isProfile ? 'text-brand-blue' : 'text-[#71717a]'}`}
             aria-hidden="true"
           >
             <span className="size-6 rounded-full bg-[#71717a] text-white text-xs font-normal leading-4 flex items-center justify-center">
               {initials}
             </span>
           </span>
-          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isProfile ? 'text-[#3A5190]' : 'text-[#71717a]'}`}>
+          <span className={`text-xs font-medium leading-4 text-center whitespace-nowrap ${isProfile ? 'text-brand-blue' : 'text-[#71717a]'}`}>
             Jane
           </span>
         </Link>

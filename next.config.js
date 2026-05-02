@@ -17,12 +17,12 @@ const nextConfig = {
   // components at build time, so designers update the .svg files and devs
   // never need to copy path data into JSX.
   //
-  // `replaceAttrValues` swaps the baked brand colors to CSS custom properties
-  // with brand defaults. This means:
-  //   • Default render → brand colors (no overrides needed).
-  //   • Inverse tone   → wrapper sets `--logo-blue` and `--logo-navy` to
-  //                       `currentColor`, then `color: white` flips the whole
-  //                       mark white. See src/components/ui/Logo.tsx.
+  // `replaceAttrValues` swaps the baked brand-color hexes (verbatim from the
+  // Figma export) for `var(--brand-blue)` / `var(--brand-navy)`. Defaults
+  // come from globals.css `:root`. To recolor the mark on a dark background,
+  // the Logo wrapper sets `--brand-*` to `currentColor` on its scope only,
+  // so a parent `text-white` flips the entire glyph white without disturbing
+  // anyone else's brand vars. See src/components/ui/Logo.tsx.
   turbopack: {
     rules: {
       '*.svg': {
@@ -32,8 +32,8 @@ const nextConfig = {
             options: {
               svgo: false,
               replaceAttrValues: {
-                '#3A5190': 'var(--logo-blue, #3A5190)',
-                '#1D2D44': 'var(--logo-navy, #1D2D44)',
+                '#3A5190': 'var(--brand-blue)',
+                '#1D2D44': 'var(--brand-navy)',
               },
             },
           },
@@ -53,8 +53,8 @@ const nextConfig = {
           options: {
             svgo: false,
             replaceAttrValues: {
-              '#3A5190': 'var(--logo-blue, #3A5190)',
-              '#1D2D44': 'var(--logo-navy, #1D2D44)',
+              '#3A5190': 'var(--brand-blue)',
+              '#1D2D44': 'var(--brand-navy)',
             },
           },
         },
