@@ -242,16 +242,16 @@ export default function ConfirmationPage() {
     if (typeof step0.firstName === 'string') setFirstName(step0.firstName)
 
     const step12 = getStepValues(12)
-    const consultFlow = typeof step12.format === 'string' && !!step12.format
+    const step13 = getStepValues(13)
+    const consultFlow = typeof step13.format === 'string' && !!step13.format
     setIsConsultation(consultFlow)
 
     if (consultFlow) {
-      const fmt = (typeof step12.format === 'string' ? step12.format : 'Video') as 'Video' | 'Phone'
-      const dateLabel = typeof step12.date === 'string' ? formatConsultDate(step12.date) : ''
-      const time = typeof step12.time === 'string' ? step12.time : ''
+      const fmt = (typeof step13.format === 'string' ? step13.format : 'Video') as 'Video' | 'Phone'
+      const dateLabel = typeof step13.date === 'string' ? formatConsultDate(step13.date) : ''
+      const time = typeof step13.time === 'string' ? step13.time : ''
       setConsultationDetails({ format: fmt, dateLabel, time })
     } else {
-      const step13 = getStepValues(13)
       let treatments: string[] = []
       if (typeof step12.treatments === 'string') {
         try { treatments = JSON.parse(step12.treatments) } catch { /* ignore */ }

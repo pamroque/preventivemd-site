@@ -114,11 +114,11 @@ export default function FoundersMessageDialog() {
             </p>
             <p className="font-serif italic text-xl leading-7">
               <span>{'— '}</span>
-              <span>Brian</span>
+              <span>Andrew</span>
               <span>{', '}</span>
-              <span>Suraj</span>
-              <span>{' & '}</span>
-              <span>Pam</span>
+              <span>Patrick</span>
+              <span>{', & '}</span>
+              <span>Sherry</span>
             </p>
           </div>
         </div>

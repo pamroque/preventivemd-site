@@ -135,7 +135,7 @@ export default function QuickStartTiles() {
           className="bg-white"
           bgImage={{ src: '/assets/home/tile-curated.png', objectPosition: 'right top' }}
         >
-          <TileText stat="20+" description="physician-curated peptide protocols" />
+          <TileText stat="9" description="physician-curated peptide protocols, with more to come" />
           <TileButton href="/#treatments">Treatments</TileButton>
         </Tile>
 

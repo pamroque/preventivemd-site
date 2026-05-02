@@ -1,104 +1,53 @@
+import type { CSSProperties } from 'react'
+import LogoFull from '@public/assets/logo-full.svg'
+import LogoGlyph from '@public/assets/logo-glyph.svg'
+
 type LogoProps = {
   className?: string
   /** Visually-hidden label override. Falls back to "PreventiveMD". */
   title?: string
   /**
-   * `brand` (default): two-color wordmark — symbol + "MD" in Preventive Blue,
-   * "Preventive" in Preventive Navy. Use on light backgrounds.
+   * `full` (default): wordmark + symbol — used on hero, footer, top navbars.
+   * `glyph`: just the looping symbol — used on the BackHeader navbar where
+   * space is tight and the wordmark would compete with the Back button.
+   */
+  variant?: 'full' | 'glyph'
+  /**
+   * `brand` (default): two-color mark using the brand palette.
    * `inverse`: every glyph inherits `currentColor`, so a parent class like
-   * `text-white` themes the whole mark uniformly. Use on dark backgrounds
-   * (hero, footer) where the brand colors would lose contrast.
+   * `text-white` themes the whole mark. Use on dark backgrounds (hero,
+   * footer) where the brand colors would lose contrast.
+   *
+   * Implementation: `next.config.js` swaps the baked `#3A5190` and `#1D2D44`
+   * fills for `var(--logo-blue, #3A5190)` and `var(--logo-navy, #1D2D44)`.
+   * Inverse tone overrides both vars to `currentColor` here.
    */
   tone?: 'brand' | 'inverse'
 }
 
-const BRAND_BLUE = '#3A5190'
-const BRAND_NAVY = '#1D2D44'
+const inverseStyle = {
+  '--logo-blue': 'currentColor',
+  '--logo-navy': 'currentColor',
+} as CSSProperties
 
 /**
- * PreventiveMD wordmark — exported from Figma at viewBox 192×18.18. Set the
- * rendered size via `className` (e.g. `h-6 w-auto`).
+ * PreventiveMD wordmark. Source of truth lives in `public/assets/logo-*.svg`;
+ * SVGR inlines them at build time so CSS-driven theming still works.
  */
-export default function Logo({ className, title = 'PreventiveMD', tone = 'brand' }: LogoProps) {
-  const symbolFill = tone === 'inverse' ? 'currentColor' : BRAND_BLUE
-  const textFill = tone === 'inverse' ? 'currentColor' : BRAND_NAVY
-  const mdFill = tone === 'inverse' ? 'currentColor' : BRAND_BLUE
-
+export default function Logo({
+  className,
+  title = 'PreventiveMD',
+  variant = 'full',
+  tone = 'brand',
+}: LogoProps) {
+  const Component = variant === 'glyph' ? LogoGlyph : LogoFull
   return (
-    <svg
+    <Component
       role="img"
       aria-label={title}
-      viewBox="0 0 192 18.1799"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
+      title={title}
       className={className}
-    >
-      <title>{title}</title>
-      {/* Looping infinity-style symbol */}
-      <path
-        fill={symbolFill}
-        d="M24.4639 13.03C24.27 13.2792 24.076 13.5285 23.882 13.7777C25.1938 14.8504 26.685 15.6505 28.3274 16.1313C30.3579 16.7387 32.7706 16.655 34.7231 15.4959C39.5842 12.253 40.7415 6.31186 40.5888 1.0303L40.5243 0L39.4653 0.0175851C35.9864 0.0610919 32.2138 0.729377 29.135 2.83905C26.0655 4.92185 23.9223 7.67689 21.5665 10.0664C21.1643 10.4833 20.7573 10.879 20.3418 11.2563C16.6342 14.7278 11.5332 16.6697 6.70886 15.3199C3.49436 14.6554 1.08796 11.6676 2.50632 8.79697C3.8036 5.95706 7.53758 4.7727 10.9132 5.09452C12.6687 5.23203 14.4145 5.76193 15.9839 6.6308C17.3299 7.37382 18.5469 8.36838 19.5912 9.53873C19.8321 9.33516 20.0732 9.13158 20.3141 8.928C19.2883 7.61574 18.043 6.45553 16.6159 5.55428C14.9504 4.50032 13.0532 3.80049 11.074 3.54186C7.41605 3.02321 2.75227 3.95944 0.683956 7.90371C-0.317282 9.79507 -0.229767 12.3548 1.016 14.1728C2.23707 16.0209 4.18585 17.0543 6.09709 17.5945C11.7453 19.3418 17.9868 16.979 22.0285 13.136C22.4883 12.7184 22.9352 12.2826 23.3737 11.826C27.9848 6.58491 32.608 2.03683 39.534 2.21418L38.4105 1.20147C38.7419 5.85117 37.6611 11.4666 33.9103 14.1417C32.4069 15.138 30.4802 15.3473 28.6348 14.9199C27.1602 14.5849 25.7094 13.9224 24.4639 13.03Z"
-      />
-      {/* P */}
-      <path
-        fill={textFill}
-        d="M47.8737 1.44348H54.593C57.3636 1.44348 58.9562 3.16694 58.9562 5.30489C58.9562 11.3043 50.0335 10.4316 49.9462 14.0094V16.6928H47.8737V1.44348ZM49.9462 3.27602V10.8461C52.3678 9.20993 56.84 8.53364 56.84 5.67576C56.84 4.36681 55.8801 3.27602 54.0694 3.27602H49.9462Z"
-      />
-      {/* r */}
-      <path
-        fill={textFill}
-        d="M63.4335 6.003V8.27185C64.2189 6.57021 65.6369 5.74121 67.8185 5.74121V7.48648C64.8734 7.44285 63.4335 8.86087 63.4335 11.4133V16.671H61.3828V6.003H63.4335Z"
-      />
-      {/* e */}
-      <path
-        fill={textFill}
-        d="M77.8001 13.3768H79.7854C79.24 15.7329 76.9711 17.0418 74.3532 17.0418C71.2335 17.02 68.6811 15.0348 68.6811 11.3261C68.6811 7.96643 70.9718 5.67576 74.375 5.67576C77.2329 5.67576 79.6545 7.90098 79.6545 10.5407V11.0861L71.2117 13.3549C71.8662 14.6639 73.1097 15.3402 74.4623 15.3402C75.8585 15.3402 77.3202 14.6857 77.8001 13.3768ZM70.8845 12.3296L77.6038 10.6061V10.4316C77.6692 8.90451 76.0548 7.35558 74.3968 7.35558C72.2807 7.35558 70.7754 8.94814 70.7754 11.3479C70.7754 11.6969 70.819 12.0242 70.8845 12.3296Z"
-      />
-      {/* v */}
-      <path
-        fill={textFill}
-        d="M89.7397 6.003H91.9867L87.1436 16.6928H85.5074L80.6861 6.003H82.9332L86.3364 13.7476L89.7397 6.003Z"
-      />
-      {/* e */}
-      <path
-        fill={textFill}
-        d="M102.007 13.3768H103.992C103.447 15.7329 101.178 17.0418 98.5603 17.0418C95.4406 17.02 92.8882 15.0348 92.8882 11.3261C92.8882 7.96643 95.1788 5.67576 98.5821 5.67576C101.44 5.67576 103.862 7.90098 103.862 10.5407V11.0861L95.4188 13.3549C96.0733 14.6639 97.3168 15.3402 98.6694 15.3402C100.066 15.3402 101.527 14.6857 102.007 13.3768ZM95.0916 12.3296L101.811 10.6061V10.4316C101.876 8.90451 100.262 7.35558 98.6039 7.35558C96.4878 7.35558 94.9825 8.94814 94.9825 11.3479C94.9825 11.6969 95.0261 12.0242 95.0916 12.3296Z"
-      />
-      {/* n */}
-      <path
-        fill={textFill}
-        d="M106.58 6.003H108.653V7.94461C109.46 6.43932 111.052 5.69758 112.601 5.69758C114.696 5.69758 116.724 7.05016 116.724 9.64625V16.6928H114.652V10.3007C114.652 8.42456 113.277 7.46466 111.838 7.46466C110.267 7.46466 108.653 8.57727 108.653 10.8679V16.6928H106.58V6.003Z"
-      />
-      {/* t */}
-      <path
-        fill={textFill}
-        d="M125.964 6.003V7.7919H123.041V12.8968C123.041 14.2494 123.39 15.0566 124.917 15.0566C125.266 15.0566 125.681 15.0129 126.161 14.9257L126.51 16.6928C125.615 16.8673 124.852 16.9764 124.197 16.9764C121.972 16.9764 121.012 15.9074 121.012 13.7694L120.99 7.7919H119.136V6.003H120.052C120.641 6.003 120.99 5.71939 120.99 4.95584V3.07967L123.041 2.79607V6.003H125.964Z"
-      />
-      {/* i */}
-      <path
-        fill={textFill}
-        d="M130.048 3.6687C129.394 3.6687 128.848 3.10149 128.848 2.40338C128.848 1.70527 129.394 1.13806 130.048 1.13806C130.703 1.13806 131.248 1.70527 131.248 2.40338C131.248 3.10149 130.703 3.6687 130.048 3.6687ZM131.074 16.6928H129.023V6.02481H131.074V16.6928Z"
-      />
-      {/* v */}
-      <path
-        fill={textFill}
-        d="M142.353 6.003H144.6L139.757 16.6928H138.121L133.3 6.003H135.547L138.95 13.7476L142.353 6.003Z"
-      />
-      {/* e */}
-      <path
-        fill={textFill}
-        d="M154.621 13.3768H156.606C156.061 15.7329 153.792 17.0418 151.174 17.0418C148.054 17.02 145.502 15.0348 145.502 11.3261C145.502 7.96643 147.793 5.67576 151.196 5.67576C154.054 5.67576 156.475 7.90098 156.475 10.5407V11.0861L148.033 13.3549C148.687 14.6639 149.931 15.3402 151.283 15.3402C152.679 15.3402 154.141 14.6857 154.621 13.3768ZM147.705 12.3296L154.425 10.6061V10.4316C154.49 8.90451 152.876 7.35558 151.218 7.35558C149.102 7.35558 147.596 8.94814 147.596 11.3479C147.596 11.6969 147.64 12.0242 147.705 12.3296Z"
-      />
-      {/* M */}
-      <path
-        fill={mdFill}
-        d="M173.483 1.44348H175.294V16.6928H173.2V5.54486L168.4 13.3768H167.702L162.902 5.56668V16.6928H160.83V1.44348H162.641L168.051 10.4316L173.483 1.44348Z"
-      />
-      {/* D */}
-      <path
-        fill={mdFill}
-        d="M184.452 1.4653C188.509 1.4653 192 4.10502 192 9.07903C192 13.9876 188.531 16.6928 184.452 16.6928H178.409V1.4653H184.452ZM184.19 14.7948C187.026 14.7948 189.862 12.8532 189.862 9.07903C189.862 5.174 187.07 3.34146 184.19 3.34146H180.481V14.7948H184.19Z"
-      />
-    </svg>
+      style={tone === 'inverse' ? inverseStyle : undefined}
+    />
   )
 }

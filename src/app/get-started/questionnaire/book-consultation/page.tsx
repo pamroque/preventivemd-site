@@ -108,6 +108,20 @@ function formatSlotTime(iso: string): string {
   }).format(new Date(iso))
 }
 
+/** Short generic TZ abbreviation for the patient's browser ("PT", "CT", "ET",
+ *  "MT", "AKT", "HST"). Used to qualify a saved consultation time so the
+ *  patient sees the zone clearly later in the flow. */
+function shortTzAbbr(iso: string): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    return new Intl.DateTimeFormat('en-US', { timeZoneName: 'shortGeneric', timeZone: tz })
+      .formatToParts(new Date(iso))
+      .find((p) => p.type === 'timeZoneName')?.value ?? ''
+  } catch {
+    return ''
+  }
+}
+
 /** Categorize slots by morning (<12), afternoon (12–17), evening (≥17). */
 function categorizeSlots(daySlots: Slot[]): {
   morning:   Slot[]
@@ -454,18 +468,20 @@ export default function BookConsultationPage() {
     }
 
     const slotTimeLabel = formatSlotTime(selectedSlot.slotDatetime)
+    const tz = shortTzAbbr(selectedSlot.slotDatetime)
+    const slotTimeWithTz = tz ? `${slotTimeLabel} ${tz}` : slotTimeLabel
     saveStep(
       13,
       {
         question: QUESTION_TEXT,
-        bubbles: [`${language} · ${format} · ${formatDateLabel(selectedDate)} · ${slotTimeLabel}`],
+        bubbles: [`${language} · ${format} · ${formatDateLabel(selectedDate)} · ${slotTimeWithTz}`],
       },
       {
         // Existing fields kept for back-nav restore + chat-history bubbles.
         language,
         format,
         date: selectedDate.toISOString(),
-        time: slotTimeLabel,
+        time: slotTimeWithTz,
         // New fields the worker uses to promote the hold into an
         // appointments row at sync time.
         holdId:         reserved.holdId,

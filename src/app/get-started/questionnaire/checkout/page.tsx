@@ -764,7 +764,6 @@ function CheckoutPageInner() {
                       type="tel"
                       inputMode="numeric"
                       autoComplete="tel-national"
-                      placeholder="(###) ###-####"
                       value={phoneDisplay}
                       onChange={handlePhoneInput}
                       className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import AccessibilityMenu from '@/components/a11y/AccessibilityMenu'
+import Logo from '@/components/ui/Logo'
 
 // Heroicons: chevron-left (micro, 16px solid)
 function ChevronLeftIcon() {
@@ -51,14 +52,7 @@ export default function BackHeader({ backHref, progress }: BackHeaderProps) {
         {/* Left: logo glyph + Back */}
         <div className="flex items-center gap-3 md:gap-6">
           <Link href="/" aria-label="PreventiveMD home" className="block shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/assets/logo.svg"
-              alt="PreventiveMD"
-              width={38}
-              height={18}
-              className="h-[18px] w-auto"
-            />
+            <Logo variant="glyph" className="h-[18px] w-auto" />
           </Link>
 
           <Link

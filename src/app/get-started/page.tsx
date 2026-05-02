@@ -96,63 +96,61 @@ export default async function GetStartedPage({
           </div>
         </section>
 
-        {/* ── Timeline ── */}
-        <section
-          aria-label="How it works"
-          className="flex flex-col p-6 rounded-tr-[36px] rounded-bl-[36px] bg-gradient-to-r from-[#1d2d44] to-[#0f172a] text-white"
-        >
-          {/* Step 1 */}
-          <div className="flex items-center gap-4">
-            <TimelineDot />
-            <p className="flex-1 min-w-0 leading-5">
-              <span className="font-serif italic text-base md:text-lg">A few questions to get to know you: </span>
-              <span className="text-sm md:text-base">Complete a 5-minute questionnaire</span>
-            </p>
-          </div>
+        {/* ── Timeline + footnote ── */}
+        <section aria-label="How it works" className="flex flex-col gap-3">
+          <div className="flex flex-col p-6 rounded-tr-[36px] rounded-bl-[36px] bg-gradient-to-r from-[#1d2d44] to-[#0f172a] text-white">
+            {/* Step 1 */}
+            <div className="flex items-center gap-4">
+              <TimelineDot />
+              <p className="flex-1 min-w-0 text-sm leading-5">
+                Complete a 5-minute questionnaire
+              </p>
+            </div>
 
-          <div className="flex items-stretch gap-4">
-            <TimelineConnector height={36} />
-          </div>
+            <div className="flex items-stretch gap-4">
+              <TimelineConnector height={36} />
+            </div>
 
-          {/* Step 2 */}
-          <div className="flex items-center gap-4">
-            <TimelineDot />
-            <p className="flex-1 min-w-0 leading-5">
-              <span className="font-serif italic text-base md:text-lg">Pick a path: </span>
-              <span className="text-sm md:text-base">
+            {/* Step 2 */}
+            <div className="flex items-center gap-4">
+              <TimelineDot />
+              <p className="flex-1 min-w-0 text-sm leading-5">
                 Meet with your provider concierge or request your treatment
-              </span>
-              <sup className="text-[9px]">†</sup>
-            </p>
+                <sup className="text-[9px]">†</sup>
+              </p>
+            </div>
+
+            <div className="flex items-stretch gap-4">
+              <TimelineConnector height={36} />
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex items-center gap-4">
+              <TimelineDot />
+              <p className="flex-1 min-w-0 text-sm leading-5">
+                Pay one upfront price
+              </p>
+            </div>
+
+            <div className="flex items-stretch gap-4">
+              <TimelineConnector height={36} />
+            </div>
+
+            {/* Step 4 */}
+            <div className="flex items-center gap-4">
+              <TimelineDot />
+              <p className="flex-1 min-w-0 text-sm leading-5">
+                Your provider prescribes if it&rsquo;s the right fit
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-stretch gap-4">
-            <TimelineConnector height={36} />
-          </div>
-
-          {/* Step 3 */}
-          <div className="flex items-center gap-4">
-            <TimelineDot />
-            <p className="flex-1 min-w-0 leading-5">
-              <span className="font-serif italic text-base md:text-lg">Self-pay checkout: </span>
-              <span className="text-sm md:text-base">Pay one upfront price</span>
-            </p>
-          </div>
-
-          <div className="flex items-stretch gap-4">
-            <TimelineConnector height={36} />
-          </div>
-
-          {/* Step 4 */}
-          <div className="flex items-center gap-4">
-            <TimelineDot />
-            <p className="flex-1 min-w-0 leading-5">
-              <span className="font-serif italic text-base md:text-lg">Provider-approved, then delivered: </span>
-              <span className="text-sm md:text-base">
-                A licensed provider prescribes if it&rsquo;s the right fit
-              </span>
-            </p>
-          </div>
+          {/* Footnote — paired with the timeline so the † reference stays visible */}
+          <p className="text-xs text-[#71717a] leading-4">
+            <sup className="text-[8px]">†</sup>If you live in Kentucky,
+            Louisiana, New Mexico, Rhode Island, or West Virginia, you&rsquo;ll
+            be required to complete a $99 video consultation initially.
+          </p>
         </section>
 
         {/* ── CTA ── */}
@@ -228,13 +226,6 @@ export default async function GetStartedPage({
             </div>
           </div>
         </section>
-
-        {/* ── Footnote ── */}
-        <p className="text-xs text-[#71717a] leading-4 text-center">
-          <sup className="text-[8px]">†</sup>If you live in Kentucky, Louisiana,
-          New Mexico, Rhode Island, or West Virginia, you&rsquo;ll be required
-          to complete a $99 video consultation initially.
-        </p>
       </div>
     </main>
   )
