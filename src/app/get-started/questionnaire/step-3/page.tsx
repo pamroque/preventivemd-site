@@ -169,7 +169,7 @@ const PEPTIDE_TO_GOAL: Record<string, GoalId> = {
 }
 
 const GOALS: GoalOption[] = [
-  { id: 'weight', label: 'Support healthy weight management', Icon: GlobeAltIcon },
+  { id: 'weight', label: 'Support weight loss', Icon: GlobeAltIcon },
   { id: 'sleep', label: 'Improve sleep quality', Icon: MoonIcon },
   { id: 'stress', label: 'Reduce stress and anxious feelings', Icon: GlobeAltIcon },
   { id: 'energy', label: 'Improve energy', Icon: BoltIcon },
@@ -303,14 +303,13 @@ export default function QuestionnaireStep3() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="overflow-y-auto bg-white focus:outline-none"
+        className={`overflow-y-auto bg-white focus:outline-none ${done ? "pb-[58px] md:pb-[138px]" : "pb-8"}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: '7rem',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}

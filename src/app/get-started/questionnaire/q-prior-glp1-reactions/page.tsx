@@ -111,14 +111,13 @@ export default function QPriorGlp1ReactionsPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="overflow-y-auto bg-white focus:outline-none"
+        className={`overflow-y-auto bg-white focus:outline-none ${showExpanded ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: showExpanded ? '6rem' : '2rem',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -223,7 +222,7 @@ export default function QPriorGlp1ReactionsPage() {
 
       {/* ── Sticky CTA — only for the "Yes" path ── */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-8 pt-4"
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4"
         style={{
           background: 'linear-gradient(to top, white 70%, rgba(255,255,255,0))',
           opacity: showExpanded ? 1 : 0,

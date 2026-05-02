@@ -102,7 +102,7 @@ type FormValues = z.infer<typeof schema>
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const inputWrapperCls =
-  'flex items-center h-[42px] rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden ' +
+  'flex items-center h-12 rounded-xl border border-[rgba(0,0,0,0.12)] bg-white overflow-hidden ' +
   'focus-within:border-[#3A5190] transition-colors'
 
 // ─── Progress ────────────────────────────────────────────────────────────────
@@ -194,14 +194,13 @@ export default function QuestionnaireStep4() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="overflow-y-auto bg-white focus:outline-none"
+        className={`overflow-y-auto bg-white focus:outline-none ${showExpanded ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: showExpanded ? '7rem' : '2rem',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}

@@ -37,7 +37,7 @@ const PROGRESS = 100
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 const ASYNC_ROUTE = '/get-started/questionnaire/choose-treatments'
-const CONSULT_ROUTE = '/get-started/questionnaire/book-consultation'
+const CONSULT_ROUTE = '/get-started/questionnaire/desired-treatments'
 
 // ─── Card ────────────────────────────────────────────────────────────────────
 
@@ -235,14 +235,13 @@ export default function VisitTypePage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="overflow-y-auto bg-white focus:outline-none"
+        className="overflow-y-auto bg-white focus:outline-none pb-12"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: '2rem',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           {/* ── Previous step's Q&A ── */}
           <ChatHistory
@@ -289,7 +288,7 @@ export default function VisitTypePage() {
               </h1>
               {done && (
                 <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
-                  For either path, a licensed provider will review your information before anything is prescribed.
+                  Medication costs are separate and not yet included in the following fees.
                 </p>
               )}
             </div>

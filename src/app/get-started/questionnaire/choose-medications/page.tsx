@@ -240,9 +240,23 @@ export default function ChooseMedicationsPage() {
   const [loaded, setLoaded] = useState(false)
   const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
+  const stickyCtaRef = useRef<HTMLDivElement>(null)
+  const [stickyCtaHeight, setStickyCtaHeight] = useState(140)
+
   // Live price catalog from /api/treatments/pricing — replaces any
   // hardcoded PLAN_PRICES. Falls back to '—' in the UI while loading.
   const { catalog: pricingCatalog } = usePricingCatalog()
+
+  useEffect(() => {
+    const el = stickyCtaRef.current
+    if (!el) return
+    const update = () => setStickyCtaHeight(el.getBoundingClientRect().height)
+    update()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     if (loaded && treatments.length === 0) {
@@ -390,14 +404,14 @@ export default function ChooseMedicationsPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="overflow-y-auto bg-white focus:outline-none"
+        className={`overflow-y-auto bg-white focus:outline-none ${done ? 'pb-[calc(var(--cta-h)-8px)] md:pb-[calc(var(--cta-h)+32px)]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: '12rem',
+          ['--cta-h' as string]: `${stickyCtaHeight}px`,
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -450,8 +464,8 @@ export default function ChooseMedicationsPage() {
                       {/* ── Treatment heading: name + divider + Remove ── */}
                       <div className="flex items-center gap-4">
                         <div className="flex flex-1 items-center gap-3 min-w-0">
-                          <div className="shrink-0 bg-[#f0f0f0] rounded-[20px] px-3 py-1.5">
-                            <span className="text-[20px] font-semibold leading-7 tracking-[-0.5px] text-[#09090b]">
+                          <div className="shrink-0 bg-[#1d2d44] rounded-[20px] px-3 py-1.5">
+                            <span className="text-[20px] font-semibold leading-7 tracking-[-0.5px] text-white">
                               {name}
                             </span>
                           </div>
@@ -575,7 +589,9 @@ export default function ChooseMedicationsPage() {
       </main>
 
       {/* ── Sticky CTA ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-8 pt-4"
+      <div
+        ref={stickyCtaRef}
+        className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-2 pb-2 md:pb-12 pt-4"
         style={{
           background: 'linear-gradient(to top, white 70%, rgba(255,255,255,0))',
           opacity: done ? 1 : 0,
@@ -621,7 +637,7 @@ export default function ChooseMedicationsPage() {
             {/* Text */}
             <div className="flex flex-col gap-1">
               <p className="text-[12px] font-normal leading-4 tracking-[1.5px] uppercase text-white">
-                Included with your meds
+                Included with your plan
               </p>
               <div className="flex flex-col gap-1">
                 {['Licensed provider review', 'Delivery to your doorstep', 'Ongoing support'].map(item => (

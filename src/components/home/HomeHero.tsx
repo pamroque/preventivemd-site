@@ -30,6 +30,13 @@ export default function HomeHero() {
           className="hero-crossfade object-cover object-top md:hidden"
         />
         <Image
+          src="/assets/home/hero-mobile-3.png"
+          alt=""
+          fill
+          sizes="(min-width: 768px) 0px, calc(100vw - 16px)"
+          className="hero-crossfade-3 object-cover object-top md:hidden"
+        />
+        <Image
           src="/assets/home/hero-desktop-1.png"
           alt=""
           fill
@@ -43,6 +50,13 @@ export default function HomeHero() {
           fill
           sizes="(min-width: 768px) calc(100vw - 32px), 0px"
           className="hero-crossfade hidden object-cover object-top md:block"
+        />
+        <Image
+          src="/assets/home/hero-desktop-3.png"
+          alt=""
+          fill
+          sizes="(min-width: 768px) calc(100vw - 32px), 0px"
+          className="hero-crossfade-3 hidden object-cover object-top md:block"
         />
       </div>
 

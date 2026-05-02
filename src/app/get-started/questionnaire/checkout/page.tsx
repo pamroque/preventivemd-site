@@ -201,23 +201,23 @@ function PhoneCallIcon() {
 const BOOK_CONSULTATION_ROUTE = '/get-started/questionnaire/book-consultation'
 
 /** Reconstruct the BookedSlot payload that /book-consultation stashed
- *  in step 12. Returns null if any required field is missing. */
+ *  in step 13. Returns null if any required field is missing. */
 function readBookedSlot(): BookedSlot | null {
-  const s12 = getStepValues(12)
+  const s13 = getStepValues(13)
   const required = ['holdId','providerId','healthieUserId','slotDatetime','contactType','providerName','expiresAt'] as const
   for (const k of required) {
-    if (typeof s12[k] !== 'string' || !s12[k]) return null
+    if (typeof s13[k] !== 'string' || !s13[k]) return null
   }
-  const ct = String(s12.contactType)
+  const ct = String(s13.contactType)
   if (ct !== 'video' && ct !== 'phone') return null
   return {
-    holdId:         String(s12.holdId),
-    providerId:     String(s12.providerId),
-    healthieUserId: String(s12.healthieUserId),
-    slotDatetime:   String(s12.slotDatetime),
+    holdId:         String(s13.holdId),
+    providerId:     String(s13.providerId),
+    healthieUserId: String(s13.healthieUserId),
+    slotDatetime:   String(s13.slotDatetime),
     contactType:    ct,
-    providerName:   String(s12.providerName),
-    expiresAt:      String(s12.expiresAt),
+    providerName:   String(s13.providerName),
+    expiresAt:      String(s13.expiresAt),
   }
 }
 
@@ -252,10 +252,13 @@ function CheckoutPageInner() {
   const stickyCtaRef = useRef<HTMLDivElement>(null)
   const [stickyCtaHeight, setStickyCtaHeight] = useState(144)
 
-  // Detect consultation flow synchronously so backHref and CTA are correct immediately
+  // Detect consultation flow synchronously so backHref and CTA are correct immediately.
+  // Consult flow saves consultation details (incl. `format`) at step 13;
+  // async flow saves medication choices at step 13 (no `format`), so the
+  // presence of `format` is the unambiguous signal.
   const [isConsultation] = useState(() => {
-    const s12 = getStepValues(12)
-    return typeof s12.format === 'string' && !!s12.format
+    const s13 = getStepValues(13)
+    return typeof s13.format === 'string' && !!s13.format
   })
   const [consultationDetails, setConsultationDetails] = useState<{
     format: 'Video' | 'Phone'
@@ -364,12 +367,13 @@ function CheckoutPageInner() {
       setCurrentStep({
         ...last,
         editHref: isConsultation
-          ? '/get-started/questionnaire/desired-treatments'
+          ? '/get-started/questionnaire/book-consultation'
           : '/get-started/questionnaire/choose-medications',
       })
     }
 
     const step12 = getStepValues(12)
+    const step13 = getStepValues(13)
 
     if (isConsultation) {
       // Sync visit fee comes from the catalog (services.sync_visit). While
@@ -377,12 +381,11 @@ function CheckoutPageInner() {
       // when pricingCatalog populates and reconciles to the real value.
       const syncCents = pricingCatalog?.services?.sync_visit?.amount_cents ?? 0
       setDueToday(Math.round(syncCents / 100))
-      const fmt = (typeof step12.format === 'string' ? step12.format : 'Video') as 'Video' | 'Phone'
-      const dateLabel = typeof step12.date === 'string' ? formatConsultDate(step12.date) : ''
-      const time = typeof step12.time === 'string' ? step12.time : ''
+      const fmt = (typeof step13.format === 'string' ? step13.format : 'Video') as 'Video' | 'Phone'
+      const dateLabel = typeof step13.date === 'string' ? formatConsultDate(step13.date) : ''
+      const time = typeof step13.time === 'string' ? step13.time : ''
       setConsultationDetails({ format: fmt, dateLabel, time })
     } else {
-      const step13 = getStepValues(13)
       let treatments: string[] = []
       if (typeof step12.treatments === 'string') {
         try { treatments = JSON.parse(step12.treatments) } catch { /* ignore */ }
@@ -675,17 +678,14 @@ function CheckoutPageInner() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="overflow-y-auto bg-white focus:outline-none"
+        className="overflow-y-auto bg-white focus:outline-none pb-[calc(var(--cta-h)-8px)] [scroll-padding-bottom:calc(var(--cta-h)-8px)] md:pb-[calc(var(--cta-h)+32px)] md:[scroll-padding-bottom:calc(var(--cta-h)+32px)]"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: `${stickyCtaHeight + 16}px`,
-          // Match the CTA height so focus-into-view never lands a field
-          // underneath the sticky cart bar (WCAG 2.4.11).
-          scrollPaddingBottom: `${stickyCtaHeight + 16}px`,
+          ['--cta-h' as string]: `${stickyCtaHeight}px`,
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 py-6 md:py-9">
+        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           <ChatHistory
             historicSteps={[]}
@@ -693,43 +693,13 @@ function CheckoutPageInner() {
             animateCurrentStep={animateBubbles}
           />
 
-          {/* ── Slot hold countdown ── */}
-          {/* Only renders when /book-consultation reserved a real slot.
-              Shows time remaining until auto-release (10 min from reserve).
-              When the timer hits 0, the effect above redirects back to
-              /book-consultation. */}
-          {isConsultation && holdExpiresAt && !holdExpired && (
-            <div
-              className="rounded-lg border border-[#3A5190]/40 bg-[#e6f3fb] px-4 py-3"
-              role="status"
-              aria-live="polite"
-            >
-              <p className="text-sm text-[#0a4f7a] leading-5">
-                Your appointment slot is held until checkout completes.
-                <span className="font-semibold ml-1">
-                  {formatCountdown(holdSecondsRemaining)} remaining
-                </span>
-              </p>
-            </div>
-          )}
-          {isConsultation && holdExpired && (
-            <div
-              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3"
-              role="alert"
-            >
-              <p className="text-sm text-red-700 leading-5">
-                Your appointment hold expired. Redirecting you back to pick a new time…
-              </p>
-            </div>
-          )}
-
           {/* ── Eve's message ── */}
           <div className="flex items-start gap-3 w-full">
             <div className="shrink-0 size-8 md:size-10 rounded-full overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={AVATAR_URL} alt="Eve" className="w-full h-full object-cover object-top" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
               <h1
                 className="text-xl md:text-2xl font-normal leading-[1.5] text-[rgba(0,0,0,0.87)] min-h-[1.5em]"
                 aria-live="polite"
@@ -752,6 +722,16 @@ function CheckoutPageInner() {
                   </>
                 )}
               </h1>
+              {done && isConsultation && holdExpiresAt && !holdExpired && (
+                <p
+                  className="text-sm font-bold text-[rgba(0,0,0,0.6)] leading-5"
+                  role="status"
+                  aria-live="polite"
+                >
+                  I&rsquo;ll hold your selected schedule for{' '}
+                  {formatCountdown(holdSecondsRemaining)}
+                </p>
+              )}
             </div>
           </div>
 
@@ -769,7 +749,7 @@ function CheckoutPageInner() {
                 <SectionHeader label="Account Details" />
 
                 <p className="text-sm font-bold leading-5 text-[#3A5190]">
-                  To sign in to your Care Portal later, make sure you have access to your mobile number or email so we can send you a one-time passcode (OTP).
+                  To get updates about your care and sign in to your Care Portal, make sure you have access to your mobile number or email.
                 </p>
 
                 {/* Phone — pre-filled, editable, required */}

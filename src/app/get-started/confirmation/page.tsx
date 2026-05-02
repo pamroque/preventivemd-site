@@ -311,14 +311,12 @@ export default function ConfirmationPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-white">
-      <main
-        id="main-content"
-        tabIndex={-1}
-        className="overflow-y-auto focus:outline-none"
-        style={{ marginTop: '48px', paddingBottom: '88px' }}
-      >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 py-4 md:py-6">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-[100dvh] bg-white pt-12 md:pt-14 focus:outline-none"
+    >
+      <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 py-4 md:py-6">
 
           {/* ── Response bubble ── */}
           <div className="flex flex-col items-end">
@@ -540,8 +538,7 @@ export default function ConfirmationPage() {
             </>
           )}
 
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
   )
 }

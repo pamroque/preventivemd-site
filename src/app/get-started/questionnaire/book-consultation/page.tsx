@@ -14,7 +14,7 @@ import { getSessionToken } from '@/lib/supabase/intake-session'
 const AVATAR_URL = '/assets/avatar-eve.png'
 const QUESTION_TEXT = 'How and when would you like to have your live consultation?'
 const PROGRESS = 90
-const NEXT_ROUTE = '/get-started/questionnaire/desired-treatments'
+const NEXT_ROUTE = '/get-started/questionnaire/checkout'
 
 // SYNC_REQUIRED_STATES_SET is the single source of truth, imported from
 // @/lib/intake-flow. Don't redeclare here — Mississippi was missing locally
@@ -209,7 +209,7 @@ export default function BookConsultationPage() {
   const [format, setFormat] = useState(() => {
     const s0 = getStepValues(0)
     if (typeof s0.state === 'string' && SYNC_REQUIRED_STATES_SET.has(s0.state)) return 'Video'
-    const saved = getStepValues(12)
+    const saved = getStepValues(13)
     if (typeof saved.format === 'string' && saved.format) return saved.format
     return 'Video'
   })
@@ -244,12 +244,12 @@ export default function BookConsultationPage() {
   }, [])
 
   useEffect(() => {
-    const prior = getPriorSteps(12) // includes step 11 (visit-type selection)
+    const prior = getPriorSteps(13) // includes step 11 (visit-type) + step 12 (desired-treatments)
     const last = prior[prior.length - 1]
     if (last) {
-      setCurrentStep({ ...last, editHref: '/get-started/questionnaire/visit-type' })
+      setCurrentStep({ ...last, editHref: '/get-started/questionnaire/desired-treatments' })
     }
-    const saved = getStepValues(12)
+    const saved = getStepValues(13)
     if (typeof saved.language === 'string' && saved.language) setLanguage(saved.language)
     if (!requiresSync && typeof saved.format === 'string' && saved.format) setFormat(saved.format)
   }, [requiresSync])
@@ -455,7 +455,7 @@ export default function BookConsultationPage() {
 
     const slotTimeLabel = formatSlotTime(selectedSlot.slotDatetime)
     saveStep(
-      12,
+      13,
       {
         question: QUESTION_TEXT,
         bubbles: [`${language} · ${format} · ${formatDateLabel(selectedDate)} · ${slotTimeLabel}`],
@@ -482,19 +482,18 @@ export default function BookConsultationPage() {
 
   return (
     <>
-      <BackHeader backHref="/get-started/questionnaire/visit-type" progress={PROGRESS} />
+      <BackHeader backHref="/get-started/questionnaire/desired-treatments" progress={PROGRESS} />
 
       <main
         id="main-content"
         tabIndex={-1}
-        className="overflow-y-auto bg-white focus:outline-none"
+        className={`overflow-y-auto bg-white focus:outline-none ${done ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
-          paddingBottom: done ? '88px' : '2rem',
         }}
       >
-        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 py-4 md:py-6">
+        <div className="mx-auto w-full px-4 md:max-w-[480px] md:px-0 flex flex-col gap-6 pt-4 md:pt-6">
 
           {/* Prior step Q&A bubble */}
           <ChatHistory

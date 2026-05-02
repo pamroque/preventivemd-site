@@ -31,25 +31,49 @@ function ChevronRightIcon() {
 //   ...
 //   index 9  → step-10                                next: step-11
 //   index 10 → step-11                                next: visit-type
-//   index 11 → visit-type (has visitType key)         next: choose-treatments | book-consultation
-//   index 12 → choose-treatments | book-consultation  next: choose-medications | desired-treatments
-//   index 13 → choose-medications | desired-treatments next: checkout
+//   index 11 → visit-type (has visitType key)         next: choose-treatments | desired-treatments
+//   index 12 → choose-treatments | desired-treatments next: choose-medications | book-consultation
+//   index 13 → choose-medications | book-consultation next: checkout
+//
+// Step 12 holds `treatments` in BOTH flows now, so we disambiguate using
+// step 11's `visitType`. Step 13 holds `format` for consult and `choices`
+// for async — the presence of `format` is the unambiguous consult signal.
 
 function getResumeHref(): string {
   const hasData = (step: number) => Object.keys(getStepValues(step)).length > 0
 
   if (!hasData(0)) return '/get-started/questionnaire'
 
-  if (hasData(13)) return '/get-started/questionnaire/checkout'
+  // Step 13 done: consult → checkout if hold still alive, else /book-consultation;
+  // async → checkout (no hold to worry about).
+  if (hasData(13)) {
+    const s13 = getStepValues(13)
+    const isConsult = typeof s13.format === 'string' && !!s13.format
+    if (!isConsult) return '/get-started/questionnaire/checkout'
 
+    // Client-side TTL check on the saved expiresAt. /checkout still does
+    // a server-authoritative validation on mount as the safety net.
+    // 5s buffer absorbs clock skew between client and server.
+    const expiresAt = typeof s13.expiresAt === 'string' ? s13.expiresAt : null
+    const stillHeld = expiresAt && new Date(expiresAt).getTime() - Date.now() > 5_000
+    return stillHeld
+      ? '/get-started/questionnaire/checkout'
+      : '/get-started/questionnaire/book-consultation'
+  }
+
+  // Step 12 done but step 13 not: branch by flow.
   const s12 = getStepValues(12)
-  if (typeof s12.format === 'string' && s12.format) return '/get-started/questionnaire/desired-treatments'
-  if (typeof s12.treatments === 'string' && s12.treatments) return '/get-started/questionnaire/choose-medications'
+  if (typeof s12.treatments === 'string' && s12.treatments) {
+    const s11 = getStepValues(11)
+    return s11.visitType === 'consult'
+      ? '/get-started/questionnaire/book-consultation'
+      : '/get-started/questionnaire/choose-medications'
+  }
 
   const s11 = getStepValues(11)
   if (typeof s11.visitType === 'string') {
     return s11.visitType === 'consult'
-      ? '/get-started/questionnaire/book-consultation'
+      ? '/get-started/questionnaire/desired-treatments'
       : '/get-started/questionnaire/choose-treatments'
   }
 

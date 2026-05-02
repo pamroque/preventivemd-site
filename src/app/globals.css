@@ -48,7 +48,8 @@ html[data-animations='off'] .tile-cta-magnify:hover .tile-bg {
 html[data-animations='off'] .tile-cta-magnify.tile-bg-shift:hover {
   background-position: 0% 50% !important;
 }
-html[data-animations='off'] .hero-crossfade {
+html[data-animations='off'] .hero-crossfade,
+html[data-animations='off'] .hero-crossfade-3 {
   opacity: 0 !important;
 }
 html[data-animations='off'] .path-card-glint {
@@ -1626,22 +1627,40 @@ html {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Hero crossfade — overlay image fades in, holds, fades out, holds. The base
- * image underneath stays at opacity 1, so the overlay's opacity is the only
- * thing animating. Each image holds for ~3s; each fade is ~2s; cycle is 10s. */
+/* Hero crossfade — base image (-1) stays at opacity 1; overlays (-2, -3)
+ * each animate their opacity to fade in/out at staggered windows so the
+ * three images cycle. 15s total: image 1 holds ~4s, image 2 ~4s, image 3 ~4s,
+ * with ~1s crossfades between. */
 @keyframes heroCrossfade {
-  0%, 30% { opacity: 0; }
-  50%, 80% { opacity: 1; }
+  /* Overlay 1 (-2): fade in 26.66-33.33%, hold to 60%, fade out by 66.66% */
+  0%, 26.66% { opacity: 0; }
+  33.33%, 60% { opacity: 1; }
+  66.66%, 100% { opacity: 0; }
+}
+
+@keyframes heroCrossfade3 {
+  /* Overlay 2 (-3): fade in 60-66.66%, hold to 93.33%, fade out by 100% */
+  0%, 60% { opacity: 0; }
+  66.66%, 93.33% { opacity: 1; }
   100% { opacity: 0; }
 }
 
-.hero-crossfade {
-  animation: heroCrossfade 10s ease-in-out infinite;
+.hero-crossfade,
+.hero-crossfade-3 {
   will-change: opacity;
 }
 
+.hero-crossfade {
+  animation: heroCrossfade 15s ease-in-out infinite;
+}
+
+.hero-crossfade-3 {
+  animation: heroCrossfade3 15s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hero-crossfade {
+  .hero-crossfade,
+  .hero-crossfade-3 {
     animation: none;
     opacity: 0;
   }

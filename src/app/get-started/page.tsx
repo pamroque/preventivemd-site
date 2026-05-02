@@ -90,6 +90,9 @@ export default async function GetStartedPage({
             >
               Hi, I&rsquo;m Eve, your concierge. Getting started is simple.
             </h1>
+            <p className="text-sm text-[rgba(0,0,0,0.6)] leading-5">
+              Please note that we are not yet available in Alaska, Mississippi, and New Jersey.
+            </p>
           </div>
         </section>
 
