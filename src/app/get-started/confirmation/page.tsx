@@ -241,8 +241,8 @@ export default function ConfirmationPage() {
     const step0 = getStepValues(0)
     if (typeof step0.firstName === 'string') setFirstName(step0.firstName)
 
-    const step12 = getStepValues(12)
-    const step13 = getStepValues(13)
+    const step12 = getStepValues(14)
+    const step13 = getStepValues(15)
     const consultFlow = typeof step13.format === 'string' && !!step13.format
     setIsConsultation(consultFlow)
 

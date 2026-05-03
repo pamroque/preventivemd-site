@@ -148,7 +148,7 @@ export default function QPriorWeightManagementPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`overflow-y-auto bg-white focus:outline-none ${done && hasSelection ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
+        className={`overflow-y-auto bg-white focus:outline-none ${done && hasSelection ? 'pb-[74px] md:pb-[138px]' : 'pb-8'}`}
         style={{ height: 'calc(100dvh - 52px)', marginTop: '52px' }}
       >
         <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">

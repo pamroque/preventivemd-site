@@ -213,13 +213,24 @@ export default function TreatmentSelector({
     // Ineligibility check (request flow only)
     const ineligible = new Set<string>()
     if (checkIneligibility) {
-      const conditionsVal = getStepValues(4).conditions
-      const conditions = typeof conditionsVal === 'string' && conditionsVal
-        ? new Set(conditionsVal.split(','))
-        : new Set<string>()
+      // Disqualifiers can be a step-5 condition, a step-6 medication,
+      // a step-8 alcohol bracket, or a yes-answer on a binary question
+      // further down the flow (currently just step-10 athlete). We
+      // union them all into one flat lookup set; the namespaces don't
+      // collide.
+      const conditionsVal  = getStepValues(4).conditions
+      const medicationsVal = getStepValues(5).medications
+      const alcoholVal     = getStepValues(7).alcohol
+      const athleteVal     = getStepValues(9).athlete
+      const blockerInputs = new Set<string>([
+        ...(typeof conditionsVal  === 'string' && conditionsVal  ? conditionsVal.split(',')  : []),
+        ...(typeof medicationsVal === 'string' && medicationsVal ? medicationsVal.split(',') : []),
+        ...(typeof alcoholVal     === 'string' && alcoholVal     ? [`alcohol-${alcoholVal}`] : []),
+        ...(athleteVal === 'yes' ? ['athlete'] : []),
+      ])
       TREATMENTS.forEach(t => {
         const blockers = TREATMENT_INELIGIBILITY[t.id]
-        if (blockers && blockers.some(c => conditions.has(c))) ineligible.add(t.id)
+        if (blockers && blockers.some(c => blockerInputs.has(c))) ineligible.add(t.id)
       })
       if (TREATMENTS.every(t => ineligible.has(t.id))) {
         router.replace('/get-started/questionnaire/disqualification')
@@ -354,7 +365,7 @@ export default function TreatmentSelector({
       <main
         id="main-content"
         tabIndex={-1}
-        className={`overflow-y-auto bg-white focus:outline-none ${showStickyCta ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
+        className={`overflow-y-auto bg-white focus:outline-none ${showStickyCta ? 'pb-[74px] md:pb-[138px]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',

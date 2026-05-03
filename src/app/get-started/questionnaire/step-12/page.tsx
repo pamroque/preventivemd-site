@@ -12,7 +12,7 @@ const AVATAR_URL = '/assets/avatar-eve.png'
 
 // ─── Animation ───────────────────────────────────────────────────────────────
 
-const QUESTION_TEXT = 'How much alcohol do you usually consume? *'
+const QUESTION_TEXT = 'How many hours of sleep do you get per day? *'
 const QUESTION_WORDS = QUESTION_TEXT.split(' ')
 const WORD_DELAY_MS = 80
 
@@ -47,46 +47,46 @@ function useAnimationSequence(currentBubbleCount: number) {
   return { animateBubbles, visibleWords, typingStarted, done }
 }
 
-// ─── Options ─────────────────────────────────────────────────────────────────
+// ─── Sleep amount options ─────────────────────────────────────────────────────
 
-const ALCOHOL_OPTIONS = [
-  { id: 'wk-0to2',  label: '0-2 drinks per week' },
-  { id: 'wk-3to5',  label: '3-5 drinks per week' },
-  { id: 'day-1to2', label: '1-2 drinks per day' },
-  // `day-2plus` is wired as a GLP-1 disqualifier in TREATMENT_INELIGIBILITY.
-  { id: 'day-2plus', label: 'More than 2 drinks per day' },
+const SLEEP_AMOUNT_OPTIONS = [
+  { id: 'less5', label: 'Less than 5 hours' },
+  { id: '5to6', label: '5 to 6 hours' },
+  { id: '6to7', label: '6 to 7 hours' },
+  { id: '7to8', label: '7 to 8 hours' },
+  { id: '8plus', label: '8 or more hours' },
 ] as const
 
-type AlcoholId = typeof ALCOHOL_OPTIONS[number]['id']
+type SleepAmountId = typeof SLEEP_AMOUNT_OPTIONS[number]['id']
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
-const PROGRESS = 38
+const PROGRESS = 50
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
-const NEXT_STEP = '/get-started/questionnaire/step-9'
+const NEXT_STEP = '/get-started/questionnaire/step-13'
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-export default function QuestionnaireStep8() {
+export default function QuestionnaireStep12() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
-  const [savedSelection, setSavedSelection] = useState<AlcoholId | null>(null)
+  const [savedSelection, setSavedSelection] = useState<SleepAmountId | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
 
   useEffect(() => {
-    const prior = getPriorSteps(7)
+    const prior = getPriorSteps(11)
     const mapped: PriorStep[] = prior.map((s, i) => ({
       ...s,
       editHref: i === 0 ? '/get-started' : `/get-started/questionnaire${i === 1 ? '' : `/step-${i}`}`,
     }))
     setCurrentStep(mapped[mapped.length - 1] ?? null)
 
-    const saved = getStepValues(7)
-    if (typeof saved.alcohol === 'string' && saved.alcohol) {
-      setSavedSelection(saved.alcohol as AlcoholId)
+    const saved = getStepValues(11)
+    if (typeof saved.sleepAmount === 'string' && saved.sleepAmount) {
+      setSavedSelection(saved.sleepAmount as SleepAmountId)
     }
   }, [])
 
@@ -94,20 +94,20 @@ export default function QuestionnaireStep8() {
   const { animateBubbles, visibleWords, typingStarted, done } =
     useAnimationSequence(currentBubbleCount)
 
-  function handleSelect(opt: typeof ALCOHOL_OPTIONS[number]) {
+  function handleSelect(opt: typeof SLEEP_AMOUNT_OPTIONS[number]) {
     if (isNavigating) return
     setIsNavigating(true)
     saveStep(
-      7,
+      11,
       { question: QUESTION_TEXT, bubbles: [opt.label] },
-      { alcohol: opt.id },
+      { sleepAmount: opt.id }
     )
     router.push(NEXT_STEP)
   }
 
   return (
     <>
-      <BackHeader backHref="/get-started/questionnaire/step-7" progress={PROGRESS} />
+      <BackHeader backHref="/get-started/questionnaire/step-11" progress={PROGRESS} />
 
       <main
         id="main-content"
@@ -160,18 +160,13 @@ export default function QuestionnaireStep8() {
                   </>
                 )}
               </h1>
-              {done && (
-                <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
-                  WHY WE ASK: Your drinking habits can affect which treatments are a good fit for you.
-                </p>
-              )}
             </div>
           </div>
 
-          {/* ── Alcohol options — tapping navigates immediately ── */}
+          {/* ── Sleep amount options — tapping navigates immediately ── */}
           {done && (
             <div className="flex flex-col gap-3 animate-[fadeIn_0.4s_ease_forwards]">
-              {ALCOHOL_OPTIONS.map((opt) => {
+              {SLEEP_AMOUNT_OPTIONS.map((opt) => {
                 const isSelected = savedSelection === opt.id
                 return (
                   <div

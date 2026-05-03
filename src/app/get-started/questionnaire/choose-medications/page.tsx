@@ -8,6 +8,15 @@ import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
 import { usePricingCatalog, lookupPriceCents } from '@/lib/pricing/usePricingCatalog'
+import {
+  type MedForm,
+  type FormOption,
+  type Glp1Type,
+  FORM_LABELS,
+  FORM_OPTIONS_BY_TREATMENT,
+  GLP1_FORM_OPTIONS_BY_TYPE,
+  getFormOptions,
+} from '@/lib/treatment-forms'
 
 // Maps the questionnaire-level treatment ID to the canonical slug used in
 // the pricing catalog (and Stripe). 'glp-1' splits into one of five
@@ -124,79 +133,10 @@ function getBrandedStartingPrice(type: string | null | undefined, form: MedForm 
   return BRANDED_GLP1_STARTING_PRICES[type]?.[form] ?? null
 }
 
-// ─── Form factors ─────────────────────────────────────────────────────────────
-//
-// Each medication has its own list of "How would you like to take it?"
-// options. Treatments with a single option (e.g., GHK-Cu = Cream,
-// Foundayo® = Pills) auto-select that option so the patient sees the
-// form pre-selected — see the auto-select effect on mount and the
-// type-change branch in `setChoice`.
-//
-// Form IDs are also used as catalog formulation keys for pricing
-// lookups; rows that don't exist in the catalog (e.g., 'cream',
-// 'kwikpen', 'pen') simply return null and contribute 0 to the cart.
-
-type MedForm = 'injection' | 'oral' | 'kwikpen' | 'pen' | 'cream'
-
-interface FormOption {
-  id:    MedForm
-  label: string
-  // ReactNode rather than `string` so a sub can include inline markup
-  // — e.g., the branded form factors append a superscript dagger that
-  // ties to the price footnote.
-  sub?:  React.ReactNode
-}
-
-const FORM_LABELS: Record<MedForm, string> = {
-  injection: 'Injection vials',
-  oral:      'Pills',
-  kwikpen:   'KwikPen®',
-  pen:       'Injection pens',
-  cream:     'Cream',
-}
-
-// Per-treatment form options (non-GLP-1).
-const FORM_OPTIONS_BY_TREATMENT: Record<string, FormOption[]> = {
-  'ghk-cu':      [{ id: 'cream',     label: 'Cream',           sub: 'Once or twice daily' }],
-  'sermorelin':  [{ id: 'injection', label: 'Injection vials', sub: 'Once weekly' }],
-  'glutathione': [{ id: 'injection', label: 'Injection vials', sub: 'Once weekly' }],
-  'nad-plus':    [{ id: 'injection', label: 'Injection vials', sub: 'Once weekly' }],
-}
-
-// Per-GLP-1-type form options. Sub-labels follow the form-factor type:
-// Injection vials, KwikPen®, and Injection pens → Once weekly;
-// Pills → Once daily.
-const GLP1_FORM_OPTIONS_BY_TYPE: Record<Glp1Type, FormOption[]> = {
-  semaglutide: [
-    { id: 'injection', label: 'Injection vials', sub: 'Once weekly' },
-    { id: 'oral',      label: 'Pills',           sub: 'Once daily' },
-  ],
-  tirzepatide: [
-    { id: 'injection', label: 'Injection vials', sub: 'Once weekly' },
-    { id: 'oral',      label: 'Pills',           sub: 'Once daily' },
-  ],
-  // Branded form-factor cards show frequency only; the per-form
-  // "Starting at $X" price now lives on the Prescription plan card via
-  // BRANDED_GLP1_STARTING_PRICES below.
-  foundayo: [
-    { id: 'oral',      label: 'Pills',           sub: 'Once daily' },
-  ],
-  wegovy: [
-    { id: 'pen',       label: 'Injection pens',  sub: 'Once weekly' },
-    { id: 'oral',      label: 'Pills',           sub: 'Once daily' },
-  ],
-  zepbound: [
-    { id: 'injection', label: 'Injection vials', sub: 'Once weekly' },
-    { id: 'kwikpen',   label: 'KwikPen®',        sub: 'Once weekly' },
-  ],
-}
-
-function getFormOptions(treatmentId: string, glp1Type: Glp1Type | null): FormOption[] {
-  if (treatmentId === 'glp-1') {
-    return glp1Type ? GLP1_FORM_OPTIONS_BY_TYPE[glp1Type] : []
-  }
-  return FORM_OPTIONS_BY_TREATMENT[treatmentId] ?? []
-}
+// Form factor types and maps live in `@/lib/treatment-forms` so the
+// /treatments/[slug] marketing pages and this picker share a single
+// source of truth. See that file for FORM_LABELS, FORM_OPTIONS_BY_TREATMENT,
+// GLP1_FORM_OPTIONS_BY_TYPE, and getFormOptions.
 
 // Plan definitions are now structural only — no prices. Prices come from
 // /api/treatments/pricing (which reads from payment_gateway_prices).
@@ -214,7 +154,6 @@ const PLAN_DEFS = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Glp1Type = 'semaglutide' | 'tirzepatide' | 'foundayo' | 'wegovy' | 'zepbound'
 type MedPlan = '1mo' | '3mo' | '6mo' | '12mo'
 
 interface MedChoice {
@@ -397,7 +336,7 @@ export default function ChooseMedicationsPage() {
   }, [loaded, treatments, router])
 
   useEffect(() => {
-    const step12 = getStepValues(12)
+    const step12 = getStepValues(14)
     let ids: string[] = []
     if (typeof step12.treatments === 'string') {
       try { ids = JSON.parse(step12.treatments) } catch { /* ignore */ }
@@ -411,7 +350,7 @@ export default function ChooseMedicationsPage() {
     const initial: Record<string, MedChoice> = {}
     ids.forEach(id => { initial[id] = { type: null, form: null, plan: null } })
 
-    const step13 = getStepValues(13)
+    const step13 = getStepValues(15)
     if (typeof step13.choices === 'string') {
       try {
         const saved = JSON.parse(step13.choices) as Record<string, MedChoice>
@@ -445,7 +384,7 @@ export default function ChooseMedicationsPage() {
 
     setChoices(initial)
 
-    const prior = getPriorSteps(13)
+    const prior = getPriorSteps(15)
     const last = prior[prior.length - 1]
     if (last && Array.isArray(last.bubbles)) {
       setCurrentStep({
@@ -475,7 +414,7 @@ export default function ChooseMedicationsPage() {
     // chat-history bubbles from `nextTreatments` for the same reason.
     const newBubbles = nextTreatments.map(tid => TREATMENT_NAMES[tid] ?? tid)
     saveStep(
-      12,
+      14,
       {
         question: currentStep?.question ?? 'Which treatments would you like to request? *',
         bubbles: newBubbles,
@@ -599,7 +538,7 @@ export default function ChooseMedicationsPage() {
       return `${name} · ${formLabel} · ${plan}`
     })
     saveStep(
-      13,
+      15,
       { question: QUESTION_TEXT, bubbles },
       { choices: JSON.stringify(choices) }
     )
@@ -614,7 +553,7 @@ export default function ChooseMedicationsPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`overflow-y-auto bg-white focus:outline-none ${done ? 'pb-[calc(var(--cta-h)-8px)] md:pb-[calc(var(--cta-h)+32px)]' : 'pb-8'}`}
+        className={`overflow-y-auto bg-white focus:outline-none ${done ? 'pb-[calc(var(--cta-h)+8px)] md:pb-[calc(var(--cta-h)+32px)]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',

@@ -303,7 +303,7 @@ export default function QuestionnaireStep3() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`overflow-y-auto bg-white focus:outline-none ${done ? "pb-[58px] md:pb-[138px]" : "pb-8"}`}
+        className={`overflow-y-auto bg-white focus:outline-none ${done ? "pb-[74px] md:pb-[138px]" : "pb-8"}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',

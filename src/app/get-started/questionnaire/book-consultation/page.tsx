@@ -224,7 +224,7 @@ export default function BookConsultationPage() {
   const [format, setFormat] = useState(() => {
     const s0 = getStepValues(0)
     if (typeof s0.state === 'string' && SYNC_REQUIRED_STATES_SET.has(s0.state)) return 'Video'
-    const saved = getStepValues(13)
+    const saved = getStepValues(15)
     if (typeof saved.format === 'string' && saved.format) return saved.format
     return 'Video'
   })
@@ -259,12 +259,12 @@ export default function BookConsultationPage() {
   }, [])
 
   useEffect(() => {
-    const prior = getPriorSteps(13) // includes step 11 (visit-type) + step 12 (desired-treatments)
+    const prior = getPriorSteps(15) // includes step 13 (visit-type) + step 14 (desired-treatments)
     const last = prior[prior.length - 1]
     if (last) {
       setCurrentStep({ ...last, editHref: '/get-started/questionnaire/desired-treatments' })
     }
-    const saved = getStepValues(13)
+    const saved = getStepValues(15)
     if (typeof saved.language === 'string' && saved.language) setLanguage(saved.language)
     if (!requiresSync && typeof saved.format === 'string' && saved.format) setFormat(saved.format)
   }, [requiresSync])
@@ -472,7 +472,7 @@ export default function BookConsultationPage() {
     const tz = shortTzAbbr(selectedSlot.slotDatetime)
     const slotTimeWithTz = tz ? `${slotTimeLabel} ${tz}` : slotTimeLabel
     saveStep(
-      13,
+      15,
       {
         question: QUESTION_TEXT,
         bubbles: [`${language} · ${format} · ${formatDateLabel(selectedDate)} · ${slotTimeWithTz}`],
@@ -505,7 +505,7 @@ export default function BookConsultationPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`overflow-y-auto bg-white focus:outline-none ${done ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
+        className={`overflow-y-auto bg-white focus:outline-none ${done ? 'pb-[74px] md:pb-[138px]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',

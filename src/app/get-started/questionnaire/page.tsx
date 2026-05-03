@@ -288,7 +288,7 @@ export default function QuestionnaireStep1() {
     <>
       <BackHeader backHref="/get-started" progress={PROGRESS} />
 
-      <main id="main-content" tabIndex={-1} className={`min-h-screen bg-white pt-12 md:pt-14 focus:outline-none ${done ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}>
+      <main id="main-content" tabIndex={-1} className={`min-h-screen bg-white pt-12 md:pt-14 focus:outline-none ${done ? 'pb-[74px] md:pb-[138px]' : 'pb-8'}`}>
         <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
 
           {/* ── Previous question — static, no animation ── */}

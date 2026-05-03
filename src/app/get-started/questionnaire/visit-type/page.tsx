@@ -191,12 +191,12 @@ export default function VisitTypePage() {
     const saved = getStepValues(0)
     setFirstName(typeof saved.firstName === 'string' ? saved.firstName : '')
 
-    const prior = getPriorSteps(11)
+    const prior = getPriorSteps(13)
     const last = prior[prior.length - 1]
     if (last && Array.isArray(last.bubbles)) {
       setCurrentStep({
         ...last,
-        editHref: '/get-started/questionnaire/step-11',
+        editHref: '/get-started/questionnaire/step-13',
       })
     }
   }, [])
@@ -217,7 +217,7 @@ export default function VisitTypePage() {
     if (isNavigating) return
     setIsNavigating(true)
     saveStep(
-      11,
+      13,
       { question: "Next, choose how you'd like to move forward.", bubbles: ['Choose medications'] },
       { visitType: 'async' }
     )
@@ -228,7 +228,7 @@ export default function VisitTypePage() {
     if (isNavigating) return
     setIsNavigating(true)
     saveStep(
-      11,
+      13,
       { question: "Next, choose how you'd like to move forward.", bubbles: ['Book a live consultation'] },
       { visitType: 'consult' }
     )
@@ -238,7 +238,7 @@ export default function VisitTypePage() {
   return (
     <>
       <DisqualificationGate />
-      <BackHeader backHref="/get-started/questionnaire/step-11" progress={PROGRESS} />
+      <BackHeader backHref="/get-started/questionnaire/step-13" progress={PROGRESS} />
 
       <main
         id="main-content"

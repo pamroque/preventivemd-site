@@ -204,7 +204,7 @@ const BOOK_CONSULTATION_ROUTE = '/get-started/questionnaire/book-consultation'
 /** Reconstruct the BookedSlot payload that /book-consultation stashed
  *  in step 13. Returns null if any required field is missing. */
 function readBookedSlot(): BookedSlot | null {
-  const s13 = getStepValues(13)
+  const s13 = getStepValues(15)
   const required = ['holdId','providerId','healthieUserId','slotDatetime','contactType','providerName','expiresAt'] as const
   for (const k of required) {
     if (typeof s13[k] !== 'string' || !s13[k]) return null
@@ -258,7 +258,7 @@ function CheckoutPageInner() {
   // async flow saves medication choices at step 13 (no `format`), so the
   // presence of `format` is the unambiguous signal.
   const [isConsultation] = useState(() => {
-    const s13 = getStepValues(13)
+    const s13 = getStepValues(15)
     return typeof s13.format === 'string' && !!s13.format
   })
   const [consultationDetails, setConsultationDetails] = useState<{
@@ -362,7 +362,7 @@ function CheckoutPageInner() {
   useEffect(() => {
     setIsAndroid(/android/i.test(navigator.userAgent))
 
-    const prior = getPriorSteps(14)
+    const prior = getPriorSteps(16)
     const last = prior[prior.length - 1]
     if (last && Array.isArray(last.bubbles)) {
       setCurrentStep({
@@ -373,8 +373,8 @@ function CheckoutPageInner() {
       })
     }
 
-    const step12 = getStepValues(12)
-    const step13 = getStepValues(13)
+    const step12 = getStepValues(14)
+    const step13 = getStepValues(15)
 
     if (isConsultation) {
       // Sync visit fee comes from the catalog (services.sync_visit). While
@@ -514,7 +514,7 @@ function CheckoutPageInner() {
     // Existing local persistence — keeps the chat-history bubbles and
     // back-navigation behavior intact.
     saveStep(
-      14,
+      16,
       { question: 'Checkout details', bubbles: [data.email] },
       {
         email: data.email,
@@ -685,8 +685,8 @@ function CheckoutPageInner() {
     formulation:  string
     term:         string
   }> {
-    const step12 = getStepValues(12)
-    const step13 = getStepValues(13)
+    const step12 = getStepValues(14)
+    const step13 = getStepValues(15)
     let treatmentIds: string[] = []
     if (typeof step12.treatments === 'string') {
       try { treatmentIds = JSON.parse(step12.treatments) } catch { /* ignore */ }
@@ -722,7 +722,7 @@ function CheckoutPageInner() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="overflow-y-auto bg-white focus:outline-none pb-[calc(var(--cta-h)-8px)] [scroll-padding-bottom:calc(var(--cta-h)-8px)] md:pb-[calc(var(--cta-h)+32px)] md:[scroll-padding-bottom:calc(var(--cta-h)+32px)]"
+        className="overflow-y-auto bg-white focus:outline-none pb-[calc(var(--cta-h)+8px)] [scroll-padding-bottom:calc(var(--cta-h)+8px)] md:pb-[calc(var(--cta-h)+32px)] md:[scroll-padding-bottom:calc(var(--cta-h)+32px)]"
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',

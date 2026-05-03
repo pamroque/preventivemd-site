@@ -10,6 +10,7 @@ import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/componen
 import { getLastAnsweredStep, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { getStep4BackHref } from '@/lib/goal-routing'
 import { usePrefersReducedMotion } from '@/lib/useEveTyping'
+import { getSavedUnitSystem, kgToLbs } from '@/lib/units'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -92,7 +93,7 @@ const schema = z.object({
     .min(1, 'Required')
     .refine(
       (v) => !isNaN(Number(v)) && Number(v) > 0 && Number(v) < 2000,
-      'Enter a valid weight in lbs'
+      'Enter a valid weight',
     ),
   intentional: z.enum(['yes', 'no'], { required_error: 'Please select one' }),
 })
@@ -136,6 +137,10 @@ export default function QuestionnaireStep4() {
   const savedSelection =
     saved.weightChanged === 'yes' ? 'yes' : saved.weightChanged === 'no' ? 'no' : null
 
+  // Carry the unit selection from step-2 so the input + bubble match
+  // what the patient picked at the start of the flow.
+  const units = getSavedUnitSystem()
+
   const currentBubbleCount = currentStep?.bubbles.length ?? 0
   const { animateBubbles, visibleWords, typingStarted, done } =
     useAnimationSequence(currentBubbleCount)
@@ -152,7 +157,14 @@ export default function QuestionnaireStep4() {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      weightLost: typeof saved.weightLost === 'string' ? saved.weightLost : '',
+      // In metric mode we restore from `weightLostKg` so the user sees what
+      // they typed; in imperial we restore the canonical lbs value.
+      weightLost:
+        units === 'metric' && typeof saved.weightLostKg === 'string'
+          ? saved.weightLostKg
+          : typeof saved.weightLost === 'string'
+            ? saved.weightLost
+            : '',
       intentional: (saved.intentional as 'yes' | 'no' | undefined) ?? undefined,
     },
   })
@@ -172,16 +184,24 @@ export default function QuestionnaireStep4() {
   }
 
   async function onSubmit(data: FormValues) {
+    // Save canonical lbs (`weightLost`) so backend code stays unchanged.
+    // When the user is in metric we also persist `weightLostKg` for the
+    // form-roundtrip on back-nav.
+    const typed = Number(data.weightLost)
+    const weightLostLbs = units === 'metric' ? String(kgToLbs(typed)) : data.weightLost
+    const unitSuffix = units === 'metric' ? 'kg' : 'lbs'
     const bubbles = [
       'Yes',
-      `${data.weightLost} lbs lost`,
+      `${data.weightLost} ${unitSuffix} lost`,
       data.intentional === 'yes' ? 'Intentional' : 'Unintentional',
     ]
-    saveStep(
-      3,
-      { question: QUESTION_TEXT, bubbles },
-      { weightChanged: 'yes', weightLost: data.weightLost, intentional: data.intentional }
-    )
+    const values: Record<string, string> = {
+      weightChanged: 'yes',
+      weightLost:    weightLostLbs,
+      intentional:   data.intentional,
+    }
+    if (units === 'metric') values.weightLostKg = data.weightLost
+    saveStep(3, { question: QUESTION_TEXT, bubbles }, values)
     router.push(NEXT_STEP)
   }
 
@@ -194,7 +214,7 @@ export default function QuestionnaireStep4() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`overflow-y-auto bg-white focus:outline-none ${showExpanded ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
+        className={`overflow-y-auto bg-white focus:outline-none ${showExpanded ? 'pb-[74px] md:pb-[138px]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -297,15 +317,17 @@ export default function QuestionnaireStep4() {
                     inputMode="decimal"
                     min={1}
                     max={1999}
+                    step={units === 'metric' ? '0.1' : '1'}
                     placeholder="Estimate is fine"
                     {...register('weightLost')}
                     className="flex-1 h-full bg-transparent text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] focus:outline-none border-0 px-3"
+                    aria-label={units === 'metric' ? 'Weight lost in kilograms' : 'Weight lost in pounds'}
                     aria-invalid={!!errors.weightLost}
                     aria-describedby={errors.weightLost ? 'weightLost-error' : undefined}
                     aria-required="true"
                   />
                   <span aria-hidden="true" className="pr-3 text-sm font-semibold text-[#09090b] opacity-50 shrink-0 leading-5">
-                    lbs (pounds)
+                    {units === 'metric' ? 'kg (kilograms)' : 'lbs (pounds)'}
                   </span>
                 </div>
                 <FieldError id="weightLost-error" message={errors.weightLost?.message} />

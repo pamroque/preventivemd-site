@@ -65,7 +65,13 @@ function useAnimationSequence(currentBubbleCount: number) {
 interface Condition {
   id: string
   label: string
-  maleHidden: boolean
+  /** Shorter label used in the chat-history bubble (defaults to `label`).
+   *  Lets us drop a "(please specify)" hint that belongs in the form
+   *  but reads awkwardly in the briefback. */
+  bubbleLabel?: string
+  /** When true, the condition reveals a required free-text input under
+   *  its checkbox so the patient can elaborate. */
+  requiresDetail?: boolean
   disqualifying: boolean
 }
 
@@ -73,51 +79,35 @@ const CONDITIONS: Condition[] = [
   {
     id: 'pregnancy',
     label: 'Pregnancy, breastfeeding, or plans to be pregnant in the next 2 months',
-    maleHidden: true,
     disqualifying: true,
   },
-  { id: 'asthma', label: 'Asthma or sulfite sensitivity', maleHidden: false, disqualifying: false },
-  { id: 'pancreatitis', label: 'Pancreatitis', maleHidden: false, disqualifying: false },
+  { id: 'pancreatitis',  label: 'Pancreatitis',                                                       disqualifying: false },
+  { id: 'gallstones',    label: 'Gallstones or gallbladder disease',                                  disqualifying: false },
+  { id: 'gastroparesis', label: 'Gastroparesis or severe stomach-emptying problems',                  disqualifying: false },
+  { id: 'type1diabetes', label: 'Type 1 diabetes',                                                    disqualifying: false },
+  { id: 'type2diabetes', label: 'Type 2 diabetes',                                                    disqualifying: false },
+  { id: 'retinopathy',   label: 'Diabetic retinopathy or eye disease',                                disqualifying: false },
+  { id: 'ketoacidosis',  label: 'Diabetic ketoacidosis',                                              disqualifying: false },
+  { id: 'cardiovascular', label: 'Serious heart problems, blood vessel disease, or uncontrolled high blood pressure', disqualifying: false },
+  { id: 'kidney',        label: 'Kidney disease',                                                     disqualifying: false },
+  { id: 'liver',         label: 'Liver disease',                                                      disqualifying: false },
+  { id: 'pituitary',     label: 'Hormone-related conditions, including pituitary, thyroid, adrenal, pancreatic, Cushing’s, Addison’s, or PCOS', disqualifying: false },
   {
-    id: 'suicidal',
-    label: 'History of suicidal thoughts, self-harm, or suicide attempt',
-    maleHidden: false,
-    disqualifying: false,
-  },
-  { id: 'gallstones', label: 'Gallstones or gallbladder disease', maleHidden: false, disqualifying: false },
-  {
-    id: 'gastroparesis',
-    label: 'Gastroparesis or severe stomach-emptying problems',
-    maleHidden: false,
-    disqualifying: false,
-  },
-  { id: 'type1diabetes', label: 'Type 1 diabetes', maleHidden: false, disqualifying: false },
-  { id: 'type2diabetes', label: 'Type 2 diabetes', maleHidden: false, disqualifying: false },
-  { id: 'retinopathy', label: 'Diabetic retinopathy or eye disease', maleHidden: false, disqualifying: false },
-  {
-    id: 'cancer',
-    label: 'Cancer now, cancer in the past, or a family history of cancer',
-    maleHidden: false,
+    id: 'cancer-self',
+    label: 'Cancer now or in the past',
+    requiresDetail: true,
     disqualifying: false,
   },
   {
-    id: 'mtc',
-    label: 'Medullary thyroid cancer (MTC) or family history',
-    maleHidden: false,
+    id: 'cancer-family',
+    label: 'Family history of cancer',
+    requiresDetail: true,
     disqualifying: false,
   },
-  {
-    id: 'men2',
-    label: 'Multiple Endocrine Neoplasia syndrome type 2 (MEN2)',
-    maleHidden: false,
-    disqualifying: false,
-  },
-  {
-    id: 'pituitary',
-    label: 'Pituitary or hormone disorder requiring ongoing treatment or specialist care',
-    maleHidden: false,
-    disqualifying: false,
-  },
+  { id: 'mtc',           label: 'Medullary thyroid cancer (MTC) or Multiple Endocrine Neoplasia syndrome type 2 (MEN2) (or family history)', disqualifying: false },
+  { id: 'wilsons',       label: 'Wilson’s disease or other copper metabolism disorders',              disqualifying: false },
+  { id: 'lhon',          label: 'Leber hereditary optic neuropathy (LHON)',                           disqualifying: false },
+  { id: 'sulfur',        label: 'Sulfur (NOT sulfa) allergy',                                         disqualifying: false },
 ]
 
 // ─── Progress ────────────────────────────────────────────────────────────────
@@ -134,14 +124,25 @@ const NEXT_STEP = '/get-started/questionnaire/step-6'
 // `disqualifying: true` flags on the CONDITIONS list are kept for
 // documentation; the routing source of truth lives in the lib helper.
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Camel-case session-storage key for a condition's "please specify"
+ *  detail, e.g. `cancer-self` → `cancerSelfDetail`. */
+function detailKey(conditionId: string): string {
+  const camel = conditionId.replace(/-([a-z])/g, (_, c) => c.toUpperCase())
+  return `${camel}Detail`
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function QuestionnaireStep5() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
-  const [isMale, setIsMale] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  /** Free-text "please specify" detail per condition id. Only populated
+   *  for conditions whose `requiresDetail` flag is true. Optional. */
+  const [details, setDetails] = useState<Record<string, string>>({})
   const [isNavigating, setIsNavigating] = useState(false)
 
   useEffect(() => {
@@ -152,20 +153,25 @@ export default function QuestionnaireStep5() {
     }))
     setCurrentStep(mapped[mapped.length - 1] ?? null)
 
-    const sex = getStepValues(0).sex
-    setIsMale(sex === 'male')
-
     const saved = getStepValues(4)
     if (typeof saved.conditions === 'string' && saved.conditions) {
       setSelected(new Set(saved.conditions.split(',')))
     }
+    // Restore detail strings for any condition that defines one.
+    const restored: Record<string, string> = {}
+    for (const c of CONDITIONS) {
+      if (!c.requiresDetail) continue
+      const key = detailKey(c.id)
+      if (typeof saved[key] === 'string') restored[c.id] = saved[key] as string
+    }
+    if (Object.keys(restored).length > 0) setDetails(restored)
   }, [])
 
   const currentBubbleCount = currentStep?.bubbles.length ?? 0
   const { animateBubbles, visibleWords, typingStarted, done } =
     useAnimationSequence(currentBubbleCount)
 
-  const visibleConditions = CONDITIONS.filter((c) => !(c.maleHidden && isMale))
+  const visibleConditions = CONDITIONS
   const hasSelection = selected.size > 0
 
   function toggle(id: string) {
@@ -178,6 +184,10 @@ export default function QuestionnaireStep5() {
       }
       return next
     })
+  }
+
+  function setDetail(id: string, value: string) {
+    setDetails((prev) => ({ ...prev, [id]: value }))
   }
 
   function handleNone() {
@@ -196,12 +206,23 @@ export default function QuestionnaireStep5() {
     setIsNavigating(true)
 
     const selectedConditions = CONDITIONS.filter((c) => selected.has(c.id))
-    const bubbles = selectedConditions.map((c) => c.label)
+    const bubbles = selectedConditions.map((c) => {
+      const head = c.bubbleLabel ?? c.label
+      const detail = c.requiresDetail ? (details[c.id] ?? '').trim() : ''
+      return detail ? `${head}: ${detail}` : head
+    })
+
+    const detailValues: Record<string, string> = {}
+    for (const c of CONDITIONS) {
+      if (!c.requiresDetail) continue
+      const v = (details[c.id] ?? '').trim()
+      if (selected.has(c.id) && v) detailValues[detailKey(c.id)] = v
+    }
 
     saveStep(
       4,
       { question: QUESTION_TEXT, bubbles },
-      { conditions: [...selected].join(',') }
+      { conditions: [...selected].join(','), ...detailValues },
     )
     router.push(NEXT_STEP)
   }
@@ -213,7 +234,7 @@ export default function QuestionnaireStep5() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`overflow-y-auto bg-white focus:outline-none ${done && hasSelection ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
+        className={`overflow-y-auto bg-white focus:outline-none ${done && hasSelection ? 'pb-[74px] md:pb-[138px]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',
@@ -288,29 +309,56 @@ export default function QuestionnaireStep5() {
 
               <fieldset className="flex flex-col gap-6 border-0 p-0 m-0">
                 <legend className="sr-only">Select any conditions that apply</legend>
-                {visibleConditions.map((condition) => (
-                  <label
-                    key={condition.id}
-                    className="flex gap-3 items-start cursor-pointer"
-                  >
-                    <div className="flex h-5 items-center justify-center shrink-0 w-4 mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={selected.has(condition.id)}
-                        onChange={() => toggle(condition.id)}
-                        className="
-                          size-4 rounded-[4px] border border-[#e4e4e7]
-                          accent-brand-blue
-                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
-                          cursor-pointer
-                        "
-                      />
+                {visibleConditions.map((condition) => {
+                  const isChecked = selected.has(condition.id)
+                  const showDetail = condition.requiresDetail && isChecked
+                  const detailId = `${condition.id}-detail`
+                  return (
+                    <div
+                      key={condition.id}
+                      className={`flex flex-col gap-3 ${showDetail ? 'mb-3' : ''}`}
+                    >
+                      <label className="flex gap-3 items-start cursor-pointer">
+                        <div className="flex h-5 items-center justify-center shrink-0 w-4 mt-0.5">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggle(condition.id)}
+                            className="
+                              size-4 rounded-[4px] border border-[#e4e4e7]
+                              accent-brand-blue
+                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
+                              cursor-pointer
+                            "
+                          />
+                        </div>
+                        <span className="text-sm leading-5 text-[#09090b]">
+                          {condition.label}
+                        </span>
+                      </label>
+
+                      {showDetail && (
+                        <div className="flex flex-col gap-1.5 pl-7">
+                          <label htmlFor={detailId} className="sr-only">
+                            {`Please specify: ${condition.bubbleLabel ?? condition.label}`}
+                          </label>
+                          <input
+                            id={detailId}
+                            type="text"
+                            value={details[condition.id] ?? ''}
+                            onChange={(e) => setDetail(condition.id, e.target.value)}
+                            placeholder="Please specify (optional)"
+                            className="
+                              w-full h-[42px] px-3 py-1.5 bg-white border border-[#e4e4e7] rounded-lg shadow-sm
+                              text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a]
+                              focus:outline-none focus:border-brand-blue transition-colors
+                            "
+                          />
+                        </div>
+                      )}
                     </div>
-                    <span className="text-sm leading-5 text-[#09090b]">
-                      {condition.label}
-                    </span>
-                  </label>
-                ))}
+                  )
+                })}
               </fieldset>
             </div>
           )}

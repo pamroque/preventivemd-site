@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
-import { isIntakeDisqualified } from '@/lib/disqualification'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -13,31 +12,27 @@ const AVATAR_URL = '/assets/avatar-eve.png'
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
-function ArrowUpIcon() {
+function ThumbsUpIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
       className="size-5 shrink-0" aria-hidden="true">
-      <path fillRule="evenodd"
-        d="M10 17a.75.75 0 0 1-.75-.75V5.612L5.29 9.77a.75.75 0 0 1-1.08-1.04l5.25-5.5a.75.75 0 0 1 1.08 0l5.25 5.5a.75.75 0 1 1-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0 1 10 17Z"
-        clipRule="evenodd" />
+      <path d="M1 8.25a1.25 1.25 0 1 1 2.5 0v7.5a1.25 1.25 0 0 1-2.5 0v-7.5ZM11 3V1.7c0-.268.14-.526.395-.607A2 2 0 0 1 14 3c0 .995-.182 1.948-.514 2.826-.204.54.166 1.174.744 1.174h2.52c1.243 0 2.261 1.01 2.146 2.247a23.864 23.864 0 0 1-2.096 6.728C16.422 17.498 15.433 18 14.4 18H9.276a4.5 4.5 0 0 1-1.895-.407L5 16.43V8.64l.138-.064a4.5 4.5 0 0 0 2.361-3.107L8.17 2.67A.75.75 0 0 1 9 2c.98 0 2 .69 2 1Z" />
     </svg>
   )
 }
 
-function ArrowDownIcon() {
+function ThumbsDownIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
       className="size-5 shrink-0" aria-hidden="true">
-      <path fillRule="evenodd"
-        d="M10 3a.75.75 0 0 1 .75.75v10.638l3.96-4.158a.75.75 0 1 1 1.08 1.04l-5.25 5.5a.75.75 0 0 1-1.08 0l-5.25-5.5a.75.75 0 1 1 1.08-1.04l3.96 4.158V3.75A.75.75 0 0 1 10 3Z"
-        clipRule="evenodd" />
+      <path d="M18.905 12.75a1.25 1.25 0 0 1-2.5 0v-7.5a1.25 1.25 0 0 1 2.5 0v7.5ZM8.905 17v1.3c0 .268-.14.526-.395.607A2 2 0 0 1 5.905 17c0-.995.182-1.948.514-2.826.204-.54-.166-1.174-.744-1.174h-2.52c-1.243 0-2.261-1.01-2.146-2.247.193-2.333.892-4.595 2.096-6.728C3.483 2.502 4.472 2 5.505 2h5.124a4.5 4.5 0 0 1 1.895.407L14.905 3.57v7.79l-.138.064a4.5 4.5 0 0 0-2.361 3.107l-.77 2.897a.75.75 0 0 1-.731.572Z" />
     </svg>
   )
 }
 
 // ─── Animation ───────────────────────────────────────────────────────────────
 
-const QUESTION_TEXT = 'How would you describe your current stress level? *'
+const QUESTION_TEXT = 'How would you rate your sleep quality? *'
 const QUESTION_WORDS = QUESTION_TEXT.split(' ')
 const WORD_DELAY_MS = 80
 
@@ -72,24 +67,23 @@ function useAnimationSequence(currentBubbleCount: number) {
   return { animateBubbles, visibleWords, typingStarted, done }
 }
 
-// ─── Stress options ───────────────────────────────────────────────────────────
+// ─── Sleep quality options ────────────────────────────────────────────────────
 
-const STRESS_OPTIONS = [
-  { id: 'low', label: 'Low', icon: <ArrowDownIcon /> },
-  { id: 'moderate', label: 'Moderate', icon: null },
-  { id: 'high', label: 'High', icon: <ArrowUpIcon /> },
+const SLEEP_QUALITY_OPTIONS = [
+  { id: 'good', label: 'Good', icon: <ThumbsUpIcon /> },
+  { id: 'fair', label: 'Fair', icon: null },
+  { id: 'poor', label: 'Poor', icon: <ThumbsDownIcon /> },
 ] as const
 
-type StressId = typeof STRESS_OPTIONS[number]['id']
+type SleepQualityId = typeof SLEEP_QUALITY_OPTIONS[number]['id']
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
-const PROGRESS = 55
+const PROGRESS = 45
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
-const NEXT_STEP = '/get-started/questionnaire/visit-type'
-const DISQUALIFICATION_STEP = '/get-started/questionnaire/disqualification'
+const NEXT_STEP = '/get-started/questionnaire/step-12'
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
@@ -97,7 +91,7 @@ export default function QuestionnaireStep11() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
-  const [savedSelection, setSavedSelection] = useState<StressId | null>(null)
+  const [savedSelection, setSavedSelection] = useState<SleepQualityId | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
 
   useEffect(() => {
@@ -109,8 +103,8 @@ export default function QuestionnaireStep11() {
     setCurrentStep(mapped[mapped.length - 1] ?? null)
 
     const saved = getStepValues(10)
-    if (typeof saved.stress === 'string' && saved.stress) {
-      setSavedSelection(saved.stress as StressId)
+    if (typeof saved.sleepQuality === 'string' && saved.sleepQuality) {
+      setSavedSelection(saved.sleepQuality as SleepQualityId)
     }
   }, [])
 
@@ -118,19 +112,15 @@ export default function QuestionnaireStep11() {
   const { animateBubbles, visibleWords, typingStarted, done } =
     useAnimationSequence(currentBubbleCount)
 
-  function handleSelect(opt: typeof STRESS_OPTIONS[number]) {
+  function handleSelect(opt: typeof SLEEP_QUALITY_OPTIONS[number]) {
     if (isNavigating) return
     setIsNavigating(true)
     saveStep(
       10,
       { question: QUESTION_TEXT, bubbles: [opt.label] },
-      { stress: opt.id }
+      { sleepQuality: opt.id }
     )
-    // Defer the disqualification decision to the very end of the
-    // questionnaire (here) instead of redirecting at the moment a
-    // disqualifying answer is selected — patients get to finish their
-    // intake and see a single, deliberate outcome screen.
-    router.push(isIntakeDisqualified() ? DISQUALIFICATION_STEP : NEXT_STEP)
+    router.push(NEXT_STEP)
   }
 
   return (
@@ -190,16 +180,16 @@ export default function QuestionnaireStep11() {
               </h1>
               {done && (
                 <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
-                  WHY WE ASK: Stress can affect your appetite, sleep, energy, and weight.
+                  WHY WE ASK: Your sleep quality can affect weight, energy, and metabolic health.
                 </p>
               )}
             </div>
           </div>
 
-          {/* ── Stress options — tapping navigates immediately ── */}
+          {/* ── Sleep quality options — tapping navigates immediately ── */}
           {done && (
             <div className="flex flex-col gap-3 animate-[fadeIn_0.4s_ease_forwards]">
-              {STRESS_OPTIONS.map((opt) => {
+              {SLEEP_QUALITY_OPTIONS.map((opt) => {
                 const isSelected = savedSelection === opt.id
                 return (
                   <div

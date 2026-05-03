@@ -30,14 +30,18 @@ function ChevronRightIcon() {
 //   index 0  → personal info (/questionnaire)         next: step-2
 //   index 1  → step-2                                 next: step-3
 //   ...
-//   index 9  → step-10                                next: step-11
-//   index 10 → step-11                                next: visit-type
-//   index 11 → visit-type (has visitType key)         next: choose-treatments | desired-treatments
-//   index 12 → choose-treatments | desired-treatments next: choose-medications | book-consultation
-//   index 13 → choose-medications | book-consultation next: checkout
+//   index 7  → step-8 (alcohol)                       next: step-9
+//   index 8  → step-9 (exercise)                      next: step-10
+//   index 9  → step-10 (athlete)                      next: step-11
+//   index 10 → step-11 (sleep quality)                next: step-12
+//   index 11 → step-12 (hours of sleep)               next: step-13
+//   index 12 → step-13 (stress)                       next: visit-type
+//   index 13 → visit-type (has visitType key)         next: choose-treatments | desired-treatments
+//   index 14 → choose-treatments | desired-treatments next: choose-medications | book-consultation
+//   index 15 → choose-medications | book-consultation next: checkout
 //
-// Step 12 holds `treatments` in BOTH flows now, so we disambiguate using
-// step 11's `visitType`. Step 13 holds `format` for consult and `choices`
+// Step 14 holds `treatments` in BOTH flows now, so we disambiguate using
+// step 13's `visitType`. Step 15 holds `format` for consult and `choices`
 // for async — the presence of `format` is the unambiguous consult signal.
 
 function getResumeHref(): string {
@@ -45,7 +49,7 @@ function getResumeHref(): string {
 
   if (!hasData(0)) return '/get-started/questionnaire'
 
-  // If the patient's saved answers would disqualify them at step-11,
+  // If the patient's saved answers would disqualify them at step-13,
   // resume there directly. Without this guard, a returning user could
   // navigate past the disqualification screen because the
   // index-based lookup below would route them to /visit-type or
@@ -54,41 +58,43 @@ function getResumeHref(): string {
     return '/get-started/questionnaire/disqualification'
   }
 
-  // Step 13 done: consult → checkout if hold still alive, else /book-consultation;
+  // Step 15 done: consult → checkout if hold still alive, else /book-consultation;
   // async → checkout (no hold to worry about).
-  if (hasData(13)) {
-    const s13 = getStepValues(13)
-    const isConsult = typeof s13.format === 'string' && !!s13.format
+  if (hasData(15)) {
+    const s15 = getStepValues(15)
+    const isConsult = typeof s15.format === 'string' && !!s15.format
     if (!isConsult) return '/get-started/questionnaire/checkout'
 
     // Client-side TTL check on the saved expiresAt. /checkout still does
     // a server-authoritative validation on mount as the safety net.
     // 5s buffer absorbs clock skew between client and server.
-    const expiresAt = typeof s13.expiresAt === 'string' ? s13.expiresAt : null
+    const expiresAt = typeof s15.expiresAt === 'string' ? s15.expiresAt : null
     const stillHeld = expiresAt && new Date(expiresAt).getTime() - Date.now() > 5_000
     return stillHeld
       ? '/get-started/questionnaire/checkout'
       : '/get-started/questionnaire/book-consultation'
   }
 
-  // Step 12 done but step 13 not: branch by flow.
-  const s12 = getStepValues(12)
-  if (typeof s12.treatments === 'string' && s12.treatments) {
-    const s11 = getStepValues(11)
-    return s11.visitType === 'consult'
+  // Step 14 done but step 15 not: branch by flow.
+  const s14 = getStepValues(14)
+  if (typeof s14.treatments === 'string' && s14.treatments) {
+    const s13 = getStepValues(13)
+    return s13.visitType === 'consult'
       ? '/get-started/questionnaire/book-consultation'
       : '/get-started/questionnaire/choose-medications'
   }
 
-  const s11 = getStepValues(11)
-  if (typeof s11.visitType === 'string') {
-    return s11.visitType === 'consult'
+  const s13 = getStepValues(13)
+  if (typeof s13.visitType === 'string') {
+    return s13.visitType === 'consult'
       ? '/get-started/questionnaire/desired-treatments'
       : '/get-started/questionnaire/choose-treatments'
   }
 
   // step-N saves to index N-1, so if index I is done the next page is step-(I+2)
-  if (hasData(10)) return '/get-started/questionnaire/visit-type'
+  if (hasData(12)) return '/get-started/questionnaire/visit-type'
+  if (hasData(11)) return '/get-started/questionnaire/step-13'
+  if (hasData(10)) return '/get-started/questionnaire/step-12'
   if (hasData(9))  return '/get-started/questionnaire/step-11'
   if (hasData(8))  return '/get-started/questionnaire/step-10'
   if (hasData(7))  return '/get-started/questionnaire/step-9'
@@ -112,9 +118,9 @@ function getResumeHref(): string {
 }
 
 function getResumeCopy(): string {
-  const s11 = getStepValues(11)
-  if (typeof s11.visitType === 'string') {
-    return s11.visitType === 'consult'
+  const s13 = getStepValues(13)
+  if (typeof s13.visitType === 'string') {
+    return s13.visitType === 'consult'
       ? 'Continue booking'
       : 'Request treatment'
   }

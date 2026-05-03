@@ -64,13 +64,13 @@ function useAnimationSequence(currentBubbleCount: number) {
 
 const MEDICATIONS = [
   { id: 'insulin', label: 'Insulin' },
-  { id: 'sulfonylurea', label: 'Sulfonylurea or another diabetes medicine that can cause low blood sugar' },
+  { id: 'other-diabetes', label: 'Other diabetes medicine' },
   { id: 'birthcontrol', label: 'Oral birth control' },
   { id: 'bloodthinner', label: 'Blood thinner such as warfarin' },
-  { id: 'levothyroxine', label: 'Levothyroxine' },
   { id: 'steroid', label: 'Steroid such as prednisone' },
   { id: 'thyroid', label: 'Thyroid medication, anti-thyroid medication, or other pituitary/hormone treatment' },
-  { id: 'cancer', label: 'Cancer treatment medicines' },
+  { id: 'abiraterone', label: 'Abiraterone acetate, somatrogon-GHLA, chloroquine, or hydroxychloroquine' },
+  { id: 'chemo', label: 'Chemotherapy' },
   { id: 'others', label: 'Others (please specify)' },
 ] as const
 
@@ -169,7 +169,7 @@ export default function QuestionnaireStep6() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`overflow-y-auto bg-white focus:outline-none ${done && hasSelection ? 'pb-[58px] md:pb-[138px]' : 'pb-8'}`}
+        className={`overflow-y-auto bg-white focus:outline-none ${done && hasSelection ? 'pb-[74px] md:pb-[138px]' : 'pb-8'}`}
         style={{
           height: 'calc(100dvh - 52px)',
           marginTop: '52px',

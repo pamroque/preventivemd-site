@@ -5,14 +5,39 @@ import { useRouter } from 'next/navigation'
 import BackHeader from '@/components/ui/BackHeader'
 import ChatHistory, { type PriorStep, currentStepAnimDuration } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
+import { isIntakeDisqualified } from '@/lib/disqualification'
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
 const AVATAR_URL = '/assets/avatar-eve.png'
 
+// ─── Icons ───────────────────────────────────────────────────────────────────
+
+function ArrowUpIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+      className="size-5 shrink-0" aria-hidden="true">
+      <path fillRule="evenodd"
+        d="M10 17a.75.75 0 0 1-.75-.75V5.612L5.29 9.77a.75.75 0 0 1-1.08-1.04l5.25-5.5a.75.75 0 0 1 1.08 0l5.25 5.5a.75.75 0 1 1-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0 1 10 17Z"
+        clipRule="evenodd" />
+    </svg>
+  )
+}
+
+function ArrowDownIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+      className="size-5 shrink-0" aria-hidden="true">
+      <path fillRule="evenodd"
+        d="M10 3a.75.75 0 0 1 .75.75v10.638l3.96-4.158a.75.75 0 1 1 1.08 1.04l-5.25 5.5a.75.75 0 0 1-1.08 0l-5.25-5.5a.75.75 0 1 1 1.08-1.04l3.96 4.158V3.75A.75.75 0 0 1 10 3Z"
+        clipRule="evenodd" />
+    </svg>
+  )
+}
+
 // ─── Animation ───────────────────────────────────────────────────────────────
 
-const QUESTION_TEXT = 'How much alcohol do you usually consume? *'
+const QUESTION_TEXT = 'How would you describe your current stress level? *'
 const QUESTION_WORDS = QUESTION_TEXT.split(' ')
 const WORD_DELAY_MS = 80
 
@@ -47,46 +72,45 @@ function useAnimationSequence(currentBubbleCount: number) {
   return { animateBubbles, visibleWords, typingStarted, done }
 }
 
-// ─── Options ─────────────────────────────────────────────────────────────────
+// ─── Stress options ───────────────────────────────────────────────────────────
 
-const ALCOHOL_OPTIONS = [
-  { id: 'wk-0to2',  label: '0-2 drinks per week' },
-  { id: 'wk-3to5',  label: '3-5 drinks per week' },
-  { id: 'day-1to2', label: '1-2 drinks per day' },
-  // `day-2plus` is wired as a GLP-1 disqualifier in TREATMENT_INELIGIBILITY.
-  { id: 'day-2plus', label: 'More than 2 drinks per day' },
+const STRESS_OPTIONS = [
+  { id: 'low', label: 'Low', icon: <ArrowDownIcon /> },
+  { id: 'moderate', label: 'Moderate', icon: null },
+  { id: 'high', label: 'High', icon: <ArrowUpIcon /> },
 ] as const
 
-type AlcoholId = typeof ALCOHOL_OPTIONS[number]['id']
+type StressId = typeof STRESS_OPTIONS[number]['id']
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
-const PROGRESS = 38
+const PROGRESS = 55
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
-const NEXT_STEP = '/get-started/questionnaire/step-9'
+const NEXT_STEP = '/get-started/questionnaire/visit-type'
+const DISQUALIFICATION_STEP = '/get-started/questionnaire/disqualification'
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-export default function QuestionnaireStep8() {
+export default function QuestionnaireStep13() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
-  const [savedSelection, setSavedSelection] = useState<AlcoholId | null>(null)
+  const [savedSelection, setSavedSelection] = useState<StressId | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
 
   useEffect(() => {
-    const prior = getPriorSteps(7)
+    const prior = getPriorSteps(12)
     const mapped: PriorStep[] = prior.map((s, i) => ({
       ...s,
       editHref: i === 0 ? '/get-started' : `/get-started/questionnaire${i === 1 ? '' : `/step-${i}`}`,
     }))
     setCurrentStep(mapped[mapped.length - 1] ?? null)
 
-    const saved = getStepValues(7)
-    if (typeof saved.alcohol === 'string' && saved.alcohol) {
-      setSavedSelection(saved.alcohol as AlcoholId)
+    const saved = getStepValues(12)
+    if (typeof saved.stress === 'string' && saved.stress) {
+      setSavedSelection(saved.stress as StressId)
     }
   }, [])
 
@@ -94,20 +118,24 @@ export default function QuestionnaireStep8() {
   const { animateBubbles, visibleWords, typingStarted, done } =
     useAnimationSequence(currentBubbleCount)
 
-  function handleSelect(opt: typeof ALCOHOL_OPTIONS[number]) {
+  function handleSelect(opt: typeof STRESS_OPTIONS[number]) {
     if (isNavigating) return
     setIsNavigating(true)
     saveStep(
-      7,
+      12,
       { question: QUESTION_TEXT, bubbles: [opt.label] },
-      { alcohol: opt.id },
+      { stress: opt.id }
     )
-    router.push(NEXT_STEP)
+    // Defer the disqualification decision to the very end of the
+    // questionnaire (here) instead of redirecting at the moment a
+    // disqualifying answer is selected — patients get to finish their
+    // intake and see a single, deliberate outcome screen.
+    router.push(isIntakeDisqualified() ? DISQUALIFICATION_STEP : NEXT_STEP)
   }
 
   return (
     <>
-      <BackHeader backHref="/get-started/questionnaire/step-7" progress={PROGRESS} />
+      <BackHeader backHref="/get-started/questionnaire/step-12" progress={PROGRESS} />
 
       <main
         id="main-content"
@@ -162,16 +190,16 @@ export default function QuestionnaireStep8() {
               </h1>
               {done && (
                 <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
-                  WHY WE ASK: Your drinking habits can affect which treatments are a good fit for you.
+                  WHY WE ASK: Stress can affect your appetite, sleep, energy, and weight.
                 </p>
               )}
             </div>
           </div>
 
-          {/* ── Alcohol options — tapping navigates immediately ── */}
+          {/* ── Stress options — tapping navigates immediately ── */}
           {done && (
             <div className="flex flex-col gap-3 animate-[fadeIn_0.4s_ease_forwards]">
-              {ALCOHOL_OPTIONS.map((opt) => {
+              {STRESS_OPTIONS.map((opt) => {
                 const isSelected = savedSelection === opt.id
                 return (
                   <div
@@ -188,7 +216,7 @@ export default function QuestionnaireStep8() {
                       disabled={isNavigating}
                       aria-pressed={isSelected}
                       className={`
-                        w-full h-[42px] flex items-center justify-center px-4
+                        w-full h-[42px] flex items-center justify-center gap-2 px-4
                         text-base font-medium transition-colors shadow-sm disabled:opacity-60
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
                         ${isSelected
@@ -196,6 +224,7 @@ export default function QuestionnaireStep8() {
                           : 'rounded-lg border border-[#e4e4e7] text-brand-blue bg-white hover:border-brand-blue/40'}
                       `}
                     >
+                      {opt.icon}
                       {opt.label}
                     </button>
                   </div>

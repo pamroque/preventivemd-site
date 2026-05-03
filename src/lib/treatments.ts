@@ -59,7 +59,13 @@ export const GOAL_TO_TREATMENTS: Record<string, readonly string[]> = {
   sexual: ['pt-141'],
 }
 
-// Treatment id → step-5 condition ids that make it ineligible (request flow only).
+// Treatment id → ineligibility ids (step-5 conditions, step-6 medications,
+// or `athlete` for a yes on the step-9 professional-athlete question).
+// Request flow only — the consult flow surfaces every treatment
+// regardless and lets the provider decide.
 export const TREATMENT_INELIGIBILITY: Record<string, readonly string[]> = {
-  'glp-1': ['mtc', 'men2'],
+  'glp-1':       ['mtc', 'type1diabetes', 'pancreatitis', 'chemo', 'insulin', 'abiraterone', 'alcohol-day-2plus'],
+  'ghk-cu':      ['cancer-self', 'wilsons', 'athlete'],
+  'glutathione': ['sulfur'],
+  'sermorelin':  ['type1diabetes', 'type2diabetes', 'cancer-self', 'kidney', 'liver', 'athlete'],
 }

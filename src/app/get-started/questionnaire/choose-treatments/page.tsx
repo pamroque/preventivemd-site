@@ -9,7 +9,7 @@ export default function ChooseTreatmentsPage() {
       <DisqualificationGate />
       <TreatmentSelector
         questionText="Which treatments would you like to request? *"
-        stepIndex={12}
+        stepIndex={14}
         backHref="/get-started/questionnaire/visit-type"
         nextHref="/get-started/questionnaire/choose-medications"
         progress={80}

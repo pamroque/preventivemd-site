@@ -8,7 +8,7 @@
  *
  * The new behavior defers the decision: every disqualifying answer is
  * still saved, but the user proceeds through the rest of the
- * questionnaire as normal. After the last question (step-11, stress
+ * questionnaire as normal. After the last question (step-13, stress
  * level), this helper is consulted; if any disqualifying answer is
  * present, the user is routed to /disqualification instead of
  * /visit-type.

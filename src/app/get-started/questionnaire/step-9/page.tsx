@@ -10,29 +10,9 @@ import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-sto
 
 const AVATAR_URL = '/assets/avatar-eve.png'
 
-// ─── Icons ───────────────────────────────────────────────────────────────────
-
-function ThumbsUpIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-      className="size-5 shrink-0" aria-hidden="true">
-      <path d="M1 8.25a1.25 1.25 0 1 1 2.5 0v7.5a1.25 1.25 0 0 1-2.5 0v-7.5ZM11 3V1.7c0-.268.14-.526.395-.607A2 2 0 0 1 14 3c0 .995-.182 1.948-.514 2.826-.204.54.166 1.174.744 1.174h2.52c1.243 0 2.261 1.01 2.146 2.247a23.864 23.864 0 0 1-2.096 6.728C16.422 17.498 15.433 18 14.4 18H9.276a4.5 4.5 0 0 1-1.895-.407L5 16.43V8.64l.138-.064a4.5 4.5 0 0 0 2.361-3.107L8.17 2.67A.75.75 0 0 1 9 2c.98 0 2 .69 2 1Z" />
-    </svg>
-  )
-}
-
-function ThumbsDownIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-      className="size-5 shrink-0" aria-hidden="true">
-      <path d="M18.905 12.75a1.25 1.25 0 0 1-2.5 0v-7.5a1.25 1.25 0 0 1 2.5 0v7.5ZM8.905 17v1.3c0 .268-.14.526-.395.607A2 2 0 0 1 5.905 17c0-.995.182-1.948.514-2.826.204-.54-.166-1.174-.744-1.174h-2.52c-1.243 0-2.261-1.01-2.146-2.247.193-2.333.892-4.595 2.096-6.728C3.483 2.502 4.472 2 5.505 2h5.124a4.5 4.5 0 0 1 1.895.407L14.905 3.57v7.79l-.138.064a4.5 4.5 0 0 0-2.361 3.107l-.77 2.897a.75.75 0 0 1-.731.572Z" />
-    </svg>
-  )
-}
-
 // ─── Animation ───────────────────────────────────────────────────────────────
 
-const QUESTION_TEXT = 'How would you rate your sleep quality? *'
+const QUESTION_TEXT = 'How often do you exercise? *'
 const QUESTION_WORDS = QUESTION_TEXT.split(' ')
 const WORD_DELAY_MS = 80
 
@@ -67,19 +47,20 @@ function useAnimationSequence(currentBubbleCount: number) {
   return { animateBubbles, visibleWords, typingStarted, done }
 }
 
-// ─── Sleep quality options ────────────────────────────────────────────────────
+// ─── Exercise options ─────────────────────────────────────────────────────────
 
-const SLEEP_QUALITY_OPTIONS = [
-  { id: 'good', label: 'Good', icon: <ThumbsUpIcon /> },
-  { id: 'fair', label: 'Fair', icon: null },
-  { id: 'poor', label: 'Poor', icon: <ThumbsDownIcon /> },
+const EXERCISE_OPTIONS = [
+  { id: 'rarely', label: 'Rarely or never' },
+  { id: '1to2', label: '1 to 2 times per week' },
+  { id: '3to4', label: '3 to 4 times per week' },
+  { id: '5plus', label: '5 or more times per week' },
 ] as const
 
-type SleepQualityId = typeof SLEEP_QUALITY_OPTIONS[number]['id']
+type ExerciseOptionId = typeof EXERCISE_OPTIONS[number]['id']
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
-const PROGRESS = 45
+const PROGRESS = 40
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
@@ -91,7 +72,7 @@ export default function QuestionnaireStep9() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
-  const [savedSelection, setSavedSelection] = useState<SleepQualityId | null>(null)
+  const [savedSelection, setSavedSelection] = useState<ExerciseOptionId | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
 
   useEffect(() => {
@@ -103,8 +84,8 @@ export default function QuestionnaireStep9() {
     setCurrentStep(mapped[mapped.length - 1] ?? null)
 
     const saved = getStepValues(8)
-    if (typeof saved.sleepQuality === 'string' && saved.sleepQuality) {
-      setSavedSelection(saved.sleepQuality as SleepQualityId)
+    if (typeof saved.exercise === 'string' && saved.exercise) {
+      setSavedSelection(saved.exercise as ExerciseOptionId)
     }
   }, [])
 
@@ -112,13 +93,13 @@ export default function QuestionnaireStep9() {
   const { animateBubbles, visibleWords, typingStarted, done } =
     useAnimationSequence(currentBubbleCount)
 
-  function handleSelect(opt: typeof SLEEP_QUALITY_OPTIONS[number]) {
+  function handleSelect(opt: typeof EXERCISE_OPTIONS[number]) {
     if (isNavigating) return
     setIsNavigating(true)
     saveStep(
       8,
       { question: QUESTION_TEXT, bubbles: [opt.label] },
-      { sleepQuality: opt.id }
+      { exercise: opt.id }
     )
     router.push(NEXT_STEP)
   }
@@ -178,18 +159,13 @@ export default function QuestionnaireStep9() {
                   </>
                 )}
               </h1>
-              {done && (
-                <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
-                  WHY WE ASK: Your sleep quality can affect weight, energy, and metabolic health.
-                </p>
-              )}
             </div>
           </div>
 
-          {/* ── Sleep quality options — tapping navigates immediately ── */}
+          {/* ── Exercise options — tapping navigates immediately ── */}
           {done && (
             <div className="flex flex-col gap-3 animate-[fadeIn_0.4s_ease_forwards]">
-              {SLEEP_QUALITY_OPTIONS.map((opt) => {
+              {EXERCISE_OPTIONS.map((opt) => {
                 const isSelected = savedSelection === opt.id
                 return (
                   <div
@@ -206,7 +182,7 @@ export default function QuestionnaireStep9() {
                       disabled={isNavigating}
                       aria-pressed={isSelected}
                       className={`
-                        w-full h-[42px] flex items-center justify-center gap-2 px-4
+                        w-full h-[42px] flex items-center justify-center px-4
                         text-base font-medium transition-colors shadow-sm disabled:opacity-60
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-1
                         ${isSelected
@@ -214,7 +190,6 @@ export default function QuestionnaireStep9() {
                           : 'rounded-lg border border-[#e4e4e7] text-brand-blue bg-white hover:border-brand-blue/40'}
                       `}
                     >
-                      {opt.icon}
                       {opt.label}
                     </button>
                   </div>

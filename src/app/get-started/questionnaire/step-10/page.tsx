@@ -12,7 +12,7 @@ const AVATAR_URL = '/assets/avatar-eve.png'
 
 // ─── Animation ───────────────────────────────────────────────────────────────
 
-const QUESTION_TEXT = 'How many hours of sleep do you get per day? *'
+const QUESTION_TEXT = 'Are you a professional athlete? *'
 const QUESTION_WORDS = QUESTION_TEXT.split(' ')
 const WORD_DELAY_MS = 80
 
@@ -47,21 +47,18 @@ function useAnimationSequence(currentBubbleCount: number) {
   return { animateBubbles, visibleWords, typingStarted, done }
 }
 
-// ─── Sleep amount options ─────────────────────────────────────────────────────
+// ─── Options ─────────────────────────────────────────────────────────────────
 
-const SLEEP_AMOUNT_OPTIONS = [
-  { id: 'less5', label: 'Less than 5 hours' },
-  { id: '5to6', label: '5 to 6 hours' },
-  { id: '6to7', label: '6 to 7 hours' },
-  { id: '7to8', label: '7 to 8 hours' },
-  { id: '8plus', label: '8 or more hours' },
+const ATHLETE_OPTIONS = [
+  { id: 'yes', label: 'Yes' },
+  { id: 'no',  label: 'No'  },
 ] as const
 
-type SleepAmountId = typeof SLEEP_AMOUNT_OPTIONS[number]['id']
+type AthleteId = typeof ATHLETE_OPTIONS[number]['id']
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 
-const PROGRESS = 50
+const PROGRESS = 42
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
@@ -73,7 +70,7 @@ export default function QuestionnaireStep10() {
   const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState<PriorStep | null>(null)
-  const [savedSelection, setSavedSelection] = useState<SleepAmountId | null>(null)
+  const [savedSelection, setSavedSelection] = useState<AthleteId | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
 
   useEffect(() => {
@@ -85,8 +82,8 @@ export default function QuestionnaireStep10() {
     setCurrentStep(mapped[mapped.length - 1] ?? null)
 
     const saved = getStepValues(9)
-    if (typeof saved.sleepAmount === 'string' && saved.sleepAmount) {
-      setSavedSelection(saved.sleepAmount as SleepAmountId)
+    if (saved.athlete === 'yes' || saved.athlete === 'no') {
+      setSavedSelection(saved.athlete)
     }
   }, [])
 
@@ -94,13 +91,13 @@ export default function QuestionnaireStep10() {
   const { animateBubbles, visibleWords, typingStarted, done } =
     useAnimationSequence(currentBubbleCount)
 
-  function handleSelect(opt: typeof SLEEP_AMOUNT_OPTIONS[number]) {
+  function handleSelect(opt: typeof ATHLETE_OPTIONS[number]) {
     if (isNavigating) return
     setIsNavigating(true)
     saveStep(
       9,
       { question: QUESTION_TEXT, bubbles: [opt.label] },
-      { sleepAmount: opt.id }
+      { athlete: opt.id },
     )
     router.push(NEXT_STEP)
   }
@@ -160,17 +157,23 @@ export default function QuestionnaireStep10() {
                   </>
                 )}
               </h1>
+              {done && (
+                <p className="text-sm leading-5 text-[rgba(0,0,0,0.6)]">
+                  WHY WE ASK: This helps your provider tailor treatment recommendations around you.
+                </p>
+              )}
             </div>
           </div>
 
-          {/* ── Sleep amount options — tapping navigates immediately ── */}
+          {/* ── Yes / No — tap to continue, no separate "Save and continue" button ── */}
           {done && (
-            <div className="flex flex-col gap-3 animate-[fadeIn_0.4s_ease_forwards]">
-              {SLEEP_AMOUNT_OPTIONS.map((opt) => {
+            <div className="flex gap-3 animate-[fadeIn_0.4s_ease_forwards]">
+              {ATHLETE_OPTIONS.map((opt) => {
                 const isSelected = savedSelection === opt.id
                 return (
                   <div
                     key={opt.id}
+                    className="flex-1"
                     style={isSelected ? {
                       padding: '2px',
                       background: 'linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-mint) 100%)',

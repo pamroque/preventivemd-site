@@ -7,6 +7,7 @@ import ChatHistory, { type PriorStep } from '@/components/ui/ChatHistory'
 import { getPriorSteps, getStepValues, saveStep } from '@/lib/intake-session-store'
 import { useEveTyping } from '@/lib/useEveTyping'
 import { computeBmi } from '@/lib/bmi'
+import { getSavedUnitSystem, kgToLbs, lbsToKg } from '@/lib/units'
 import {
   getSelectedGoals,
   getNextGoalRoute,
@@ -61,9 +62,18 @@ export default function QTargetWeightPage() {
     setNextRoute(getNextGoalRoute(THIS_ROUTE, goals))
   }, [])
 
-  // Pre-fill from saved data on back navigation
+  // Read the patient's preferred unit system once — it was selected on
+  // step-2 and shouldn't change mid-flow. The form input is shown in
+  // their unit; we still save canonical lbs (`goalWeight`) for BMI
+  // and the backend, plus the original metric value when applicable.
+  const units = useMemo(() => getSavedUnitSystem(), [])
+
+  // Pre-fill from saved data on back navigation. In metric mode we
+  // restore from `goalWeightKg` so the user sees what they typed; in
+  // imperial we restore `goalWeight`.
   const [goalWeight, setGoalWeight] = useState(() => {
     const saved = getStepValues(SESSION_INDEX)
+    if (units === 'metric' && typeof saved.goalWeightKg === 'string') return saved.goalWeightKg
     return typeof saved.goalWeight === 'string' ? saved.goalWeight : ''
   })
 
@@ -71,10 +81,12 @@ export default function QTargetWeightPage() {
   const heightVals = useMemo(() => getStepValues(1), [])
 
   const bmi = useMemo(() => {
-    const w = Number(goalWeight)
-    if (!w || w <= 0) return null
-    return computeBmi({ ...heightVals, weight: String(w) })
-  }, [goalWeight, heightVals])
+    const typed = Number(goalWeight)
+    if (!typed || typed <= 0) return null
+    // Canonical BMI math runs in imperial; convert kg input to lbs first.
+    const lbs = units === 'metric' ? kgToLbs(typed) : typed
+    return computeBmi({ ...heightVals, weight: String(lbs) })
+  }, [goalWeight, heightVals, units])
 
   const bmiText = bmi ? `Resulting BMI: ${bmi.value} (${BMI_LABEL[bmi.category] ?? bmi.category})` : null
 
@@ -92,22 +104,38 @@ export default function QTargetWeightPage() {
 
   function handleContinue() {
     if (isNavigating) return
-    const w = Number(goalWeight)
-    if (!goalWeight || !w || w <= 0 || w >= 2000) {
-      setError('Please enter a valid goal weight in lbs.')
+    const typed = Number(goalWeight)
+    const unitSuffix = units === 'metric' ? 'kg' : 'lbs'
+    if (!goalWeight || !typed || typed <= 0 || typed >= 2000) {
+      setError(`Please enter a valid goal weight in ${unitSuffix}.`)
       return
     }
-    const currentWeight = Number(heightVals.weight)
-    if (currentWeight > 0 && w >= currentWeight) {
-      setError(`Goal weight must be less than your current weight (${currentWeight} lbs).`)
+    // Compare goal vs current weight in the user's chosen units so the
+    // error message matches what they see; convert canonical lbs back
+    // to kg for the metric case.
+    const currentLbs = Number(heightVals.weight)
+    const currentTyped = units === 'metric' ? lbsToKg(currentLbs) : currentLbs
+    if (currentTyped > 0 && typed >= currentTyped) {
+      setError(`Goal weight must be less than your current weight (${currentTyped} ${unitSuffix}).`)
       return
     }
     setError(null)
     setIsNavigating(true)
+
+    // Save canonical imperial (`goalWeight` in lbs) so BMI + backend
+    // code keeps working unchanged. When the user is in metric we also
+    // persist `goalWeightKg` for form-roundtrip on back-nav.
+    const goalWeightLbs = units === 'metric' ? String(kgToLbs(typed)) : goalWeight
+    const bubble = units === 'metric'
+      ? `Goal weight: ${goalWeight} kg`
+      : `Goal weight: ${goalWeight} lbs`
+    const values: Record<string, string> = { goalWeight: goalWeightLbs }
+    if (units === 'metric') values.goalWeightKg = goalWeight
+
     saveStep(
       SESSION_INDEX,
-      { question: QUESTION_TEXT.replace(' *', ''), bubbles: [`Goal weight: ${goalWeight} lbs`] },
-      { goalWeight }
+      { question: QUESTION_TEXT.replace(' *', ''), bubbles: [bubble] },
+      values,
     )
     router.push(nextRoute)
   }
@@ -119,7 +147,7 @@ export default function QTargetWeightPage() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`overflow-y-auto bg-white focus:outline-none ${done ? "pb-[58px] md:pb-[138px]" : "pb-8"}`}
+        className={`overflow-y-auto bg-white focus:outline-none ${done ? "pb-[74px] md:pb-[138px]" : "pb-8"}`}
         style={{ height: 'calc(100dvh - 52px)', marginTop: '52px' }}
       >
         <div className="mx-auto w-full px-4 md:max-w-[560px] md:px-0 flex flex-col gap-6 md:gap-9 pt-6 md:pt-9">
@@ -170,6 +198,7 @@ export default function QTargetWeightPage() {
                   inputMode="decimal"
                   min={1}
                   max={999}
+                  step={units === 'metric' ? '0.1' : '1'}
                   placeholder=""
                   value={goalWeight}
                   onChange={e => {
@@ -177,13 +206,13 @@ export default function QTargetWeightPage() {
                     if (error) setError(null)
                   }}
                   className="flex-1 text-base text-[rgba(0,0,0,0.87)] placeholder:text-[#71717a] bg-transparent focus:outline-none"
-                  aria-label="Goal weight in pounds"
+                  aria-label={units === 'metric' ? 'Goal weight in kilograms' : 'Goal weight in pounds'}
                   aria-invalid={!!error}
                   aria-describedby={error ? 'weight-error' : bmiText ? 'bmi-display' : undefined}
                   aria-required="true"
                 />
                 <span aria-hidden="true" className="text-sm font-semibold text-[#09090b] opacity-50 shrink-0 pl-2">
-                  lbs (pounds)
+                  {units === 'metric' ? 'kg (kilograms)' : 'lbs (pounds)'}
                 </span>
               </div>
 

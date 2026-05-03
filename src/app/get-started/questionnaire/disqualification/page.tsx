@@ -35,18 +35,18 @@ export default function DisqualificationPage() {
 
   useEffect(() => {
     // The briefback always references the LAST questionnaire step the
-    // user answered, which is step-11 (stress level, saved at index 10).
-    // The disqualification decision happens at step-11 regardless of
+    // user answered, which is step-13 (stress level, saved at index 12).
+    // The disqualification decision happens at step-13 regardless of
     // which earlier answer triggered it (`isIntakeDisqualified()` in
     // src/lib/disqualification.ts), so anchoring to the last step keeps
     // the chat-history bubble consistent for every disqualification
-    // path. Edits send the user back to step-11 to revise.
-    const prior = getPriorSteps(11)
+    // path. Edits send the user back to step-13 to revise.
+    const prior = getPriorSteps(13)
     const last = prior[prior.length - 1]
     if (last && Array.isArray(last.bubbles)) {
       setCurrentStep({
         ...last,
-        editHref: '/get-started/questionnaire/step-11',
+        editHref: '/get-started/questionnaire/step-13',
       })
     }
   }, [])
