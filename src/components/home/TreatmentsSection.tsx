@@ -18,6 +18,8 @@ type Treatment = {
    *  When unset, the audio button falls back to the browser's
    *  SpeechSynthesis API speaking `name`. */
   audioSrc?: string
+  /** Lowest displayed monthly price across form factors / plans, in USD. */
+  startingAtPerMo: number
 }
 
 const TREATMENTS: Treatment[] = [
@@ -29,6 +31,7 @@ const TREATMENTS: Treatment[] = [
     audioSrc: '/assets/audio/glutathione.mp3',
     href: '/get-started?peptide=glutathione',
     detailHref: '/treatments/glutathione',
+    startingAtPerMo: 99,
   },
   {
     slug: 'ghk-cu',
@@ -38,6 +41,7 @@ const TREATMENTS: Treatment[] = [
     audioSrc: '/assets/audio/ghk-cu.mp3',
     href: '/get-started?peptide=ghk-cu',
     detailHref: '/treatments/ghk-cu',
+    startingAtPerMo: 99,
   },
   {
     slug: 'nad',
@@ -47,6 +51,7 @@ const TREATMENTS: Treatment[] = [
     href: '/get-started?peptide=nad',
     detailHref: '/treatments/nad',
     audioSrc: '/assets/audio/nad.mp3',
+    startingAtPerMo: 99,
   },
   {
     slug: 'semaglutide',
@@ -55,6 +60,8 @@ const TREATMENTS: Treatment[] = [
     thumbnail: '/assets/home/vial-generic.png',
     href: '/get-started?peptide=semaglutide',
     detailHref: '/treatments/semaglutide',
+    audioSrc: '/assets/audio/semaglutide.mp3',
+    startingAtPerMo: 149,
   },
   {
     slug: 'sermorelin',
@@ -63,6 +70,8 @@ const TREATMENTS: Treatment[] = [
     thumbnail: '/assets/home/vial-generic.png',
     href: '/get-started?peptide=sermorelin',
     detailHref: '/treatments/sermorelin',
+    audioSrc: '/assets/audio/sermorelin.mp3',
+    startingAtPerMo: 99,
   },
   {
     slug: 'tirzepatide',
@@ -72,6 +81,7 @@ const TREATMENTS: Treatment[] = [
     href: '/get-started?peptide=tirzepatide',
     detailHref: '/treatments/tirzepatide',
     audioSrc: '/assets/audio/tirzepatide.mp3',
+    startingAtPerMo: 199,
   },
   {
     slug: 'foundayo',
@@ -81,6 +91,8 @@ const TREATMENTS: Treatment[] = [
     thumbnail: '/assets/home/foundayo.png',
     href: '/get-started?peptide=foundayo',
     detailHref: '/treatments/foundayo',
+    audioSrc: '/assets/audio/foundayo.mp3',
+    startingAtPerMo: 149,
   },
   {
     slug: 'wegovy',
@@ -90,6 +102,8 @@ const TREATMENTS: Treatment[] = [
     thumbnail: '/assets/home/wegovy.png',
     href: '/get-started?peptide=wegovy',
     detailHref: '/treatments/wegovy',
+    audioSrc: '/assets/audio/wegovy.mp3',
+    startingAtPerMo: 149,
   },
   {
     slug: 'zepbound',
@@ -100,6 +114,7 @@ const TREATMENTS: Treatment[] = [
     href: '/get-started?peptide=zepbound',
     detailHref: '/treatments/zepbound',
     audioSrc: '/assets/audio/zepbound.mp3',
+    startingAtPerMo: 299,
   },
 ]
 
@@ -118,6 +133,9 @@ function TreatmentCard({ treatment, eager = false }: { treatment: Treatment; eag
           </h3>
           <TreatmentAudioButton name={treatment.name} audioSrc={treatment.audioSrc} />
         </div>
+        <p className="text-base font-bold leading-6 text-[#09090b]">
+          Starting at ${treatment.startingAtPerMo}/mo
+        </p>
         <p className="text-base leading-6 text-[#09090b]">{treatment.description}</p>
       </div>
 
